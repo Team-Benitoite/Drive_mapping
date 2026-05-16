@@ -147,15 +147,15 @@ MVPに必要なユーザーストーリーを3〜7個に絞る。
 | signup | ユーザー登録 | ユーザー情報 | 登録 |
 | login | login  | 認証関連のデータ | ログイン |
 | logout | ログアウト | 認証関連のデータ | ログアウト |
-| home | マップの表示 | 行先データ | データの利用など |
+| index | マップの表示 | 行先データ | データの利用など |
 | m_create | 行先データの登録 | 住所,写真 | 登録 |
 | m_delete | 行先データの削除 | 住所,写真 | 削除 |
 | m_edit | 行先データの編集| 〃 | 〃 |
-| index | 都道府県別などで表示する | 都道府県データ | 検索、並べ替えなど |
+| show | 都道府県別などで表示する | 都道府県データ | 検索、並べ替えなど |
 | profile | プロフィールの表示,名前,フォロー | アイコン,背景 |
 | p_edit | プロフィールの編集 | 個人情報 | 編集 |
-| follower | 
-| 
+| follower | フォロワーの表示 | アイコン, ユーザー名 | フォロワーの確認 | 
+| follow | フォローの表示 | アイコン, ユーザー名 | フォローの確認 |
 
 
 
@@ -169,14 +169,17 @@ MVPに必要なユーザーストーリーを3〜7個に絞る。
 
 1. signup
 2. login
-3. home
+3. index
 4. m_create
 5. m_delete
 6. m_edit
-7. index
-8. profile
-9. p_edit
-10. logout
+7. show
+8. detail
+9. profile
+10. p_edit
+11. follower
+12. follow
+13. logout
 
 
 
@@ -187,115 +190,358 @@ MVPに必要なユーザーストーリーを3〜7個に絞る。
 
 目的：signup
 
-表示する情報：
+表示する情報：アカウント名, メールアドレス, パスワード
 
-ユーザーができる操作：
+ユーザーができる操作：アカウントの登録
 
-次に進む画面：login
+次に進む画面：index
 
-関連するユーザーストーリー：
+
 
 #### 画面名：login
 
 目的：login
 
-表示する情報：
+表示する情報：メールアドレス, パスワード
 
 ユーザーができる操作：必要事項入力
 
-次に進む画面：home
+次に進む画面：index
 
-関連するユーザーストーリー：
 
-#### 画面名：home
+
+#### 画面名：index
 
 目的：ホーム画面
 
-表示する情報：マップデータなど
+表示する情報：メニュー, 登録データ, マップデータ
 
-ユーザーができる操作：
+ユーザーができる操作：登録データの閲覧, ページ移動
 
-次に進む画面：m_create,m_edit
+次に進む画面：signup, login, logout, m_create, m_delete, m_edit, profile, show
 
-関連するユーザーストーリー：
+
+
 #### 画面名：m_create
 
 目的：行先データの追加
 
-表示する情報：
+表示する情報：タイトル, 内容, メイン（主な都道府県）, サブ（通った都道府県）, 出発地点名（住所含む）, 中間地点（〃）, 到着地点（〃）, 写真タイトルの入力欄, 写真データ,  画面遷移ボタン（index, show, logout）, キャンセルボタン
 
 ユーザーができる操作：マップデータの登録
 
-次に進む画面：home
+次に進む画面：index, logout
 
-関連するユーザーストーリー：
+
+
+#### 画面名：m_delete
+
+目的：行先データの削除
+
+表示する情報：タイトル, 内容, メイン（主な都道府県）, サブ（通った都道府県）, 出発地点名（住所含む）, 中間地点（〃）, 到着地点（〃）, 写真タイトル, 写真データ,  画面遷移ボタン（index, show, logout）, 削除ボタン, キャンセルボタン
+
+ユーザーができる操作：行先データの削除
+
+次に進む画面：index, logout
+
+
 
 #### 画面名：m_edit
 
 目的：行先データの編集
 
-表示する情報：
+表示する情報：タイトル, 内容, メイン（主な都道府県）, サブ（通った都道府県）, 出発地点名（住所含む）, 中間地点（〃）, 到着地点（〃）, 写真タイトルの入力欄, 写真データ,  画面遷移ボタン（index, show, logout）, キャンセルボタン
 
 ユーザーができる操作：編集
 
-次に進む画面：home
+次に進む画面：index, logout
 
-関連するユーザーストーリー：
 
-#### 画面名：index
 
-目的：
+#### 画面名：show
 
-表示する情報：
+目的：登録データリスト閲覧
 
-ユーザーができる操作：
+表示する情報：m_createで作成した行先データ
 
-次に進む画面：
+ユーザーができる操作：行先データの表示
 
-関連するユーザーストーリー：
+次に進む画面：detail, index, logout
+
+
+
+#### 画面名：detail
+
+目的：詳細データ閲覧
+
+表示する情報：m_createで作成した行先データ
+
+ユーザーができる操作：行先データの閲覧, 行先データのルートURL, 画面遷移ボタン（index, logout）
+
+次に進む画面：show, index, logout
+
+
 
 #### 画面名：profile
 
-目的：
+目的：プロフィールの表示
 
-表示する情報：
+表示する情報：アイコン, ユーザー名, アカウント登録の日付
 
-ユーザーができる操作：
+ユーザーができる操作：プロフィール編集, フォロー
 
-次に進む画面：
+次に進む画面：p_edit, follower, follow, show
 
-関連するユーザーストーリー：
+
 
 #### 画面名：p_edit
 
-目的：
+目的：プロフィール編集
 
-表示する情報：
+表示する情報：アイコン, ユーザー名
 
-ユーザーができる操作：
+ユーザーができる操作：プロフィール編集
 
-次に進む画面：
+次に進む画面：profile, index, logout
 
-関連するユーザーストーリー：
+
 
 #### 画面名：logout
 
-目的：
+目的：ログアウト
 
-表示する情報：
+表示する情報：ポップアップ
 
-ユーザーができる操作：
+ユーザーができる操作：ログアウト
 
-次に進む画面：
+次に進む画面：home
 
-関連するユーザーストーリー：
+
 ## 5. データ設計
 
 ### 5.1 主要データ
 
-| データ名 | 目的 | 主な項目 | 関連データ |
-|---|---|---|---|
-|  |  |  |  |
+-- データベース: `drive_mapping`
+--
+
+-- --------------------------------------------------------
+
+--
+-- テーブルの構造 `routes`
+--
+
+CREATE TABLE `routes` (
+  `id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED DEFAULT NULL,
+  `title` varchar(100) NOT NULL,
+  `summary` varchar(255) DEFAULT NULL,
+  `description` text,
+  `address` varchar(255) DEFAULT NULL,
+  `prefecture_code` tinyint UNSIGNED NOT NULL,
+  `map_url` text,
+  `site_url` text,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- テーブルの構造 `route_likes`
+--
+
+CREATE TABLE `route_likes` (
+  `id` bigint UNSIGNED NOT NULL,
+  `route_id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- テーブルの構造 `route_photos`
+--
+
+CREATE TABLE `route_photos` (
+  `id` bigint UNSIGNED NOT NULL,
+  `route_id` bigint UNSIGNED NOT NULL,
+  `file_name` varchar(255) NOT NULL,
+  `thumb_name` varchar(255) NOT NULL,
+  `sort_order` int NOT NULL DEFAULT '0',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- テーブルの構造 `route_points`
+--
+
+CREATE TABLE `route_points` (
+  `id` bigint UNSIGNED NOT NULL,
+  `route_id` bigint UNSIGNED NOT NULL,
+  `point_type` enum('start','middle','goal') NOT NULL,
+  `label` varchar(100) NOT NULL,
+  `url` text,
+  `sort_order` int NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- テーブルの構造 `route_prefectures`
+--
+
+CREATE TABLE `route_prefectures` (
+  `id` bigint UNSIGNED NOT NULL,
+  `route_id` bigint UNSIGNED NOT NULL,
+  `prefecture_code` tinyint UNSIGNED NOT NULL,
+  `is_main` tinyint(1) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- テーブルの構造 `users`
+--
+
+CREATE TABLE `users` (
+  `id` bigint UNSIGNED NOT NULL,
+  `name` varchar(50) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- ダンプしたテーブルのインデックス
+--
+
+--
+-- テーブルのインデックス `routes`
+--
+ALTER TABLE `routes`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_routes_user` (`user_id`),
+  ADD KEY `idx_routes_pref` (`prefecture_code`),
+  ADD KEY `idx_routes_created` (`created_at`);
+
+--
+-- テーブルのインデックス `route_likes`
+--
+ALTER TABLE `route_likes`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_route_user` (`route_id`,`user_id`),
+  ADD KEY `idx_route` (`route_id`),
+  ADD KEY `fk_likes_user` (`user_id`);
+
+--
+-- テーブルのインデックス `route_photos`
+--
+ALTER TABLE `route_photos`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_route_photos_route` (`route_id`);
+
+--
+-- テーブルのインデックス `route_points`
+--
+ALTER TABLE `route_points`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_points_route` (`route_id`);
+
+--
+-- テーブルのインデックス `route_prefectures`
+--
+ALTER TABLE `route_prefectures`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_rp_route` (`route_id`),
+  ADD KEY `idx_rp_pref` (`prefecture_code`);
+
+--
+-- テーブルのインデックス `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`);
+
+--
+-- ダンプしたテーブルの AUTO_INCREMENT
+--
+
+--
+-- テーブルの AUTO_INCREMENT `routes`
+--
+ALTER TABLE `routes`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+
+--
+-- テーブルの AUTO_INCREMENT `route_likes`
+--
+ALTER TABLE `route_likes`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- テーブルの AUTO_INCREMENT `route_photos`
+--
+ALTER TABLE `route_photos`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- テーブルの AUTO_INCREMENT `route_points`
+--
+ALTER TABLE `route_points`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- テーブルの AUTO_INCREMENT `route_prefectures`
+--
+ALTER TABLE `route_prefectures`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- テーブルの AUTO_INCREMENT `users`
+--
+ALTER TABLE `users`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- ダンプしたテーブルの制約
+--
+
+--
+-- テーブルの制約 `routes`
+--
+ALTER TABLE `routes`
+  ADD CONSTRAINT `fk_routes_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- テーブルの制約 `route_likes`
+--
+ALTER TABLE `route_likes`
+  ADD CONSTRAINT `fk_likes_route` FOREIGN KEY (`route_id`) REFERENCES `routes` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_likes_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- テーブルの制約 `route_photos`
+--
+ALTER TABLE `route_photos`
+  ADD CONSTRAINT `fk_route_photos_route` FOREIGN KEY (`route_id`) REFERENCES `routes` (`id`) ON DELETE CASCADE;
+
+--
+-- テーブルの制約 `route_points`
+--
+ALTER TABLE `route_points`
+  ADD CONSTRAINT `fk_route_points_route` FOREIGN KEY (`route_id`) REFERENCES `routes` (`id`) ON DELETE CASCADE;
+
+--
+-- テーブルの制約 `route_prefectures`
+--
+ALTER TABLE `route_prefectures`
+  ADD CONSTRAINT `fk_route_prefectures_route` FOREIGN KEY (`route_id`) REFERENCES `routes` (`id`) ON DELETE CASCADE;
+COMMIT;
+
 
 ### 5.2 DB構成の初版
 
@@ -366,7 +612,7 @@ GET /example
 
 関連する画面：
 
-関連するユーザーストーリー：
+
 
 ## 6. API / BaaS操作
 
@@ -412,7 +658,7 @@ GET /example
 
 担当者：
 
-関連するユーザーストーリー：
+
 
 ### Issue 2以降
 
@@ -425,13 +671,13 @@ GitHub Issue URL：
 
 次の項目を満たしたチームは、最小の実装に入ってよい。
 
-- [ ] 想定ユーザーと解決する課題を説明できる。
-- [ ] MVPで作る機能を3〜7個に絞っている。
-- [ ] 今回は作らない機能を明記している。
-- [ ] 主要画面を一覧化している。
+- [x] 想定ユーザーと解決する課題を説明できる。
+- [x] MVPで作る機能を3〜7個に絞っている。
+- [x] 今回は作らない機能を明記している。
+- [x] 主要画面を一覧化している。
 - [ ] 主要データを一覧化している。
 - [ ] 主要データの読み取り権限と書き込み権限を説明できる。
-- [ ] 要件定義MarkdownをPull Requestで追加または更新している。
+- [x] 要件定義MarkdownをPull Requestで追加または更新している。
 - [ ] 最初に実装するIssueを1つ選んでいる。
 - [ ] そのIssueの完了条件が書かれている。
 - [ ] 実装ブランチを切って作業する準備ができている。
