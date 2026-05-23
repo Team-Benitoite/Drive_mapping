@@ -1,6 +1,6 @@
-# 要件定義書
+# **要件定義書**
 
-## 0. 基本情報
+## **0\. 基本情報**
 
 チーム名：Benitoite
 
@@ -14,23 +14,16 @@
 
 関連リンク：
 
-- GitHub Repository：https://github.com/Team-Benitoite/Drive_mapping.git
-- GitHub Projects：https://github.com/Team-Benitoite/Drive_mapping
-- 第2週企画メモ：
-- Figma / 画面設計：
-- デプロイ先：
+* GitHub Repository：https://github.com/Team-Benitoite/Drive\_mapping.git  
+* GitHub Projects：https://github.com/Team-Benitoite/Drive\_mapping
 
-## 1. プロダクト概要
+## **1\. プロダクト概要**
 
-### 1.1 一文説明
+### **1.1 一文説明**
 
-このプロダクトは、誰が、どのような課題を、どのように解決するものかを1文で書く。
-
-```text
 「ツーリング」をお題にしてツーリングを趣味としている人やそれに興味を持つ人を対象とするサービス。
-```
 
-### 1.2 想定ユーザー
+### **1.2 想定ユーザー**
 
 主なユーザー：ツーリングやドライブを趣味にしている人
 
@@ -38,683 +31,322 @@
 
 ユーザーが利用する場面：行先の決定するための補助
 
-### 1.3 解決する課題
+### **1.3 解決する課題**
 
-このプロダクトで解決する課題：引きこもり回避
+このプロダクトで解決する課題：休日の引きこもり回避、および外出先決定の心理的ハードルの低下。
 
-なぜその課題が重要なのか：
+なぜその課題が重要なのか：行先が決まらないと結果的に外出をやめてしまい、有意義な時間を逸してしまうため。
 
-既存の代替手段：
+既存の代替手段：Google Mapsでの目的地検索、一般的なSNS（XやInstagram）、紙のツーリングマップ。
 
-既存の代替手段で不足していること：
+既存の代替手段で不足していること：「走って楽しいルート」や「実際の道のり」というツーリング特有の視点での検索・記録が難しく、ルートデータの再利用性が低い。
 
-### 1.4 提供価値
+### **1.4 提供価値**
 
-このプロダクトが提供する価値：アウトドアを推奨し、ツーリングなどの魅力を知ってもらうこと
+このプロダクトが提供する価値：アウトドアを推奨し、ツーリングなどの魅力を知ってもらうこと。
 
-ユーザーにとって楽になること：ツーリング先の決定が容易になる
+ユーザーにとって楽になること：他の人が走った実績のあるルートを簡単に共有・参照でき、ツーリング先の決定が容易になる。
 
-発表時に伝えたい価値：
+## **2\. MVPスコープ**
 
-## 2. MVPスコープ
+### **2.1 MVPで作る機能**
 
-### 2.1 MVPで作る機能
+1. Map機能（ルートの描画・ピン表示）  
+2. 認証機能（登録、ログイン）  
+3. 簡単なDB機能（ルートの投稿、閲覧）
 
-最初に価値を確認するために必要な機能だけを書く。
+### **2.2 今回は作らない機能**
 
-1.Map
-2.認証
-3.簡単なDB
+1. 凝ったフロントエンド（アニメーションなど）  
+2. 複雑な外部API連携（今回はGoogle Maps等の基本機能のみ）  
+3. リアルタイムGPSトラッキング機能（走行中のナビゲーション等）
 
-### 2.2 今回は作らない機能
+### **2.3 完成とみなす条件**
 
-卒業制作の初期スコープから外す機能を書く。
+* ユーザー登録・ログインができること。  
+* Mapping機能を用いて、出発地〜目的地のルートデータがDBに登録できること。  
+* 登録したルートデータがマップ上に反映され、他のユーザーも閲覧できること。
 
-1.凝ったフロントエンド
-2.API
-3.GPS
+### **2.4 デモで見せる流れ**
 
-### 2.3 完成とみなす条件
+1. 新規ユーザー登録  
+2. ログイン  
+3. マップデータ（ツーリングルート）の作成と登録  
+4. ホーム（index）や詳細画面で、登録した道がマップ上に反映されて閲覧できることを示す
 
-第1段階の完成条件を書く。
+## **3\. ユーザーストーリー**
 
-- Mapping機能
-- 認証
-- 
+### **Story 1**
 
-### 2.4 デモで見せる流れ
-
-発表で見せる最小の操作手順を書く。
-
-1.登録
-2.ログイン
-3.mapdataの登録
-4.googleなどに道を反映させて閲覧できる
-
-## 3. ユーザーストーリー
-
-MVPに必要なユーザーストーリーを3〜7個に絞る。
-
-```text
-ツーリングを趣味とする者として、
-ツーリングがしたい。
-なぜなら、ツーリングがしたいから。
-```
-
-### Story 1
-
-```text
-既存の記録アプリでは正確なルートが出ないため、不満を感じていた。
-そのため、記録したルートのデータをそのままマップアプリに持っていくことができれば、短時間で手持ちのスマートフォンで表示させることができ、ルートの決定を短縮することができると感じた。
-```
+ツーリングを趣味とする者として、正確なルートを記録・共有したい。  
+既存の記録アプリでは正確なルートが出ないため不満を感じていた。  
+そのため、手持ちのスマートフォンでルートデータを直接マップに表示させ、ルート決定を短縮したい。
 
 受け入れ条件：
 
-- 
--
--
+* 出発地点、中間地点、到着地点を入力できること。  
+* 入力した地点情報をもとに、マップ上でルートが確認できること。  
+* ルートを保存し、一覧表示できること。
 
-### Story 2
+### **Story 2**
 
-```text
-興味はあるが手を出せていない人達に情報を共有し最初の一歩を踏み出していただきたいと考えている
-```
+ツーリングに興味はあるが手を出せていない人達として、最初の一歩を踏み出したい。
 
 受け入れ条件：
 
--
--
--
+* ログインしていなくても、他人が作成したルート一覧を都道府県別などで検索・閲覧できること。  
+* 詳細画面で、ルートの概要や写真を見ることができること。
 
-### Story 3
+### **Story 3**
 
-```text
-
-```
+ツーリングのモチベーションを保つために、他のユーザーと交流したい。
 
 受け入れ条件：
 
--
--
--
+* 他のユーザーが投稿した魅力的なルートに対して「いいね」ができること。
 
-## 4. 画面設計
+## **4\. 画面設計**
 
-### 4.1 画面一覧
+### **4.1 画面一覧**
 
 | 画面名 | 目的 | 主な情報 | 主な操作 |
-|---|---|---|---|
+| :---- | :---- | :---- | :---- |
 | signup | ユーザー登録 | ユーザー情報 | 登録 |
-| login | login  | 認証関連のデータ | ログイン |
+| login | login | 認証関連のデータ | ログイン |
 | logout | ログアウト | 認証関連のデータ | ログアウト |
-| index | マップの表示 | 行先データ | データの利用など |
-| m_create | 行先データの登録 | 住所,写真 | 登録 |
-| m_delete | 行先データの削除 | 住所,写真 | 削除 |
-| m_edit | 行先データの編集| 〃 | 〃 |
-| show | 都道府県別などで表示する | 都道府県データ | 検索、並べ替えなど |
-| profile | プロフィールの表示,名前,フォロー | アイコン,背景 |
-| p_edit | プロフィールの編集 | 個人情報 | 編集 |
-| follower | フォロワーの表示 | アイコン, ユーザー名 | フォロワーの確認 | 
-| follow | フォローの表示 | アイコン, ユーザー名 | フォローの確認 |
+| index | マップの表示 | 行先データ一覧 | データの利用・閲覧 |
+| m\_create | 行先データの登録 | 住所,写真,タイトル | フォーム入力、登録 |
+| m\_delete | 行先データの削除 | 行先データ | 削除の実行 |
+| m\_edit | 行先データの編集 | 行先データ | 編集の実行 |
+| show | 条件別表示 | 都道府県データ | 検索、並べ替え |
+| detail | 詳細データ閲覧 | 行先詳細,写真,マップ | ルートの詳細確認 |
+| profile | プロフィールの表示 | アイコン,背景,名前 | 閲覧、フォロー |
+| p\_edit | プロフィールの編集 | 個人情報 | 編集 |
+| follower | フォロワーの表示 | アイコン, ユーザー名 | 一覧の確認 |
+| follow | フォローの表示 | アイコン, ユーザー名 | 一覧の確認 |
 
+## **5\. データ設計**
 
+### **5.1 主要データ**
 
+（※ 提出されたSQLダンプファイルの通りとするため、DDLの記述は省略・または参照）
 
+### **5.2 DB構成の初版**
 
-### 4.2 画面遷移
+#### **テーブル名：users**
 
-画面遷移図のリンク：
+目的：ユーザーアカウントと認証情報の管理
 
-主要な画面遷移：
+主なカラム：id, name, email, password\_hash
 
-1. signup
-2. login
-3. index
-4. m_create
-5. m_delete
-6. m_edit
-7. show
-8. detail
-9. profile
-10. p_edit
-11. follower
-12. follow
-13. logout
+主キー：id
 
+外部キー：なし
 
+読み取り権限：誰でも可能（パスワード除く）、または認証ユーザーのみ
 
+書き込み権限：本人のみ
 
-### 4.3 画面ごとの要件
+#### **テーブル名：routes**
 
-#### 画面名：signup
+目的：ルートの大枠データの保存（タイトル、説明、メイン都道府県など）
 
-目的：signup
+主なカラム：id, user\_id, title, summary, description, prefecture\_code
 
-表示する情報：アカウント名, メールアドレス, パスワード
+主キー：id
 
-ユーザーができる操作：アカウントの登録
+外部キー：user\_id \-\> users(id)
 
-次に進む画面：index
+読み取り権限：誰でも可能
 
+書き込み権限：作成者（user\_idが一致するユーザー）のみ
 
+#### **テーブル名：route\_points**
 
-#### 画面名：login
+目的：ルートを構成する経由地（出発地、中間地、到着地）の保存
 
-目的：login
+主なカラム：id, route\_id, point\_type (start/middle/goal), label
 
-表示する情報：メールアドレス, パスワード
+主キー：id
 
-ユーザーができる操作：必要事項入力
+外部キー：route\_id \-\> routes(id)
 
-次に進む画面：index
+読み取り権限：誰でも可能
 
+書き込み権限：対象ルートの作成者のみ
 
+#### **テーブル名：route\_photos**
 
-#### 画面名：index
+目的：ルートに関連付けられた写真データの管理
 
-目的：ホーム画面
+主なカラム：id, route\_id, file\_name
 
-表示する情報：メニュー, 登録データ, マップデータ
+主キー：id
 
-ユーザーができる操作：登録データの閲覧, ページ移動
+外部キー：route\_id \-\> routes(id)
 
-次に進む画面：signup, login, logout, m_create, m_delete, m_edit, profile, show
+#### **テーブル名：route\_likes**
 
+目的：ルートへの「いいね」機能の中間テーブル
 
+主なカラム：id, route\_id, user\_id
 
-#### 画面名：m_create
+主キー：id
 
-目的：行先データの追加
+外部キー：route\_id \-\> routes(id), user\_id \-\> users(id)
 
-表示する情報：タイトル, 内容, メイン（主な都道府県）, サブ（通った都道府県）, 出発地点名（住所含む）, 中間地点（〃）, 到着地点（〃）, 写真タイトルの入力欄, 写真データ,  画面遷移ボタン（index, show, logout）, キャンセルボタン
+### **5.3 BaaSを使う場合**
 
-ユーザーができる操作：マップデータの登録
+（今回はMySQLのDDLが提示されているため、自作バックエンドAPIを想定し本項目は割愛）
 
-次に進む画面：index, logout
+### **5.4 自作APIを使う場合**
 
+#### **API： GET /api/routes**
 
+目的：ルートの一覧を取得する（index, show画面用）
 
-#### 画面名：m_delete
+読むテーブル：routes, users (投稿者名取得のため)
 
-目的：行先データの削除
+書くテーブル：なし
 
-表示する情報：タイトル, 内容, メイン（主な都道府県）, サブ（通った都道府県）, 出発地点名（住所含む）, 中間地点（〃）, 到着地点（〃）, 写真タイトル, 写真データ,  画面遷移ボタン（index, show, logout）, 削除ボタン, キャンセルボタン
+認証の必要性：不要（ゲストでも閲覧可）
 
-ユーザーができる操作：行先データの削除
+関連する画面：index, show
 
-次に進む画面：index, logout
+#### **API： POST /api/routes**
 
+目的：新しいルートを作成する
 
+読むテーブル：なし
 
-#### 画面名：m_edit
+書くテーブル：routes, route\_points, route\_photos (トランザクション処理)
 
-目的：行先データの編集
+認証の必要性：必須
 
-表示する情報：タイトル, 内容, メイン（主な都道府県）, サブ（通った都道府県）, 出発地点名（住所含む）, 中間地点（〃）, 到着地点（〃）, 写真タイトルの入力欄, 写真データ,  画面遷移ボタン（index, show, logout）, キャンセルボタン
+関連する画面：m\_create
 
-ユーザーができる操作：編集
+#### **API： GET /api/routes/{id}**
 
-次に進む画面：index, logout
+目的：特定のルートの詳細情報を取得する
 
+読むテーブル：routes, route\_points, route\_photos, users
 
+書くテーブル：なし
 
-#### 画面名：show
+認証の必要性：不要
 
-目的：登録データリスト閲覧
+関連する画面：detail
 
-表示する情報：m_createで作成した行先データ
+## **6\. API / BaaS操作**
 
-ユーザーができる操作：行先データの表示
-
-次に進む画面：detail, index, logout
-
-
-
-#### 画面名：detail
-
-目的：詳細データ閲覧
-
-表示する情報：m_createで作成した行先データ
-
-ユーザーができる操作：行先データの閲覧, 行先データのルートURL, 画面遷移ボタン（index, logout）
-
-次に進む画面：show, index, logout
-
-
-
-#### 画面名：profile
-
-目的：プロフィールの表示
-
-表示する情報：アイコン, ユーザー名, アカウント登録の日付
-
-ユーザーができる操作：プロフィール編集, フォロー
-
-次に進む画面：p_edit, follower, follow, show
-
-
-
-#### 画面名：p_edit
-
-目的：プロフィール編集
-
-表示する情報：アイコン, ユーザー名
-
-ユーザーができる操作：プロフィール編集
-
-次に進む画面：profile, index, logout
-
-
-
-#### 画面名：logout
-
-目的：ログアウト
-
-表示する情報：ポップアップ
-
-ユーザーができる操作：ログアウト
-
-次に進む画面：home
-
-
-## 5. データ設計
-
-### 5.1 主要データ
-
--- データベース: `drive_mapping`
---
-
--- --------------------------------------------------------
-
---
--- テーブルの構造 `routes`
---
-
-CREATE TABLE `routes` (
-  `id` bigint UNSIGNED NOT NULL,
-  `user_id` bigint UNSIGNED DEFAULT NULL,
-  `title` varchar(100) NOT NULL,
-  `summary` varchar(255) DEFAULT NULL,
-  `description` text,
-  `address` varchar(255) DEFAULT NULL,
-  `prefecture_code` tinyint UNSIGNED NOT NULL,
-  `map_url` text,
-  `site_url` text,
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
-
---
--- テーブルの構造 `route_likes`
---
-
-CREATE TABLE `route_likes` (
-  `id` bigint UNSIGNED NOT NULL,
-  `route_id` bigint UNSIGNED NOT NULL,
-  `user_id` bigint UNSIGNED NOT NULL,
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
-
---
--- テーブルの構造 `route_photos`
---
-
-CREATE TABLE `route_photos` (
-  `id` bigint UNSIGNED NOT NULL,
-  `route_id` bigint UNSIGNED NOT NULL,
-  `file_name` varchar(255) NOT NULL,
-  `thumb_name` varchar(255) NOT NULL,
-  `sort_order` int NOT NULL DEFAULT '0',
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
-
---
--- テーブルの構造 `route_points`
---
-
-CREATE TABLE `route_points` (
-  `id` bigint UNSIGNED NOT NULL,
-  `route_id` bigint UNSIGNED NOT NULL,
-  `point_type` enum('start','middle','goal') NOT NULL,
-  `label` varchar(100) NOT NULL,
-  `url` text,
-  `sort_order` int NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
-
---
--- テーブルの構造 `route_prefectures`
---
-
-CREATE TABLE `route_prefectures` (
-  `id` bigint UNSIGNED NOT NULL,
-  `route_id` bigint UNSIGNED NOT NULL,
-  `prefecture_code` tinyint UNSIGNED NOT NULL,
-  `is_main` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
-
---
--- テーブルの構造 `users`
---
-
-CREATE TABLE `users` (
-  `id` bigint UNSIGNED NOT NULL,
-  `name` varchar(50) NOT NULL,
-  `email` varchar(255) NOT NULL,
-  `password_hash` varchar(255) NOT NULL,
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- ダンプしたテーブルのインデックス
---
-
---
--- テーブルのインデックス `routes`
---
-ALTER TABLE `routes`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_routes_user` (`user_id`),
-  ADD KEY `idx_routes_pref` (`prefecture_code`),
-  ADD KEY `idx_routes_created` (`created_at`);
-
---
--- テーブルのインデックス `route_likes`
---
-ALTER TABLE `route_likes`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_route_user` (`route_id`,`user_id`),
-  ADD KEY `idx_route` (`route_id`),
-  ADD KEY `fk_likes_user` (`user_id`);
-
---
--- テーブルのインデックス `route_photos`
---
-ALTER TABLE `route_photos`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_route_photos_route` (`route_id`);
-
---
--- テーブルのインデックス `route_points`
---
-ALTER TABLE `route_points`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_points_route` (`route_id`);
-
---
--- テーブルのインデックス `route_prefectures`
---
-ALTER TABLE `route_prefectures`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_rp_route` (`route_id`),
-  ADD KEY `idx_rp_pref` (`prefecture_code`);
-
---
--- テーブルのインデックス `users`
---
-ALTER TABLE `users`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `email` (`email`);
-
---
--- ダンプしたテーブルの AUTO_INCREMENT
---
-
---
--- テーブルの AUTO_INCREMENT `routes`
---
-ALTER TABLE `routes`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
-
---
--- テーブルの AUTO_INCREMENT `route_likes`
---
-ALTER TABLE `route_likes`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- テーブルの AUTO_INCREMENT `route_photos`
---
-ALTER TABLE `route_photos`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- テーブルの AUTO_INCREMENT `route_points`
---
-ALTER TABLE `route_points`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- テーブルの AUTO_INCREMENT `route_prefectures`
---
-ALTER TABLE `route_prefectures`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- テーブルの AUTO_INCREMENT `users`
---
-ALTER TABLE `users`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
-
---
--- ダンプしたテーブルの制約
---
-
---
--- テーブルの制約 `routes`
---
-ALTER TABLE `routes`
-  ADD CONSTRAINT `fk_routes_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
---
--- テーブルの制約 `route_likes`
---
-ALTER TABLE `route_likes`
-  ADD CONSTRAINT `fk_likes_route` FOREIGN KEY (`route_id`) REFERENCES `routes` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_likes_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
---
--- テーブルの制約 `route_photos`
---
-ALTER TABLE `route_photos`
-  ADD CONSTRAINT `fk_route_photos_route` FOREIGN KEY (`route_id`) REFERENCES `routes` (`id`) ON DELETE CASCADE;
-
---
--- テーブルの制約 `route_points`
---
-ALTER TABLE `route_points`
-  ADD CONSTRAINT `fk_route_points_route` FOREIGN KEY (`route_id`) REFERENCES `routes` (`id`) ON DELETE CASCADE;
-
---
--- テーブルの制約 `route_prefectures`
---
-ALTER TABLE `route_prefectures`
-  ADD CONSTRAINT `fk_route_prefectures_route` FOREIGN KEY (`route_id`) REFERENCES `routes` (`id`) ON DELETE CASCADE;
-COMMIT;
-
-
-### 5.2 DB構成の初版
-
-この時点では完璧なDB設計を目指さなくてよい。実装を始めるために必要な初版を書く。
-
-#### テーブル名：
-
-目的：
-
-主なカラム：
-
--
--
--
-
-主キー：
-
-外部キー：
-
-初期データの有無：
-
-読み取り権限：
-
-書き込み権限：
-
-### 5.3 BaaSを使う場合
-
-Supabaseを使う場合は、画面ごとに読み書きするテーブルを書く。
-Firebaseなど別のBaaSを使う場合は、テーブルをコレクション、RLS方針をSecurity Rules方針として読み替える。
-
-#### 画面名：
-
-読むテーブル：
-
-書くテーブル：
-
-Firebaseの場合のコレクション：
-
-Firebaseの場合のインデックス：
-
-Firebaseの場合の初期データ投入手順：
-
-認証の必要性：
-
-RLS方針：
-
-Security Rules方針：
-
-注意点：
-
-### 5.4 自作APIを使う場合
-
-自作APIを使う場合は、DBとAPI操作の対応を書く。
-
-#### API：
-
-```text
-GET /example
-```
-
-目的：
-
-読むテーブル：
-
-書くテーブル：
-
-認証の必要性：
-
-関連する画面：
-
-
-
-## 6. API / BaaS操作
-
-### 6.1 API候補
+### **6.1 API候補**
 
 | 操作 | 目的 | 認証 | 関連画面 |
-|---|---|---|---|
-| GET /example |  |  |  |
+| :---- | :---- | :---- | :---- |
+| POST /api/register | 新規ユーザー登録 | 不要 | signup |
+| POST /api/login | ログイン（トークン発行等） | 不要 | login |
+| POST /api/logout | ログアウト | 必須 | logout |
+| GET /api/routes | ルート一覧取得（県別絞り込み対応） | 不要 | index, show |
+| POST /api/routes | ルート新規登録（地点情報含む） | 必須 | m\_create |
+| GET /api/routes/{id} | ルート詳細取得 | 不要 | detail |
+| PUT /api/routes/{id} | ルート情報の編集 | 必須(本人) | m\_edit |
+| DELETE /api/routes/{id} | ルート情報の削除 | 必須(本人) | m\_delete |
+| POST /api/routes/{id}/like | いいねの追加・解除 | 必須 | detail, index |
 
-### 6.2 BaaS操作候補
+## **7\. 初期Issue**
 
-| 画面 | 読むテーブル | 書くテーブル | 権限 |
-|---|---|---|---|
-|  |  |  |  |
+### **Issue 1**
 
-## 7. 初期Issue
-
-第5週で着手するIssueを書く。Issueには、目的、完了条件、担当者を含める。
-
-### Issue 1
-
-タイトル：
+タイトル：DB環境構築およびマイグレーションの作成
 
 種類：
 
-- [ ] 要件定義Issue
-- [ ] 画面Issue
-- [ ] データIssue
-- [ ] 機能Issue
-- [ ] DB設計Issue
-- [ ] API設計Issue
-- [ ] 環境構築Issue
-- [ ] 実装Issue
-- [ ] 調査Issue
+* \[x\] DB設計Issue  
+* \[x\] 環境構築Issue
 
-目的：
+目的：ローカル開発環境にMySQLを立ち上げ、定義されたDDLをもとにマイグレーションファイルを作成・実行する。
 
 完了条件：
 
--
--
--
+* users, routes, route\_points などのテーブルが正しく生成されること。  
+* ダミーデータ（シーダー）が1件以上投入できること。  
+  担当者：未定
 
-担当者：
+### **Issue 2**
 
+タイトル：ユーザー認証API（登録・ログイン）の実装
 
+種類：
 
-### Issue 2以降
+* \[x\] API設計Issue  
+* \[x\] 実装Issue
 
-Issue 1と同じ形式で、必要な数だけ追加する。
-各IssueはMarkdownに書くだけで終わらせず、GitHub Issuesにも作成し、GitHub Projectsで追跡できるようにする。
+目的：フロントエンドからユーザー登録およびログインが行えるバックエンドの仕組みを作る。
 
-GitHub Issue URL：
+完了条件：
 
-## 8. 実装へ進む前のチェック
+* POST /api/register でユーザーが作成され、パスワードがハッシュ化されること。  
+* POST /api/login で正しい認証情報の場合、セッションまたはトークンが返却されること。  
+  担当者：未定
 
-次の項目を満たしたチームは、最小の実装に入ってよい。
+### **Issue 3**
 
-- [x] 想定ユーザーと解決する課題を説明できる。
-- [x] MVPで作る機能を3〜7個に絞っている。
-- [x] 今回は作らない機能を明記している。
-- [x] 主要画面を一覧化している。
-- [ ] 主要データを一覧化している。
-- [ ] 主要データの読み取り権限と書き込み権限を説明できる。
-- [x] 要件定義MarkdownをPull Requestで追加または更新している。
-- [ ] 最初に実装するIssueを1つ選んでいる。
-- [ ] そのIssueの完了条件が書かれている。
-- [ ] 実装ブランチを切って作業する準備ができている。
-- [ ] mainブランチへ直接コミットしない方針を確認している。
+タイトル：ルート登録機能（API＋フロントエンド画面）の実装
 
-## 9. 最小の縦切り実装
+種類：
 
-要件定義の最低ラインを満たしたチームは、最小の縦切り実装に進む。
+* \[x\] 画面Issue  
+* \[x\] API設計Issue  
+* \[x\] 実装Issue
 
-選ぶユーザーストーリー：
+目的：ユーザーがルートの基本情報と出発地点・到着地点を入力し、DBに保存できるようにする。
 
-最初に作る画面：
+完了条件：
 
-必要なデータ：
+* m\_create画面のフォームが実装されていること。  
+* POST /api/routes で routes と route\_points テーブルにデータが保存されること。  
+  担当者：未定
 
-必要なAPIまたはBaaS操作：
+## **8\. 実装へ進む前のチェック**
 
-確認方法：
+* \[x\] 想定ユーザーと解決する課題を説明できる。  
+* \[x\] MVPで作る機能を3〜7個に絞っている。  
+* \[x\] 今回は作らない機能を明記している。  
+* \[x\] 主要画面を一覧化している。  
+* \[x\] 主要データを一覧化している。  
+* \[x\] 主要データの読み取り権限と書き込み権限を説明できる。  
+* \[x\] 要件定義MarkdownをPull Requestで追加または更新している。  
+* \[ \] 最初に実装するIssueを1つ選んでいる。  
+* \[ \] そのIssueの完了条件が書かれている。  
+* \[ \] 実装ブランチを切って作業する準備ができている。  
+* \[ \] mainブランチへ直接コミットしない方針を確認している。
 
-作成するPull Request：
+## **9\. 最小の縦切り実装**
 
-レビュー担当：
+選ぶユーザーストーリー：Story 1 (ルートの作成と保存)
 
-## 10. 未決定事項
+最初に作る画面：m\_create (作成), index (一覧)
 
-まだ決まっていないことを書く。
+必要なデータ：users, routes, route\_points
+
+必要なAPIまたはBaaS操作：POST /api/routes, GET /api/routes
+
+確認方法：ダミーのログイン状態を作り、m\_create 画面から地点名を入力して送信。DBにデータが入り、それが index 画面にリスト表示されることころまでを一気通貫で確認する。
+
+作成するPull Request：feature/vertical-slice-route-crud
+
+レビュー担当：未定
+
+## **10\. 未決定事項**
 
 | 項目 | 状態 | 次にやること |
-|---|---|---|
-|  |  |  |
+| :---- | :---- | :---- |
+| フロントエンドのFW | 未定 | React / Vue等の選定 |
+| バックエンドの言語/FW | 未定 | Laravel, Node.js, Go等の選定 |
+| マップ描画ライブラリ | 未定 | Google Maps APIか、Leaflet等の無償代替を利用するか決定する |
 
-## 11. 講師レビュー欄
+## **11\. 講師レビュー欄**
 
 講師からのコメント：
 
 次回までに修正すること：
-
--
--
--
