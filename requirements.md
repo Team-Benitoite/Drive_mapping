@@ -341,8 +341,8 @@
 
 | 項目 | 状態 | 次にやること |
 | :---- | :---- | :---- |
-| フロントエンドのFW | 未定 | React / Vue等の選定 |
-| バックエンドの言語/FW | 未定 | Laravel, Node.js, Go等の選定 |
+| フロントエンドのFW | React | React / Vue等の選定 |
+| バックエンドの言語/FW | Node.js | Laravel, Node.js, Go等の選定 |
 | マップ描画ライブラリ | 未定 | Google Maps APIか、Leaflet等の無償代替を利用するか決定する |
 
 ## **11\. 講師レビュー欄**
