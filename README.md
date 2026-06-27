@@ -80,6 +80,42 @@ npm run dev
 - MVSではサムネイル生成は必須にしていません。登録画像をそのまま一覧と詳細で表示します。
 - RLSは必ず有効にしてください。
 
+## デプロイ手順（Vercel）
+
+1. GitHubに最新のコードをpushします。
+
+2. Vercelで `Team-Benitoite/Drive_mapping` リポジトリをImportします。
+
+3. Project Settings > Environment Variables に以下を設定します。
+
+```bash
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+VITE_SUPABASE_STORAGE_BUCKET=route-photos
+```
+
+4. Build Settings は通常、自動検出のままで問題ありません。
+
+```bash
+Framework Preset: Vite
+Build Command: npm run build
+Output Directory: dist
+Install Command: npm install
+```
+
+5. SupabaseのSQL Editorで、最新版の [supabase/schema.sql](supabase/schema.sql) を実行します。
+
+6. Supabaseの Authentication > URL Configuration に、Vercelで発行されたURLを設定します。
+
+```text
+Site URL: https://your-vercel-project.vercel.app
+Redirect URLs: https://your-vercel-project.vercel.app
+```
+
+7. SupabaseプロジェクトがPausedの場合は、Resumeしてから動作確認します。
+
+`vercel.json` でSPA用のリライト設定を入れているため、`/routes/1` や `/profile` を直接開いても `index.html` が表示されます。
+
 ## チーム開発ルール
 
 詳しい要件は [docs/team-requirements.md](docs/team-requirements.md) を確認してください。
