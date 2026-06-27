@@ -1,43 +1,87 @@
-# Drive_mapping
-- developは開発中のものを置くブランチ　(このdevelppブランチからfeatureなどブランチを切っていきます)
-- releaseは次にリリースするものを置くブランチ
-- hotfixは公開中のもののバグ修正用ブランチ
+# Drive Mapping
 
-1. コミュニケーション・報連相のルール
--「15分ルール」の徹底：
-- エラーや実装で15分（または30分）調べて解決しなかった場合、必ずチームのチャットにヘルプを出す。一人で抱え込んで数日溶かすのを防ぎます。
-- 分報（times）チャンネルの活用：
-- SlackやDiscordに各自のつぶやき部屋（#times_名前）を作り、「今から〇〇の実装やります」「このエラー意味不明」「ご飯行ってきます」など、独り言レベルで作業状況を垂れ流す。
-- リアクションの義務化：
-- 連絡事項には「👀」や「👍」などのスタンプで即座に反応する（「読みました」という返信の手間を省きつつ、伝達漏れを防ぐため）。
+既存PHP版 `Drive_mapping` を、React + Supabase構成へ移植したMVSです。
 
-2. タスク管理のルール
-- チケット（Issue）駆動開発：
-- GitHub ProjectsやTrelloなどのカンバンボードを使用し、すべての作業は必ず「タスク化」してから着手する。
-- タスクの粒度は「長くても2〜3日で終わるサイズ」に分割する（「フロントエンド作成」ではなく、「ログイン画面のUI作成」「Supabase連携」などに分ける）。
-- ステータスの明確化：
-- Todo（未着手） / In Progress（作業中） / In Review（確認待ち） / Done（完了）を必ず毎日最新の状態に保つ。
+MVSの目的は、デザインや追加機能を作り込む前に、既存版と同じ主要機能を動かすことです。
 
-3. 開発・Git運用のルール
-- GitHub Flowの採用：
-- main ブランチには直接コミットしない。
-- 必ず feature/〇〇 のように機能ごとにブランチを切り、作業が終わったらPull Request（PR）を出す。
-- PR（Pull Request）とコードレビュー：
-- PRをマージ（統合）するには、必ず自分以外の1名以上のレビュー（Approve）を必須とする。
-- PRの説明欄には「何をしたか」「どこを確認してほしいか」のスクリーンショットや動画を貼る。
-コミットメッセージのプレフィックス：
-後から履歴を見やすくするため、コミット文の先頭にルールを設ける。
-feat: 新機能追加
-fix: バグ修正
-docs: ドキュメント修正
-refactor: リファクタリング（機能変更なし）
+## 技術構成
 
-5. ミーティング（定例）のルール
-週1回の同期ミーティング（ウィークリースクラム）：
-時間は30分〜1時間と上限を決める。
-アジェンダは「先週やったこと」「今週やること」「困っていること（ブロッカー）」の3点のみ。
-議事録の即時作成：
-決定事項や次回のTODOは、ミーティング中にドキュメント（Notionなど）に書き込み、終了と同時に共有する。
-6. マインドセット（ここが一番重要）
-「人を責めずに仕組みを責める」：
-バグが起きたり、ミスが発生したりした時は、「なぜミスをしたのか」と個人を追及するのではなく、「どうすれば次から自動で防げるか（仕組み化・自動化）」をチームで考える。
+- React
+- Vite
+- Supabase Auth
+- Supabase Database
+- Supabase Storage
+
+このフォルダーはチーム共有用に整理済みです。旧PHP版、生成物、ローカル環境ファイルは含めていません。
+
+## フォルダー構成
+
+- `src`: Reactアプリ本体
+- `public`: 画像などの静的ファイル
+- `supabase`: Supabase SQL
+- `docs`: 要件定義・チーム共有資料
+- `.env.example`: 環境変数サンプル
+
+## セットアップ
+
+1. 依存関係をインストールします。
+
+```bash
+npm install
+```
+
+2. `.env.example` を参考に `.env` を作成します。
+
+```bash
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+VITE_SUPABASE_STORAGE_BUCKET=route-photos
+```
+
+`your-project-ref` と `your-supabase-anon-key` はサンプル値です。
+Supabase管理画面の Project Settings > API から、Project URL と anon public key をコピーして設定してください。
+
+`.env` を変更した後は、起動中の `npm run dev` を停止して再起動してください。
+
+3. SupabaseのSQL Editorで [supabase/schema.sql](supabase/schema.sql) を実行します。
+
+4. 開発サーバーを起動します。
+
+```bash
+npm run dev
+```
+
+標準URLは `http://localhost:5173` です。
+
+## MVS機能
+
+- 新規登録
+- ログイン
+- ログアウト
+- 日本地図トップ
+- 都道府県別の投稿一覧
+- キーワード検索
+- ルート投稿作成
+- ルート詳細
+- 投稿編集
+- 投稿削除
+- 写真アップロード
+- いいね
+- お気に入り一覧
+- プロフィール編集
+- フォロー / フォロワー一覧
+
+## Supabaseメモ
+
+- Authはメールアドレスとパスワードを使います。
+- ユーザー登録時に `profiles` レコードを作るトリガーをSQLに含めています。
+- Storage bucketは投稿写真に `route-photos`、プロフィール画像に `profile-icons` を使います。
+- プロフィール機能・フォロー機能を使う前に、最新版の [supabase/schema.sql](supabase/schema.sql) をSupabase SQL Editorで再実行してください。
+- MVSではサムネイル生成は必須にしていません。登録画像をそのまま一覧と詳細で表示します。
+- RLSは必ず有効にしてください。
+
+## チーム開発ルール
+
+詳しい要件は [docs/team-requirements.md](docs/team-requirements.md) を確認してください。
+
+このMVSでは、デザインの作り込みよりも既存Drive_mappingと同じ機能の移植を優先します。
