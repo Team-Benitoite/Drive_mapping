@@ -37,12 +37,12 @@ function ProfileList({ currentUserId, followedIds, onToggleFollow, saving, title
               />
               {currentUserId && currentUserId !== profile.id && (
                 <button
-                type="button"
-                onClick={(e) => {
-                    e.preventDefault(); // 念のためイベントを止める
+                  type="button"
+                  onClick={(event) => {
+                    event.preventDefault();
                     onToggleFollow(profile.id);
-                }}
-                disabled={saving}
+                  }}
+                  disabled={saving}
                 >
                   {followedIds.has(profile.id) ? 'フォロー解除' : 'フォロー'}
                 </button>
@@ -318,7 +318,11 @@ export default function ProfilePage({ id }) {
           <h1>{profile?.name || 'プロフィール'}</h1>
           <p className="pre-line">{profile?.bio || '自己紹介は未入力です。'}</p>
           {!isOwnProfile && (
-            <button type="button" onClick={() =>toggleFollow(targetId)} disabled={saving}>
+            <button
+              type="button"
+              onClick={() => toggleFollow(targetId)}
+              disabled={saving}
+            >
               {isFollowing ? 'フォロー解除' : 'フォローする'}
             </button>
           )}
