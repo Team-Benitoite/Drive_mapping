@@ -2,7 +2,7 @@ import { useState } from 'react';
 import ProfileAvatar from './ProfileAvatar.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
-import { Link } from '../utils/navigation.jsx';
+import { getAuthHref, Link } from '../utils/navigation.jsx';
 
 export default function Layout({ children }) {
   const { authError, loading, profile, user } = useAuth();
@@ -117,8 +117,8 @@ export default function Layout({ children }) {
               </>
             ) : (
               <>
-                <Link href="/login">ログイン</Link> /{' '}
-                <Link href="/signup">新規登録</Link>
+                <Link href={getAuthHref('/login')}>ログイン</Link> /{' '}
+                <Link href={getAuthHref('/signup')}>新規登録</Link>
               </>
             )}
           </div>

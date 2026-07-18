@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { getPrefectureName } from '../utils/prefectures.js';
 import { getPublicPhotoUrl, isOwner, likeCount } from '../utils/routeData.js';
-import { Link, navigate } from '../utils/navigation.jsx';
+import { getAuthHref, Link, navigate } from '../utils/navigation.jsx';
 
 const pointLabel = {
   start: 'スタート',
@@ -85,7 +85,7 @@ export default function RouteShowPage({ id }) {
 
   async function toggleLike() {
     if (!user) {
-      navigate('/login');
+      navigate(getAuthHref('/login'));
       return;
     }
 

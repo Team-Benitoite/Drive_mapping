@@ -7,7 +7,7 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import { profileIconBucket, supabase } from '../lib/supabase.js';
 import { getPrefectureName } from '../utils/prefectures.js';
 import { loadProfilesByIds } from '../utils/profileData.js';
-import { Link, navigate } from '../utils/navigation.jsx';
+import { getAuthHref, Link, navigate } from '../utils/navigation.jsx';
 
 function safeStorageName(file) {
   const extension = file.name.includes('.')
@@ -259,7 +259,7 @@ export default function ProfilePage({ id }) {
 
   async function toggleFollow(followeeId = targetId) {
     if (!user) {
-      navigate('/login');
+      navigate(getAuthHref('/login'));
       return;
     }
     if (!followeeId || followeeId === user.id) return;

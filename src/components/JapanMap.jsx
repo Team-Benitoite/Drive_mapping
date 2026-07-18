@@ -118,11 +118,66 @@ export default function JapanMap({ counts, hrefForCode }) {
 
   return (
     <div className={`dm-map-wrap ${heatOn ? 'heat-on' : ''}`}>
-      <div className="dm-map-togglebar">
-        <span>カラー</span>
-        <button type="button" aria-pressed={heatOn} onClick={toggleHeat}>
-          {heatOn ? 'ON' : 'OFF'}
-        </button>
+      <div className="dm-map-stage">
+        <div className="dm-map-togglebar">
+          <span>カラー</span>
+          <button type="button" aria-pressed={heatOn} onClick={toggleHeat}>
+            {heatOn ? 'ON' : 'OFF'}
+          </button>
+        </div>
+
+        <img
+          ref={imageRef}
+          src="/map.jpg"
+          useMap="#image-map"
+          alt="日本地図"
+          onLoad={() => {
+            const image = imageRef.current;
+            if (!image || !image.naturalWidth || !image.naturalHeight) return;
+            setScale({
+              x: image.clientWidth / image.naturalWidth,
+              y: image.clientHeight / image.naturalHeight,
+            });
+          }}
+        />
+
+        <map name="image-map">
+          {areas.map(([code, name, coords]) => {
+            const count = counts[code] || 0;
+            return (
+              <area
+                key={code}
+                alt={name}
+                title={`${prefectureMap[code] || name} / 投稿 ${count} 件`}
+                href={hrefForCode ? hrefForCode(code) : `/routes?prefecture_code=${code}`}
+                data-pref={code}
+                coords={scaledCoords(coords)}
+                shape="poly"
+                onClick={(event) => handleClick(event, code)}
+              />
+            );
+          })}
+        </map>
+
+        <svg
+          className="dm-heat-overlay"
+          viewBox="0 0 894 894"
+          preserveAspectRatio="xMidYMid meet"
+          aria-hidden="true"
+        >
+          {areas.map(([code, , coords]) => {
+            const count = counts[code] || 0;
+            return (
+              <polygon
+                key={code}
+                points={coordsToPoints(coords)}
+                fill={heatColor(count)}
+                stroke="rgba(0,0,0,0.20)"
+                strokeWidth="1"
+              />
+            );
+          })}
+        </svg>
       </div>
 
       <div className="dm-map-legend" aria-label="凡例">
@@ -148,59 +203,6 @@ export default function JapanMap({ counts, hrefForCode }) {
           21件以上
         </span>
       </div>
-
-      <img
-        ref={imageRef}
-        src="/map.jpg"
-        useMap="#image-map"
-        alt="日本地図"
-        onLoad={() => {
-          const image = imageRef.current;
-          if (!image || !image.naturalWidth || !image.naturalHeight) return;
-          setScale({
-            x: image.clientWidth / image.naturalWidth,
-            y: image.clientHeight / image.naturalHeight,
-          });
-        }}
-      />
-
-      <map name="image-map">
-        {areas.map(([code, name, coords]) => {
-          const count = counts[code] || 0;
-          return (
-            <area
-              key={code}
-              alt={name}
-              title={`${prefectureMap[code] || name} / 投稿 ${count} 件`}
-              href={hrefForCode ? hrefForCode(code) : `/routes?prefecture_code=${code}`}
-              data-pref={code}
-              coords={scaledCoords(coords)}
-              shape="poly"
-              onClick={(event) => handleClick(event, code)}
-            />
-          );
-        })}
-      </map>
-
-      <svg
-        className="dm-heat-overlay"
-        viewBox="0 0 894 894"
-        preserveAspectRatio="xMidYMid meet"
-        aria-hidden="true"
-      >
-        {areas.map(([code, , coords]) => {
-          const count = counts[code] || 0;
-          return (
-            <polygon
-              key={code}
-              points={coordsToPoints(coords)}
-              fill={heatColor(count)}
-              stroke="rgba(0,0,0,0.20)"
-              strokeWidth="1"
-            />
-          );
-        })}
-      </svg>
     </div>
   );
 }

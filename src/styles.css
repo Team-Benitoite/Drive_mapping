@@ -86,7 +86,7 @@ h3 {
   display: grid;
   grid-template-columns: 1fr 320px;
   gap: 20px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .card,
@@ -100,11 +100,85 @@ h3 {
   background: #fff;
 }
 
-.card.side {
-  border: none;
-  border-radius: 0;
+.home-sidebar-slot {
+  position: relative;
+  min-width: 0;
+}
+
+.home-sidebar {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 14px;
+  min-width: 0;
+  height: 100%;
+}
+
+.home-menu-card,
+.home-count-card {
+  padding: 16px;
+}
+
+.home-menu-list,
+.home-count-list {
+  margin: 0;
+}
+
+.home-menu-list {
+  display: grid;
+  gap: 8px;
   padding: 0;
-  background: transparent;
+  list-style: none;
+}
+
+.home-menu-list li {
+  padding: 0;
+}
+
+.home-menu-list a {
+  display: block;
+  width: min(220px, 100%);
+  padding: 11px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  color: #111;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.home-menu-list a:hover,
+.home-menu-list a:focus-visible {
+  background: #dfeaff;
+  text-decoration: none;
+}
+
+.home-count-list {
+  padding-left: 20px;
+}
+
+.home-count-list li {
+  padding: 5px 0;
+}
+
+.home-count-card {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.home-count-scroll {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding-right: 6px;
+}
+
+.home-count-scroll > p {
+  margin: 0;
 }
 
 .map-wrap {
@@ -122,6 +196,10 @@ h3 {
   position: relative;
   display: inline-block;
   max-width: 100%;
+}
+
+.dm-map-stage {
+  position: relative;
 }
 
 .dm-map-togglebar {
@@ -753,6 +831,21 @@ hr {
   .wrap {
     grid-template-columns: 1fr;
   }
+
+  .home-sidebar {
+    position: static;
+    grid-template-rows: auto auto;
+    height: auto;
+  }
+
+  .home-sidebar-slot {
+    position: static;
+  }
+
+  .home-count-scroll {
+    max-height: 280px;
+    flex: none;
+  }
 }
 
 @media (max-width: 768px) {
@@ -762,6 +855,16 @@ hr {
 
   .map-wrap {
     max-width: 100%;
+  }
+
+  .dm-map-wrap {
+    display: block;
+    width: 100%;
+  }
+
+  .dm-map-legend {
+    position: static;
+    margin-top: 10px;
   }
 }
 

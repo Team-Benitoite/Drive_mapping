@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase.js';
-import { navigate, Link } from '../utils/navigation.jsx';
+import {
+  getAuthHref,
+  getAuthReturnPath,
+  Link,
+  navigate,
+} from '../utils/navigation.jsx';
 
 export default function SignupPage() {
   const [name, setName] = useState('');
@@ -9,6 +14,7 @@ export default function SignupPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const returnTo = getAuthReturnPath();
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -83,7 +89,7 @@ export default function SignupPage() {
     setSubmitting(false);
 
     if (data.session) {
-      navigate('/');
+      navigate(returnTo);
     } else {
       setSuccess(
         '登録を受け付けました。Supabaseでメール確認が有効な場合は、確認メールのリンクを開いてからログインしてください。',
@@ -129,7 +135,8 @@ export default function SignupPage() {
         </button>
       </form>
       <p>
-        すでにアカウントをお持ちですか？ <Link href="/login">ログイン</Link>
+        すでにアカウントをお持ちですか？{' '}
+        <Link href={getAuthHref('/login', returnTo)}>ログイン</Link>
       </p>
     </section>
   );
