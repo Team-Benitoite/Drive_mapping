@@ -3,6 +3,7 @@ import AuthGuard from '../components/AuthGuard.jsx';
 import PrefectureSelect from '../components/PrefectureSelect.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { storageBucket, supabase } from '../lib/supabase.js';
+import { isGoogleMapsUrl } from '../utils/googleMaps.js';
 import { prefectures } from '../utils/prefectures.js';
 import { getPublicPhotoUrl, isOwner, normalizeMiddlePoints } from '../utils/routeData.js';
 import { Link, navigate } from '../utils/navigation.jsx';
@@ -13,6 +14,7 @@ const emptyForm = {
   description: '',
   address: '',
   siteUrl: '',
+  googleMapsUrl: '',
   prefectureCode: '',
   subPrefectureCodes: [],
   startLabel: '',
@@ -181,6 +183,7 @@ export default function RouteFormPage({ mode, id }) {
         description: data.description || '',
         address: data.address || '',
         siteUrl: data.site_url || '',
+        googleMapsUrl: data.google_maps_url || '',
         prefectureCode: String(data.prefecture_code || ''),
         subPrefectureCodes:
           data.route_prefectures
@@ -214,6 +217,12 @@ export default function RouteFormPage({ mode, id }) {
     }
     if (form.siteUrl && !/^https?:\/\/.+/.test(form.siteUrl)) {
       return '目的地のサイトはURL形式で入力してください。';
+    }
+    if (form.googleMapsUrl.length > 2048) {
+      return 'Google Maps共有URLは2048文字以内にしてください。';
+    }
+    if (!isGoogleMapsUrl(form.googleMapsUrl)) {
+      return 'Google Maps共有URLには、Google Mapsの共有画面でコピーしたHTTPS URLを入力してください。';
     }
     if (remainingPhotoCount > 10) {
       return '写真は最大10枚までです。';
@@ -338,6 +347,7 @@ export default function RouteFormPage({ mode, id }) {
         description: form.description.trim() || null,
         address: form.address.trim() || null,
         site_url: form.siteUrl.trim() || null,
+        google_maps_url: form.googleMapsUrl.trim() || null,
         prefecture_code: Number(form.prefectureCode),
       };
 
@@ -473,6 +483,22 @@ export default function RouteFormPage({ mode, id }) {
               onChange={(event) => updateField('siteUrl', event.target.value)}
               placeholder="https://example.com"
             />
+          </label>
+
+          <label>
+            Google Maps共有URL（任意）
+            <input
+              type="url"
+              maxLength={2048}
+              value={form.googleMapsUrl}
+              onChange={(event) =>
+                updateField('googleMapsUrl', event.target.value)
+              }
+              placeholder="https://maps.app.goo.gl/..."
+            />
+            <small>
+              Google Mapsで経路を作成し、「共有」からコピーしたURLを入力してください。
+            </small>
           </label>
 
           <hr />

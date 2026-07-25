@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '../lib/supabase.js';
+import { googleMapsApiKey, supabase } from '../lib/supabase.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import {
+  buildGoogleMapsDirectionsUrl,
+  buildGoogleMapsEmbedUrl,
+  getSafeGoogleMapsUrl,
+} from '../utils/googleMaps.js';
 import { getPrefectureName } from '../utils/prefectures.js';
 import { getPublicPhotoUrl, isOwner, likeCount } from '../utils/routeData.js';
 import { getAuthHref, Link, navigate } from '../utils/navigation.jsx';
@@ -135,6 +140,12 @@ export default function RouteShowPage({ id }) {
     route.route_prefectures
       ?.filter((prefecture) => !prefecture.is_main)
       .map((prefecture) => getPrefectureName(prefecture.prefecture_code)) || [];
+  const googleMapsDirectionsUrl = buildGoogleMapsDirectionsUrl(route);
+  const googleMapsSharedUrl = getSafeGoogleMapsUrl(route.google_maps_url);
+  const googleMapsEmbedUrl = buildGoogleMapsEmbedUrl(
+    route,
+    googleMapsApiKey,
+  );
 
   return (
     <article>
@@ -219,6 +230,53 @@ export default function RouteShowPage({ id }) {
               <p className="meta">ルート情報は登録されていません。</p>
             )}
           </section>
+
+          {(googleMapsDirectionsUrl || googleMapsSharedUrl) && (
+            <section className="panel google-maps-panel">
+              <div className="google-maps-heading">
+                <div>
+                  <h2>Google Maps経路</h2>
+                  <p className="meta">
+                    登録地点または保存された共有URLから経路を確認できます。
+                  </p>
+                </div>
+                <div className="actions">
+                  {googleMapsDirectionsUrl && (
+                    <a
+                      href={googleMapsDirectionsUrl}
+                      className="button"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      登録地点から経路を開く
+                    </a>
+                  )}
+                  {googleMapsSharedUrl && (
+                    <a
+                      href={googleMapsSharedUrl}
+                      className="button secondary"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      保存した共有経路を開く
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {googleMapsEmbedUrl && (
+                <div className="google-maps-embed">
+                  <iframe
+                    title={`${route.title}のGoogle Maps経路`}
+                    src={googleMapsEmbedUrl}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    allowFullScreen
+                  />
+                </div>
+              )}
+            </section>
+          )}
         </div>
 
         <aside className="panel">

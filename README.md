@@ -36,14 +36,19 @@ npm install
 VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 VITE_SUPABASE_STORAGE_BUCKET=route-photos
+VITE_GOOGLE_MAPS_EMBED_API_KEY=your-google-maps-embed-api-key
 ```
 
 `your-project-ref` と `your-supabase-anon-key` はサンプル値です。
 Supabase管理画面の Project Settings > API から、Project URL と anon public key をコピーして設定してください。
 
+`VITE_GOOGLE_MAPS_EMBED_API_KEY` は投稿詳細にGoogle Maps経路を埋め込む場合だけ必要です。未設定でも「登録地点から経路を開く」と「保存した共有経路を開く」は利用できます。設定する場合はGoogle Cloudで Maps Embed API を有効にし、APIキーにHTTPリファラー制限とMaps Embed APIのAPI制限を設定してください。
+
 `.env` を変更した後は、起動中の `npm run dev` を停止して再起動してください。
 
 3. SupabaseのSQL Editorで [supabase/schema.sql](supabase/schema.sql) を実行します。
+
+既存のSupabase環境へGoogle Maps共有URL機能だけを追加する場合は、[supabase/google-maps-migration.sql](supabase/google-maps-migration.sql) を実行してください。
 
 4. 開発サーバーを起動します。
 
@@ -70,6 +75,9 @@ npm run dev
 - お気に入り一覧
 - プロフィール編集
 - フォロー / フォロワー一覧
+- 登録地点からGoogle Maps経路を表示
+- Google Maps共有URLの保存・表示
+- Google Maps経路のアプリ内埋め込み（APIキー設定時）
 
 ## Supabaseメモ
 
@@ -92,6 +100,7 @@ npm run dev
 VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 VITE_SUPABASE_STORAGE_BUCKET=route-photos
+VITE_GOOGLE_MAPS_EMBED_API_KEY=your-google-maps-embed-api-key
 ```
 
 4. Build Settings は通常、自動検出のままで問題ありません。

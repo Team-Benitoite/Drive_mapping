@@ -13,6 +13,19 @@ export const storageBucket =
 
 export const profileIconBucket = 'profile-icons';
 
+const googleMapsEmbedApiKey =
+  import.meta.env.VITE_GOOGLE_MAPS_EMBED_API_KEY || '';
+const googleMapsPlaceholderValues = new Set([
+  '',
+  'your-google-maps-embed-api-key',
+]);
+
+export const googleMapsApiKey = googleMapsPlaceholderValues.has(
+  googleMapsEmbedApiKey,
+)
+  ? ''
+  : googleMapsEmbedApiKey;
+
 export const hasSupabaseEnv = Boolean(
   supabaseUrl &&
     supabaseAnonKey &&
