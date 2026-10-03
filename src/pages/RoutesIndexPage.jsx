@@ -39,7 +39,7 @@ export default function RoutesIndexPage() {
         `
           *,
           route_photos(storage_path, thumb_path, sort_order),
-          route_favorite(user_id)
+          route_favorites(user_id)
         `,
       )
       .order('created_at', { ascending: false })
@@ -51,7 +51,7 @@ export default function RoutesIndexPage() {
     if (filters.q.trim()) {
       const keyword = filters.q.trim().replaceAll(',', ' ');
       query = query.or(
-        `title.ilike.%${keyword}%,summary.ilike.%${keyword}%,description.ilike.%${keyword}%`,
+        `title.ifavorite.%${keyword}%,summary.ifavorite.%${keyword}%,description.ifavorite.%${keyword}%`,
       );
     }
 

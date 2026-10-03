@@ -7,7 +7,7 @@ import {
   getSafeGoogleMapsUrl,
 } from '../utils/googleMaps.js';
 import { getPrefectureName } from '../utils/prefectures.js';
-import { getPublicPhotoUrl, isOwner, likeCount } from '../utils/routeData.js';
+import { getPublicPhotoUrl, isOwner, favoriteCount } from '../utils/routeData.js';
 import { getAuthHref, Link, navigate } from '../utils/navigation.jsx';
 
 const pointLabel = {
@@ -25,8 +25,8 @@ export default function RouteShowPage({ id }) {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
 
   const owner = useMemo(() => isOwner(route, user), [route, user]);
-  const liked = useMemo(
-    () => Boolean(route?.route_favorite?.some((like) => like.user_id === user?.id)),
+  const favorited = useMemo(
+    () => Boolean(route?.route_favorites?.some((favorite) => favorite.user_id === user?.id)),
     [route, user],
   );
 
@@ -47,7 +47,7 @@ export default function RouteShowPage({ id }) {
           route_prefectures(prefecture_code, is_main),
           route_points(point_type, label, address, sort_order),
           route_photos(id, storage_path, thumb_path, sort_order),
-          route_favorite(user_id)
+          route_favorites(user_id)
         `,
       )
       .eq('id', id)
@@ -88,7 +88,7 @@ export default function RouteShowPage({ id }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedPhoto]);
 
-  async function toggleLike() {
+  async function toggleFavorite() {
     if (!user) {
       navigate(getAuthHref('/login'));
       return;
@@ -96,14 +96,14 @@ export default function RouteShowPage({ id }) {
 
     setBusy(true);
 
-    if (liked) {
+    if (favorited) {
       await supabase
-        .from('route_favorite')
+        .from('route_favorites')
         .delete()
         .eq('route_id', id)
         .eq('user_id', user.id);
     } else {
-      await supabase.from('route_favorite').insert({
+      await supabase.from('route_favorites').insert({
         route_id: id,
         user_id: user.id,
       });
@@ -158,8 +158,8 @@ export default function RouteShowPage({ id }) {
           </p>
         </div>
         <div className="actions">
-          <button type="button" onClick={toggleLike} disabled={busy}>
-            {liked ? 'いいね解除' : 'いいね'} ({likeCount(route)})
+          <button type="button" onClick={toggleFavorite} disabled={busy}>
+            {favorited ? 'お気に入り解除' : 'お気に入り'} ({favoriteCount(route)})
           </button>
           {owner && (
             <>

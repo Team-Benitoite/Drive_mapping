@@ -32,7 +32,7 @@ export default function Layout({ children }) {
     const { data, error } = await supabase
       .from('profiles')
       .select('id, name, avatar_path, bio')
-      .ilike('name', `%${keyword}%`)
+      .ifavorite('name', `%${keyword}%`)
       .neq('id', user.id)
       .limit(10);
 
