@@ -10,7 +10,7 @@ export function routeThumbnail(route) {
   return getPublicPhotoUrl(firstPhoto?.thumb_path || firstPhoto?.storage_path);
 }
 
-export function likeCount(route) {
+export function favoriteCount(route) {
   return route?.route_favorites?.length || 0;
 }
 

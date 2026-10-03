@@ -51,7 +51,7 @@ export default function RoutesIndexPage() {
     if (filters.q.trim()) {
       const keyword = filters.q.trim().replaceAll(',', ' ');
       query = query.or(
-        `title.ilike.%${keyword}%,summary.ilike.%${keyword}%,description.ilike.%${keyword}%`,
+        `title.ifavorite.%${keyword}%,summary.ifavorite.%${keyword}%,description.ifavorite.%${keyword}%`,
       );
     }
 
