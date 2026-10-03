@@ -204,33 +204,37 @@ export default function JapanMap({ counts = {}, hrefForCode }) {
         </map>
 
         {/* 【修正】ヒートマップオーバーレイ ＋ 地方ごとの色分けレイヤー */}
-        <svg
-          className="dm-heat-overlay"
-          viewBox="0 0 894 894"
-          preserveAspectRatio="xMidYMid meet"
-          aria-hidden="true"
-        >
-          {areas.map(([code, , coords]) => {
-            const count = counts[code] || 0;
-            const region = getRegionByCode(code); // 【追加】地方情報の取得
-            
-            // ヒートマップスイッチOFF時は「地方グループの色」、ON時は「投稿数のヒートマップ色」を適用
-            const fillColor = heatOn 
-              ? heatColor(count) 
-              : (hoveredPref === code ? region.hover : region.color);
+        {/* SVG用オーバーレイ */}
+    <svg
+    className="dm-heat-overlay"
+    viewBox="0 0 894 894"
+    preserveAspectRatio="xMidYMid meet"
+    aria-hidden="true"
+    >
+    {areas.map(([code, , coords]) => {
+        const count = counts[code] || 0;
+        const region = getRegionByCode(code); // 地方情報を取得
+        
+        // ヒートマップOFF時は地方カラー（ホバー時は hover 色）、ON時はヒートマップカラー[cite: 1, 2]
+        const fillColor = heatOn 
+        ? heatColor(count) 
+        : (hoveredPref === code ? region.hover : region.color);
 
-            return (
-              <polygon
-                key={code}
-                points={coordsToPoints(coords)}
-                fill={fillColor}
-                stroke="rgba(0,0,0,0.20)"
-                strokeWidth="1"
-                style={{ transition: 'fill 0.15s ease', pointerEvents: 'none' }}
-              />
-            );
-          })}
-        </svg>
+        return (
+        <polygon
+            key={code}
+            points={coordsToPoints(coords)}
+            style={{
+            fill: fillColor, // styleプロパティに直接指定[cite: 1]
+            stroke: 'rgba(0, 0, 0, 0.25)',
+            strokeWidth: 1,
+            transition: 'fill 0.15s ease',
+            pointerEvents: 'none' // イベント透過[cite: 1]
+            }}
+        />
+        );
+    })}
+    </svg>
       </div>
 
       {/* 【追加】地方グループの凡例表示 */}
