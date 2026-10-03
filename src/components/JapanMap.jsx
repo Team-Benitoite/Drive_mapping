@@ -1,6 +1,26 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { prefectureMap } from '../utils/prefectures.js';
 import { navigate } from '../utils/navigation.jsx';
+
+export const REGIONS = {
+  hokkaidoTohoku: { id: 'hokkaidoTohoku', name: '北海道・東北', color: '#3B82F6', hover: '#2563EB', prefs: [1, 2, 3, 4, 5, 6, 7] },
+  kanto: { id: 'kanto', name: '関東', color: '#8B5CF6', hover: '#7C3AED', prefs: [8, 9, 10, 11, 12, 13, 14] },
+  chubu: { id: 'chubu', name: '中部・北陸', color: '#10B981', hover: '#059669', prefs: [15, 16, 17, 18, 19, 20, 21, 22, 23] },
+  kinki: { id: 'kinki', name: '近畿', color: '#F59E0B', hover: '#D97706', prefs: [24, 25, 26, 27, 28, 29, 30] },
+  chugoku: { id: 'chugoku', name: '中国', color: '#EC4899', hover: '#DB2777', prefs: [31, 32, 33, 34, 35] },
+  shikoku: { id: 'shikoku', name: '四国', color: '#06B6D4', hover: '#0891B2', prefs: [36, 37, 38, 39] },
+  kyushuOkinawa: { id: 'kyushuOkinawa', name: '九州・沖縄', color: '#EF4444', hover: '#DC2626', prefs: [40, 41, 42, 43, 44, 45, 46, 47] }
+};
+
+export function getRegionByCode(code) {
+  const numCode = Number(code);
+  for (const regKey in REGIONS) {
+    if (REGIONS[regKey].prefs.includes(numCode)) {
+      return REGIONS[regKey];
+    }
+  }
+  return { id: 'other', name: 'その他', color: '#6B7280', hover: '#4B5563' };
+}
 
 const areas = [
   [47, '沖縄県', '76,774,98,774,99,818,76,817'],
@@ -52,9 +72,12 @@ const areas = [
   [1, '北海道', '672,80,672,187,638,213,638,246,689,246,689,228,712,227,753,256,802,228,845,228,846,158,812,158,716,80'],
 ];
 
-export default function JapanMap({ counts, hrefForCode }) {
-  const imageRef = useRef(null);
-  const [scale, setScale] = useState({ x: 1, y: 1 });
+export default function JapanMap({ counts = {}, hrefForCode }) {
+  const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [hasMoved, setHasMoved] = useState(false);
+  
   const [heatOn, setHeatOn] = useState(() => {
     try {
       return localStorage.getItem('dm_heatmap_on') === '1';
@@ -62,39 +85,16 @@ export default function JapanMap({ counts, hrefForCode }) {
       return false;
     }
   });
+  const [hoveredPref, setHoveredPref] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
-  useEffect(() => {
-    function updateScale() {
-      const image = imageRef.current;
-      if (!image || !image.naturalWidth || !image.naturalHeight) return;
-
-      setScale({
-        x: image.clientWidth / image.naturalWidth,
-        y: image.clientHeight / image.naturalHeight,
-      });
-    }
-
-    updateScale();
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
-  }, []);
-
-  function handleClick(event, code) {
-    event.preventDefault();
-    navigate(hrefForCode ? hrefForCode(code) : `/routes?prefecture_code=${code}`);
-  }
-
-  function toggleHeat() {
-    const next = !heatOn;
-    setHeatOn(next);
-    localStorage.setItem('dm_heatmap_on', next ? '1' : '0');
-  }
+  const containerRef = useRef(null);
 
   function heatColor(count) {
-    if (count <= 0) return 'rgba(0,0,0,0)';
-    if (count <= 10) return 'rgba(82, 190, 0, 0.30)';
-    if (count <= 20) return 'rgba(237, 233, 0, 0.30)';
-    return 'rgba(240, 23, 23, 0.30)';
+    if (count <= 0) return 'rgba(255,255,255,0.1)';
+    if (count <= 5) return 'rgba(34, 197, 94, 0.4)';
+    if (count <= 15) return 'rgba(234, 179, 8, 0.5)';
+    return 'rgba(239, 68, 68, 0.6)';
   }
 
   function coordsToPoints(coords) {
@@ -106,103 +106,194 @@ export default function JapanMap({ counts, hrefForCode }) {
     return points.join(' ');
   }
 
-  function scaledCoords(coords) {
-    return coords
-      .split(',')
-      .map((value, index) => {
-        const ratio = index % 2 === 0 ? scale.x : scale.y;
-        return Math.round(Number(value) * ratio);
-      })
-      .join(',');
-  }
+  const handleMouseDown = (e) => {
+    if (e.button !== 0) return;
+    setIsDragging(true);
+    setHasMoved(false);
+    setDragStart({ x: e.clientX - transform.x, y: e.clientY - transform.y });
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging) {
+      const newX = e.clientX - dragStart.x;
+      const newY = e.clientY - dragStart.y;
+      
+      if (Math.abs(newX - transform.x) > 3 || Math.abs(newY - transform.y) > 3) {
+        setHasMoved(true);
+      }
+      
+      setTransform((prev) => ({ ...prev, x: newX, y: newY }));
+    }
+
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setTooltipPos({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleClick = (e, code) => {
+    if (hasMoved) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    e.preventDefault();
+    navigate(hrefForCode ? hrefForCode(code) : `/routes?prefecture_code=${code}`);
+  };
+
+  const handleZoom = (factor) => {
+    setTransform((prev) => {
+      const newScale = Math.min(Math.max(prev.scale * factor, 0.6), 3.0);
+      return { ...prev, scale: newScale };
+    });
+  };
+
+  const handleReset = () => {
+    setTransform({ x: 0, y: 0, scale: 1 });
+  };
+
+  const toggleHeat = () => {
+    const next = !heatOn;
+    setHeatOn(next);
+    try {
+      localStorage.setItem('dm_heatmap_on', next ? '1' : '0');
+    } catch (e) {
+      console.warn(e);
+    }
+  };
 
   return (
-    <div className={`dm-map-wrap ${heatOn ? 'heat-on' : ''}`}>
-      <div className="dm-map-stage">
-        <div className="dm-map-togglebar">
-          <span>カラー</span>
-          <button type="button" aria-pressed={heatOn} onClick={toggleHeat}>
-            {heatOn ? 'ON' : 'OFF'}
-          </button>
-        </div>
+    <div
+      ref={containerRef}
+      className="relative w-full h-[600px] bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-800 select-none cursor-grab active:cursor-grabbing"
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+    >
+      {/* 画面左上：コントロールボタン */}
+      <div className="absolute top-4 left-4 z-20 flex flex-col gap-2 bg-slate-800/80 backdrop-blur-md p-2 rounded-xl border border-slate-700/50 shadow-lg">
+        <button
+          onClick={() => handleZoom(1.2)}
+          className="w-10 h-10 bg-slate-700 hover:bg-slate-600 active:scale-95 text-white font-bold rounded-lg transition flex items-center justify-center text-lg"
+          title="拡大"
+        >
+          ＋
+        </button>
+        <button
+          onClick={() => handleZoom(0.8)}
+          className="w-10 h-10 bg-slate-700 hover:bg-slate-600 active:scale-95 text-white font-bold rounded-lg transition flex items-center justify-center text-lg"
+          title="縮小"
+        >
+          －
+        </button>
+        <button
+          onClick={handleReset}
+          className="w-10 h-10 bg-slate-700 hover:bg-slate-600 active:scale-95 text-white rounded-lg transition flex items-center justify-center text-xs font-bold"
+          title="リセット"
+        >
+          RESET
+        </button>
+        <div className="h-[1px] bg-slate-700 my-1" />
+        <button
+          onClick={toggleHeat}
+          className={`w-10 h-10 rounded-lg text-xs font-bold transition flex items-center justify-center ${
+            heatOn ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-700 text-slate-300'
+          }`}
+          title="ヒートマップ表示切替"
+        >
+          {heatOn ? '熱ON' : '熱OFF'}
+        </button>
+      </div>
 
-        <img
-          ref={imageRef}
-          src="/map.jpg"
-          useMap="#image-map"
-          alt="日本地図"
-          onLoad={() => {
-            const image = imageRef.current;
-            if (!image || !image.naturalWidth || !image.naturalHeight) return;
-            setScale({
-              x: image.clientWidth / image.naturalWidth,
-              y: image.clientHeight / image.naturalHeight,
-            });
-          }}
-        />
+      {/* 画面右上：凡例 */}
+      <div className="absolute top-4 right-4 z-20 bg-slate-800/80 backdrop-blur-md px-4 py-3 rounded-xl border border-slate-700/50 text-xs text-slate-200 flex flex-col gap-2 shadow-lg">
+        <span className="font-semibold text-slate-400 mb-1">【凡例】</span>
+        {heatOn ? (
+          <>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-emerald-500 inline-block" /> 1〜5件</div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-amber-500 inline-block" /> 6〜15件</div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-red-500 inline-block" /> 16件以上</div>
+          </>
+        ) : (
+          Object.values(REGIONS).map((reg) => (
+            <div key={reg.id} className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full inline-block" style={{ backgroundColor: reg.color }} />
+              {reg.name}
+            </div>
+          ))
+        )}
+      </div>
 
-        <map name="image-map">
+      {/* ドラッグ操作案内ヒント */}
+      <div className="absolute bottom-4 left-4 z-20 bg-slate-800/60 backdrop-blur-sm px-3 py-1.5 rounded-lg text-xs text-slate-400 pointer-events-none">
+        💡 ドラッグで移動 / 都道府県クリックで詳細へ
+      </div>
+
+      {/* メインSVG地図コンテンツ */}
+      <div
+        className="w-full h-full transition-transform duration-75 ease-out"
+        style={{
+          transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
+          transformOrigin: 'center center',
+        }}
+      >
+        <svg
+          viewBox="0 0 894 894"
+          className="w-full h-full drop-shadow-2xl"
+          preserveAspectRatio="xMidYMid meet"
+        >
           {areas.map(([code, name, coords]) => {
             const count = counts[code] || 0;
-            return (
-              <area
-                key={code}
-                alt={name}
-                title={`${prefectureMap[code] || name} / 投稿 ${count} 件`}
-                href={hrefForCode ? hrefForCode(code) : `/routes?prefecture_code=${code}`}
-                data-pref={code}
-                coords={scaledCoords(coords)}
-                shape="poly"
-                onClick={(event) => handleClick(event, code)}
-              />
-            );
-          })}
-        </map>
+            const region = getRegionByCode(code);
+            const isHovered = hoveredPref === code;
+            
+            const fillColor = heatOn ? heatColor(count) : (isHovered ? region.hover : region.color);
 
-        <svg
-          className="dm-heat-overlay"
-          viewBox="0 0 894 894"
-          preserveAspectRatio="xMidYMid meet"
-          aria-hidden="true"
-        >
-          {areas.map(([code, , coords]) => {
-            const count = counts[code] || 0;
             return (
               <polygon
                 key={code}
                 points={coordsToPoints(coords)}
-                fill={heatColor(count)}
-                stroke="rgba(0,0,0,0.20)"
-                strokeWidth="1"
+                fill={fillColor}
+                stroke="#0f172a"
+                strokeWidth="1.5"
+                className="transition-all duration-200 cursor-pointer hover:opacity-90"
+                style={{
+                  filter: isHovered ? 'drop-shadow(0 0 8px rgba(255,255,255,0.6))' : 'none',
+                }}
+                onMouseEnter={() => setHoveredPref(code)}
+                onMouseLeave={() => setHoveredPref(null)}
+                onClick={(e) => handleClick(e, code)}
               />
             );
           })}
         </svg>
       </div>
 
-      <div className="dm-map-legend" aria-label="凡例">
-        <span className="chip">
-          <span
-            className="dot"
-            style={{ background: 'rgba(82, 190, 0, 0.76)' }}
-          />
-          1〜10件
-        </span>
-        <span className="chip">
-          <span
-            className="dot"
-            style={{ background: 'rgba(237, 233, 0, 0.89)' }}
-          />
-          11〜20件
-        </span>
-        <span className="chip">
-          <span
-            className="dot"
-            style={{ background: 'rgba(240, 23, 23, 0.88)' }}
-          />
-          21件以上
-        </span>
-      </div>
+      {}
+      {hoveredPref && (
+        <div
+          className="absolute z-30 pointer-events-none bg-slate-900/90 text-white text-xs px-3 py-2 rounded-lg shadow-xl border border-slate-700/80 backdrop-blur-md transform -translate-x-1/2 -translate-y-12 transition-all duration-75"
+          style={{
+            left: `${tooltipPos.x}px`,
+            top: `${tooltipPos.y}px`,
+          }}
+        >
+          <div className="font-bold text-sm text-indigo-400">
+            {prefectureMap[hoveredPref]}
+          </div>
+          <div className="text-slate-300">
+            投稿数: <span className="font-extrabold text-amber-400">{counts[hoveredPref] || 0}</span> 件
+          </div>
+        </div>
+      )}
     </div>
   );
 }
