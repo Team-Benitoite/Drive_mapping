@@ -276,7 +276,7 @@ h3 {
   z-index: 4;
   width: 100%;
   height: 100%;
-  display: none;
+  display: block;
   pointer-events: none;
 }
 
