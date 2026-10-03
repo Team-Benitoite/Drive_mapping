@@ -4,16 +4,16 @@ import { navigate } from '../utils/navigation.jsx';
 
 // -----------------------------------------------------------------
 // 【追加】地方ごとのカラーマップ定義
-// 各地方に所属する都道府県コード(prefs)と表示色(color, hover)を設定
+// 各地方に所属する都道府県コード(prefecture)と表示色(color, hover)を設定
 // -----------------------------------------------------------------
 export const REGIONS = {
-  hokkaidoTohoku: { id: 'hokkaidoTohoku', name: '北海道・東北', color: '#3B82F6', hover: '#2563EB', prefs: [1, 2, 3, 4, 5, 6, 7] },
-  kanto: { id: 'kanto', name: '関東', color: '#8B5CF6', hover: '#7C3AED', prefs: [8, 9, 10, 11, 12, 13, 14] },
-  chubu: { id: 'chubu', name: '中部・北陸', color: '#10B981', hover: '#059669', prefs: [15, 16, 17, 18, 19, 20, 21, 22, 23] },
-  kinki: { id: 'kinki', name: '近畿', color: '#F59E0B', hover: '#D97706', prefs: [24, 25, 26, 27, 28, 29, 30] },
-  chugoku: { id: 'chugoku', name: '中国', color: '#EC4899', hover: '#DB2777', prefs: [31, 32, 33, 34, 35] },
-  shikoku: { id: 'shikoku', name: '四国', color: '#06B6D4', hover: '#0891B2', prefs: [36, 37, 38, 39] },
-  kyushuOkinawa: { id: 'kyushuOkinawa', name: '九州・沖縄', color: '#EF4444', hover: '#DC2626', prefs: [40, 41, 42, 43, 44, 45, 46, 47] }
+  hokkaidoTohoku: { id: 'hokkaidoTohoku', name: '北海道・東北', color: '#3B82F6', hover: '#2563EB', prefecture: [1, 2, 3, 4, 5, 6, 7] },
+  kanto: { id: 'kanto', name: '関東', color: '#8B5CF6', hover: '#7C3AED', prefecture: [8, 9, 10, 11, 12, 13, 14] },
+  chubu: { id: 'chubu', name: '中部・北陸', color: '#10B981', hover: '#059669', prefecture: [15, 16, 17, 18, 19, 20, 21, 22, 23] },
+  kinki: { id: 'kinki', name: '近畿', color: '#F59E0B', hover: '#D97706', prefecture: [24, 25, 26, 27, 28, 29, 30] },
+  chugoku: { id: 'chugoku', name: '中国', color: '#EC4899', hover: '#DB2777', prefecture: [31, 32, 33, 34, 35] },
+  shikoku: { id: 'shikoku', name: '四国', color: '#06B6D4', hover: '#0891B2', prefecture: [36, 37, 38, 39] },
+  kyushuOkinawa: { id: 'kyushuOkinawa', name: '九州・沖縄', color: '#EF4444', hover: '#DC2626', prefecture: [40, 41, 42, 43, 44, 45, 46, 47] }
 };
 
 // -----------------------------------------------------------------
@@ -22,7 +22,7 @@ export const REGIONS = {
 export function getRegionByCode(code) {
   const numCode = Number(code);
   for (const regKey in REGIONS) {
-    if (REGIONS[regKey].prefs.includes(numCode)) {
+    if (REGIONS[regKey].prefecture.includes(numCode)) {
       return REGIONS[regKey];
     }
   }
