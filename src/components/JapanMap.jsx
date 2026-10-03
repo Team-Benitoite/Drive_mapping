@@ -158,7 +158,7 @@ export default function JapanMap({ counts = {}, hrefForCode }) {
       <div className="dm-map-stage">
         {/* カラー（ヒートマップ）のON/OFF切り替えボタン[cite: 2] */}
         <div className="dm-map-togglebar">
-          <span>カラー</span>
+          <span>投稿件数</span>
           <button type="button" aria-pressed={heatOn} onClick={toggleHeat}>
             {heatOn ? 'ON' : 'OFF'}
           </button>
