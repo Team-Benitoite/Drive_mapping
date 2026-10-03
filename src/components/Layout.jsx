@@ -5,15 +5,22 @@ import { supabase } from '../lib/supabase.js';
 import { getAuthHref, Link } from '../utils/navigation.jsx';
 
 export default function Layout({ children }) {
+  // AuthContextから現在の認証状態・ユーザープロファイル情報を取得[cite: 3]
   const { authError, loading, profile, user } = useAuth();
   const userName = profile?.name || user?.email || 'ユーザー';
-  const [accountQuery, setAccountQuery] = useState('');
-  const [accountResults, setAccountResults] = useState([]);
-  const [followedIds, setFollowedIds] = useState(() => new Set());
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchError, setSearchError] = useState('');
-  const [searching, setSearching] = useState(false);
 
+  // 【追加】三本バー（ハンバーガーメニュー）の開閉状態を管理するState
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // アカウント検索機能に関する各State[cite: 3]
+  const [accountQuery, setAccountQuery] = useState(''); // 検索入力文字列[cite: 3]
+  const [accountResults, setAccountResults] = useState([]); // 検索結果リスト[cite: 3]
+  const [followedIds, setFollowedIds] = useState(() => new Set()); // フォロー中ユーザーのID集合[cite: 3]
+  const [searchOpen, setSearchOpen] = useState(false); // 検索モーダルの表示フラグ[cite: 3]
+  const [searchError, setSearchError] = useState(''); // 検索エラーメッセージ[cite: 3]
+  const [searching, setSearching] = useState(false); // 検索処理中フラグ[cite: 3]
+
+  // アカウント検索の実行処理[cite: 3]
   async function handleAccountSearch(event) {
     event.preventDefault();
     setSearchError('');
@@ -56,6 +63,7 @@ export default function Layout({ children }) {
     setSearching(false);
   }
 
+  // 検索モーダル内でのフォロー/フォロー解除トグル処理[cite: 3]
   async function toggleSearchFollow(profileId) {
     if (!supabase || !user || !profileId) return;
 
@@ -95,33 +103,71 @@ export default function Layout({ children }) {
         </main>
       ) : (
         <main className="container">
-          <div className="auth">
-            {user ? (
-              <>
-                ログイン中：{userName} さん |{' '}
-                <Link href="/profile">プロフィール</Link> |{' '}
-                <Link href="/routes/new">投稿する</Link> |{' '}
-                <Link href="/logout">ログアウト</Link>
-                <form className="account-search" onSubmit={handleAccountSearch}>
-                  <input
-                    type="search"
-                    value={accountQuery}
-                    onChange={(event) => setAccountQuery(event.target.value)}
-                    placeholder="アカウント検索"
-                    aria-label="アカウント検索"
-                  />
-                  <button type="submit" disabled={searching}>
-                    検索
-                  </button>
-                </form>
-              </>
-            ) : (
-              <>
-                <Link href={getAuthHref('/login')}>ログイン</Link> /{' '}
-                <Link href={getAuthHref('/signup')}>新規登録</Link>
-              </>
+          {/* 【修正】三本バーボタンとドロップダウンメニュー構造を追加 */}
+          <div className="auth-header-bar" style={{ display: 'flex', justifyContent: 'flex-end', position: 'relative', marginBottom: '16px' }}>
+            {/* 三本バー（ハンバーガーアイコン）ボタン */}
+            <button
+              type="button"
+              className="menu-toggle-btn"
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label="メニューを開く"
+              style={{ fontSize: '20px', padding: '6px 12px', cursor: 'pointer' }}
+            >
+              ☰ メニュー
+            </button>
+
+            {/* 三本バーがクリックされた際に表示されるメニューボックス */}
+            {menuOpen && (
+              <div
+                className="auth-dropdown-menu"
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #ccc',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  zIndex: 50,
+                  minWidth: '260px'
+                }}
+              >
+                {user ? (
+                  /* ログイン時の表示エリア（元コードの要素をそのまま配置）[cite: 3] */
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div>ログイン中：<strong>{userName}</strong> さん</div>
+                    <hr style={{ margin: '4px 0' }} />
+                    <Link href="/profile" onClick={() => setMenuOpen(false)}>プロフィール</Link>
+                    <Link href="/routes/new" onClick={() => setMenuOpen(false)}>投稿する</Link>
+                    <Link href="/logout" onClick={() => setMenuOpen(false)}>ログアウト</Link>
+                    
+                    {/* アカウント検索フォーム[cite: 3] */}
+                    <form className="account-search" onSubmit={handleAccountSearch} style={{ marginTop: '8px' }}>
+                      <input
+                        type="search"
+                        value={accountQuery}
+                        onChange={(event) => setAccountQuery(event.target.value)}
+                        placeholder="アカウント検索"
+                        aria-label="アカウント検索"
+                      />
+                      <button type="submit" disabled={searching}>
+                        検索
+                      </button>
+                    </form>
+                  </div>
+                ) : (
+                  /* 未ログイン時の表示エリア[cite: 3] */
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <Link href={getAuthHref('/login')} onClick={() => setMenuOpen(false)}>ログイン</Link> /{' '}
+                    <Link href={getAuthHref('/signup')} onClick={() => setMenuOpen(false)}>新規登録</Link>
+                  </div>
+                )}
+              </div>
             )}
           </div>
+
+          {/* Supabase接続エラー表示[cite: 3] */}
           {authError && (
             <div className="notice">
               Supabaseへの接続に失敗しています。.env の
@@ -129,7 +175,11 @@ export default function Layout({ children }) {
               Supabaseプロジェクトの状態を確認してください。
             </div>
           )}
+
+          {/* 子コンポーネント（メインコンテンツ）の描画[cite: 3] */}
           {children}
+
+          {/* アカウント検索結果を表示するモーダルダイアログ[cite: 3] */}
           {searchOpen && (
             <div
               className="account-modal"

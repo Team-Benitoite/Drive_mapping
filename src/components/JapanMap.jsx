@@ -2,6 +2,34 @@ import { useEffect, useRef, useState } from 'react';
 import { prefectureMap } from '../utils/prefectures.js';
 import { navigate } from '../utils/navigation.jsx';
 
+// -----------------------------------------------------------------
+// 【追加】地方ごとのカラーマップ定義
+// 各地方に所属する都道府県コード(prefs)と表示色(color, hover)を設定
+// -----------------------------------------------------------------
+export const REGIONS = {
+  hokkaidoTohoku: { id: 'hokkaidoTohoku', name: '北海道・東北', color: '#3B82F6', hover: '#2563EB', prefs: [1, 2, 3, 4, 5, 6, 7] },
+  kanto: { id: 'kanto', name: '関東', color: '#8B5CF6', hover: '#7C3AED', prefs: [8, 9, 10, 11, 12, 13, 14] },
+  chubu: { id: 'chubu', name: '中部・北陸', color: '#10B981', hover: '#059669', prefs: [15, 16, 17, 18, 19, 20, 21, 22, 23] },
+  kinki: { id: 'kinki', name: '近畿', color: '#F59E0B', hover: '#D97706', prefs: [24, 25, 26, 27, 28, 29, 30] },
+  chugoku: { id: 'chugoku', name: '中国', color: '#EC4899', hover: '#DB2777', prefs: [31, 32, 33, 34, 35] },
+  shikoku: { id: 'shikoku', name: '四国', color: '#06B6D4', hover: '#0891B2', prefs: [36, 37, 38, 39] },
+  kyushuOkinawa: { id: 'kyushuOkinawa', name: '九州・沖縄', color: '#EF4444', hover: '#DC2626', prefs: [40, 41, 42, 43, 44, 45, 46, 47] }
+};
+
+// -----------------------------------------------------------------
+// 【追加】都道府県コードから該当する地方オブジェクトを取得する関数
+// -----------------------------------------------------------------
+export function getRegionByCode(code) {
+  const numCode = Number(code);
+  for (const regKey in REGIONS) {
+    if (REGIONS[regKey].prefs.includes(numCode)) {
+      return REGIONS[regKey];
+    }
+  }
+  return { id: 'other', name: 'その他', color: '#6B7280', hover: '#4B5563' };
+}
+
+// 元の都道府県データ（コード、名称、ポリゴン座標）[cite: 2]
 const areas = [
   [47, '沖縄県', '76,774,98,774,99,818,76,817'],
   [46, '鹿児島県', '111,720,111,762,136,763,136,749,161,750,161,773,167,774,196,754,196,731,168,731,168,720'],
@@ -52,9 +80,12 @@ const areas = [
   [1, '北海道', '672,80,672,187,638,213,638,246,689,246,689,228,712,227,753,256,802,228,845,228,846,158,812,158,716,80'],
 ];
 
-export default function JapanMap({ counts, hrefForCode }) {
-  const imageRef = useRef(null);
-  const [scale, setScale] = useState({ x: 1, y: 1 });
+export default function JapanMap({ counts = {}, hrefForCode }) {
+  const imageRef = useRef(null); // 画像エレメントの参照保持[cite: 2]
+  const [scale, setScale] = useState({ x: 1, y: 1 }); // 画像リサイズ時の縮尺状態[cite: 2]
+  const [hoveredPref, setHoveredPref] = useState(null); // 【追加】現在ホバーされている都道府県コード
+
+  // ヒートマップ表示切り替えの永続化ステート[cite: 2]
   const [heatOn, setHeatOn] = useState(() => {
     try {
       return localStorage.getItem('dm_heatmap_on') === '1';
@@ -63,6 +94,7 @@ export default function JapanMap({ counts, hrefForCode }) {
     }
   });
 
+  // ウィンドウリサイズ時に画像とマップ座標の縮尺を同期計算[cite: 2]
   useEffect(() => {
     function updateScale() {
       const image = imageRef.current;
@@ -79,17 +111,20 @@ export default function JapanMap({ counts, hrefForCode }) {
     return () => window.removeEventListener('resize', updateScale);
   }, []);
 
+  // クリック時の遷移処理[cite: 2]
   function handleClick(event, code) {
     event.preventDefault();
     navigate(hrefForCode ? hrefForCode(code) : `/routes?prefecture_code=${code}`);
   }
 
+  // ヒートマップ表示切り替えスイッチ[cite: 2]
   function toggleHeat() {
     const next = !heatOn;
     setHeatOn(next);
     localStorage.setItem('dm_heatmap_on', next ? '1' : '0');
   }
 
+  // 投稿数に応じたヒートマップ背景色の判定[cite: 2]
   function heatColor(count) {
     if (count <= 0) return 'rgba(0,0,0,0)';
     if (count <= 10) return 'rgba(82, 190, 0, 0.30)';
@@ -97,6 +132,7 @@ export default function JapanMap({ counts, hrefForCode }) {
     return 'rgba(240, 23, 23, 0.30)';
   }
 
+  // SVG用：カンマ区切りの座標をSVG polygon形式に変換[cite: 2]
   function coordsToPoints(coords) {
     const values = coords.split(',');
     const points = [];
@@ -106,6 +142,7 @@ export default function JapanMap({ counts, hrefForCode }) {
     return points.join(' ');
   }
 
+  // HTML map用：画像の実際の表示サイズに合わせて座標をスケール変換[cite: 2]
   function scaledCoords(coords) {
     return coords
       .split(',')
@@ -119,6 +156,7 @@ export default function JapanMap({ counts, hrefForCode }) {
   return (
     <div className={`dm-map-wrap ${heatOn ? 'heat-on' : ''}`}>
       <div className="dm-map-stage">
+        {/* カラー（ヒートマップ）のON/OFF切り替えボタン[cite: 2] */}
         <div className="dm-map-togglebar">
           <span>カラー</span>
           <button type="button" aria-pressed={heatOn} onClick={toggleHeat}>
@@ -126,6 +164,7 @@ export default function JapanMap({ counts, hrefForCode }) {
           </button>
         </div>
 
+        {/* 土台の地図画像[cite: 2] */}
         <img
           ref={imageRef}
           src="/map.jpg"
@@ -141,24 +180,30 @@ export default function JapanMap({ counts, hrefForCode }) {
           }}
         />
 
+        {/* クリック領域を判定するHTMLイメージマップ[cite: 2] */}
         <map name="image-map">
           {areas.map(([code, name, coords]) => {
             const count = counts[code] || 0;
+            const region = getRegionByCode(code); // 【追加】該当都道府県の地方情報を取得
             return (
               <area
                 key={code}
                 alt={name}
-                title={`${prefectureMap[code] || name} / 投稿 ${count} 件`}
+                /* ツールチップに地方名を追加表示 */
+                title={`${prefectureMap[code] || name}（${region.name}） / 投稿 ${count} 件`}
                 href={hrefForCode ? hrefForCode(code) : `/routes?prefecture_code=${code}`}
                 data-pref={code}
                 coords={scaledCoords(coords)}
                 shape="poly"
                 onClick={(event) => handleClick(event, code)}
+                onMouseEnter={() => setHoveredPref(code)}
+                onMouseLeave={() => setHoveredPref(null)}
               />
             );
           })}
         </map>
 
+        {/* 【修正】ヒートマップオーバーレイ ＋ 地方ごとの色分けレイヤー */}
         <svg
           className="dm-heat-overlay"
           viewBox="0 0 894 894"
@@ -167,42 +212,56 @@ export default function JapanMap({ counts, hrefForCode }) {
         >
           {areas.map(([code, , coords]) => {
             const count = counts[code] || 0;
+            const region = getRegionByCode(code); // 【追加】地方情報の取得
+            
+            // ヒートマップスイッチOFF時は「地方グループの色」、ON時は「投稿数のヒートマップ色」を適用
+            const fillColor = heatOn 
+              ? heatColor(count) 
+              : (hoveredPref === code ? region.hover : region.color);
+
             return (
               <polygon
                 key={code}
                 points={coordsToPoints(coords)}
-                fill={heatColor(count)}
+                fill={fillColor}
                 stroke="rgba(0,0,0,0.20)"
                 strokeWidth="1"
+                style={{ transition: 'fill 0.15s ease', pointerEvents: 'none' }}
               />
             );
           })}
         </svg>
       </div>
 
-      <div className="dm-map-legend" aria-label="凡例">
-        <span className="chip">
-          <span
-            className="dot"
-            style={{ background: 'rgba(82, 190, 0, 0.76)' }}
-          />
-          1〜10件
-        </span>
-        <span className="chip">
-          <span
-            className="dot"
-            style={{ background: 'rgba(237, 233, 0, 0.89)' }}
-          />
-          11〜20件
-        </span>
-        <span className="chip">
-          <span
-            className="dot"
-            style={{ background: 'rgba(240, 23, 23, 0.88)' }}
-          />
-          21件以上
-        </span>
-      </div>
+      {/* 【追加】地方グループの凡例表示 */}
+      {!heatOn && (
+        <div className="dm-region-legend" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px', fontSize: '12px' }}>
+          {Object.values(REGIONS).map((reg) => (
+            <span key={reg.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ width: '10px', height: '10px', backgroundColor: reg.color, borderRadius: '2px' }} />
+              {reg.name}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* 投稿数ヒートマップの凡例表示[cite: 2] */}
+      {heatOn && (
+        <div className="dm-map-legend" aria-label="凡例">
+          <span className="chip">
+            <span className="dot" style={{ background: 'rgba(82, 190, 0, 0.76)' }} />
+            1〜10件
+          </span>
+          <span className="chip">
+            <span className="dot" style={{ background: 'rgba(237, 233, 0, 0.89)' }} />
+            11〜20件
+          </span>
+          <span className="chip">
+            <span className="dot" style={{ background: 'rgba(240, 23, 23, 0.88)' }} />
+            21件以上
+          </span>
+        </div>
+      )}
     </div>
   );
 }
