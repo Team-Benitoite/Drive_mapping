@@ -11,7 +11,7 @@ export function routeThumbnail(route) {
 }
 
 export function likeCount(route) {
-  return route?.route_likes?.length || 0;
+  return route?.route_favorite?.length || 0;
 }
 
 export function isOwner(route, user) {
