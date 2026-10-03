@@ -7,7 +7,7 @@ import {
   getSafeGoogleMapsUrl,
 } from '../utils/googleMaps.js';
 import { getPrefectureName } from '../utils/prefectures.js';
-import { getPublicPhotoUrl, isOwner, likeCount } from '../utils/routeData.js';
+import { getPublicPhotoUrl, isOwner, favoriteCount } from '../utils/routeData.js';
 import { getAuthHref, Link, navigate } from '../utils/navigation.jsx';
 
 const pointLabel = {
@@ -25,8 +25,8 @@ export default function RouteShowPage({ id }) {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
 
   const owner = useMemo(() => isOwner(route, user), [route, user]);
-  const liked = useMemo(
-    () => Boolean(route?.route_favorites?.some((like) => like.user_id === user?.id)),
+  const favorited = useMemo(
+    () => Boolean(route?.route_favorites?.some((favorite) => favorite.user_id === user?.id)),
     [route, user],
   );
 
@@ -88,7 +88,7 @@ export default function RouteShowPage({ id }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedPhoto]);
 
-  async function toggleLike() {
+  async function toggleFavorite() {
     if (!user) {
       navigate(getAuthHref('/login'));
       return;
@@ -96,7 +96,7 @@ export default function RouteShowPage({ id }) {
 
     setBusy(true);
 
-    if (liked) {
+    if (favorited) {
       await supabase
         .from('route_favorites')
         .delete()
@@ -158,8 +158,8 @@ export default function RouteShowPage({ id }) {
           </p>
         </div>
         <div className="actions">
-          <button type="button" onClick={toggleLike} disabled={busy}>
-            {liked ? 'お気に入り解除' : 'お気に入り'} ({likeCount(route)})
+          <button type="button" onClick={toggleFavorite} disabled={busy}>
+            {favorited ? 'お気に入り解除' : 'お気に入り'} ({favoriteCount(route)})
           </button>
           {owner && (
             <>
