@@ -20,7 +20,7 @@ export default function FavoritesPage() {
       }
 
       const { data, error: fetchError } = await supabase
-        .from('route_favorite')
+        .from('route_favorites')
         .select(
           `
             route_id,
@@ -28,7 +28,7 @@ export default function FavoritesPage() {
             routes(
               *,
               route_photos(storage_path, thumb_path, sort_order),
-              route_favorite(user_id)
+              route_favorites(user_id)
             )
           `,
         )

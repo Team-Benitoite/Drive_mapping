@@ -39,7 +39,7 @@ export default function RoutesIndexPage() {
         `
           *,
           route_photos(storage_path, thumb_path, sort_order),
-          route_favorite(user_id)
+          route_favorites(user_id)
         `,
       )
       .order('created_at', { ascending: false })
