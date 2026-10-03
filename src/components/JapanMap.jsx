@@ -124,6 +124,15 @@ export default function JapanMap({ counts = {}, hrefForCode }) {
     localStorage.setItem('dm_heatmap_on', next ? '1' : '0');
   }
 
+// 16進数カラーを半透明（RGBA）に変換する関数をコンポーネント外に追加
+function hexToRgba(hex, alpha = 0.5) {
+  if (!hex || !hex.startsWith('#')) return hex;
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
   // 投稿数に応じたヒートマップ背景色の判定[cite: 2]
   function heatColor(count) {
     if (count <= 0) return 'rgba(0,0,0,0)';
@@ -206,35 +215,40 @@ export default function JapanMap({ counts = {}, hrefForCode }) {
         {/* 【修正】ヒートマップオーバーレイ ＋ 地方ごとの色分けレイヤー */}
         {/* SVG用オーバーレイ */}
     <svg
-    className="dm-heat-overlay"
-    viewBox="0 0 894 894"
-    preserveAspectRatio="xMidYMid meet"
-    aria-hidden="true"
+        className="dm-heat-overlay"
+        viewBox="0 0 894 894"
+        preserveAspectRatio="xMidYMid meet"
+        aria-hidden="true"
     >
-    {areas.map(([code, , coords]) => {
-        const count = counts[code] || 0;
-        const region = getRegionByCode(code); // 地方情報を取得
+        {areas.map(([code, , coords]) => {
+            const count = counts[code] || 0;
+            const region = getRegionByCode(code); // 地方情報を取得
         
-        // ヒートマップOFF時は地方カラー（ホバー時は hover 色）、ON時はヒートマップカラー[cite: 1, 2]
-        const fillColor = heatOn 
-        ? heatColor(count) 
-        : (hoveredPref === code ? region.hover : region.color);
+        // 投稿件数OFF時：地方の基本色を半透明(alpha: 0.55)、ホバー時は少し濃く(alpha: 0.8)
+            // 投稿件数ON時：ヒートマップ色
+            let fillColor;
+            if (heatOn) {
+            fillColor = heatColor(count);
+            } else {
+            const baseColor = hoveredPref === code ? region.hover : region.color;
+            fillColor = hexToRgba(baseColor, hoveredPref === code ? 0.8 : 0.55);
+            }
 
-        return (
-        <polygon
-            key={code}
-            points={coordsToPoints(coords)}
-            style={{
-            fill: fillColor, // styleプロパティに直接指定[cite: 1]
-            stroke: 'rgba(0, 0, 0, 0.25)',
-            strokeWidth: 1,
-            transition: 'fill 0.15s ease',
-            pointerEvents: 'none' // イベント透過[cite: 1]
-            }}
-        />
-        );
-    })}
-    </svg>
+            return (
+            <polygon
+                key={code}
+                points={coordsToPoints(coords)}
+                fill={fillColor}
+                stroke="rgba(0,0,0,0.30)"
+                strokeWidth="1"
+                style={{
+                transition: 'fill 0.15s ease',
+                pointerEvents: 'none' // クリックイベントを下の <area> に透過させる[cite: 1, 2]
+                }}
+            />
+            );
+        })}
+        </svg>
       </div>
 
       {/* 【追加】地方グループの凡例表示 */}
