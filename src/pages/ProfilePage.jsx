@@ -114,7 +114,7 @@ export default function ProfilePage({ id }) {
         `
           *,
           route_photos(storage_path, thumb_path, sort_order),
-          route_favorite(user_id)
+          route_favorites(user_id)
         `,
       )
       .eq('user_id', targetId)

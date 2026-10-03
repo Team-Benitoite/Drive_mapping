@@ -26,7 +26,7 @@ export default function RouteShowPage({ id }) {
 
   const owner = useMemo(() => isOwner(route, user), [route, user]);
   const liked = useMemo(
-    () => Boolean(route?.route_favorite?.some((like) => like.user_id === user?.id)),
+    () => Boolean(route?.route_favorites?.some((like) => like.user_id === user?.id)),
     [route, user],
   );
 
@@ -47,7 +47,7 @@ export default function RouteShowPage({ id }) {
           route_prefectures(prefecture_code, is_main),
           route_points(point_type, label, address, sort_order),
           route_photos(id, storage_path, thumb_path, sort_order),
-          route_favorite(user_id)
+          route_favorites(user_id)
         `,
       )
       .eq('id', id)
@@ -98,12 +98,12 @@ export default function RouteShowPage({ id }) {
 
     if (liked) {
       await supabase
-        .from('route_favorite')
+        .from('route_favorites')
         .delete()
         .eq('route_id', id)
         .eq('user_id', user.id);
     } else {
-      await supabase.from('route_favorite').insert({
+      await supabase.from('route_favorites').insert({
         route_id: id,
         user_id: user.id,
       });
@@ -159,7 +159,7 @@ export default function RouteShowPage({ id }) {
         </div>
         <div className="actions">
           <button type="button" onClick={toggleLike} disabled={busy}>
-            {liked ? 'いいね解除' : 'いいね'} ({likeCount(route)})
+            {liked ? 'お気に入り解除' : 'お気に入り'} ({likeCount(route)})
           </button>
           {owner && (
             <>
