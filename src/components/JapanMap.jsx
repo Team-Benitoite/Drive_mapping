@@ -115,7 +115,6 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
     }
   });
 
-  // カスタムイベントでヘッダーからのトグル通知を受信
   useEffect(() => {
     const handleToggle = () => {
       setHeatOn(localStorage.getItem('dm_heatmap_on') === '1');
@@ -176,9 +175,9 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
 
   function heatColor(count) {
     if (count <= 0) return 'rgba(255,255,255,0.2)';
-    if (count <= 10) return 'rgba(82, 190, 0, 0.50)';
-    if (count <= 20) return 'rgba(237, 233, 0, 0.60)';
-    return 'rgba(240, 23, 23, 0.60)';
+    if (count <= 10) return 'rgba(82, 190, 0, 0.60)';
+    if (count <= 20) return 'rgba(237, 233, 0, 0.70)';
+    return 'rgba(240, 23, 23, 0.70)';
   }
 
   function coordsToPoints(coords) {
@@ -216,7 +215,7 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
         width: '100%',
         height: 'calc(100vh - 120px)',
         minHeight: '600px',
-        background: '#ffffff', // 背景をすっきり白に
+        background: '#fafafa',
         userSelect: 'none'
       }}
     >
@@ -237,35 +236,35 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
             position: 'relative',
             width: '100%',
             maxWidth: '894px',
-            margin: '0 auto'
+            margin: '0 auto',
+            lineHeight: 0
           }}
         >
-          {/* 画像（黒枠線を隠すために少しだけ拡大マスク） */}
-          <div style={{ overflow: 'hidden', margin: '-5px' }}>
-            <img
-              ref={imageRef}
-              src="/map.jpg"
-              useMap="#image-map"
-              alt="日本地図"
-              draggable="false" // 画像ドラッグ動作を禁止[cite: 1, 2, 7]
-              style={{
-                width: 'calc(100% + 10px)',
-                height: 'auto',
-                display: 'block',
-                userSelect: 'none',
-                pointerEvents: 'none'
-              }}
-              onLoad={() => {
-                const image = imageRef.current;
-                if (!image || !image.naturalWidth || !image.naturalHeight) return;
-                setScale({
-                  x: image.clientWidth / image.naturalWidth,
-                  y: image.clientHeight / image.naturalHeight,
-                });
-              }}
-            />
-          </div>
+          {/* 土台画像 (894 x 894) */}
+          <img
+            ref={imageRef}
+            src="/map.jpg"
+            useMap="#image-map"
+            alt="日本地図"
+            draggable="false"
+            style={{
+              width: '100%',
+              height: 'auto',
+              display: 'block',
+              userSelect: 'none',
+              pointerEvents: 'none'
+            }}
+            onLoad={() => {
+              const image = imageRef.current;
+              if (!image || !image.naturalWidth || !image.naturalHeight) return;
+              setScale({
+                x: image.clientWidth / image.naturalWidth,
+                y: image.clientHeight / image.naturalHeight,
+              });
+            }}
+          />
 
+          {/* クリック判定マップ[cite: 3] */}
           <map name="image-map">
             {areas.map(([code, name, coords]) => {
               const count = counts[code] || 0;
@@ -287,7 +286,7 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
             })}
           </map>
 
-          {/* SVG オーバーレイ（地方太線と着色） */}
+          {/* SVG オーバーレイ（ズレを解消するため preserveAspectRatio="none" に統合） */}
           <svg
             className="dm-heat-overlay"
             viewBox="0 0 894 894"
@@ -304,7 +303,18 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
               zIndex: 2,
             }}
           >
-            {/* 1. 都道府県の色塗り・通常線 */}
+            {/* ★1. map.jpg に元々入っている外側の「黒い正方形枠線」を覆い隠す白い枠 mask */}
+            <rect
+              x="0"
+              y="0"
+              width="894"
+              height="894"
+              fill="none"
+              stroke="#fafafa" // 背景と同じ色
+              strokeWidth="8"  // 黒枠線を上から被せて完全に消す
+            />
+
+            {/* 2. 都道府県ポリゴン塗り */}
             {areas.map(([code, , coords]) => {
               const count = counts[code] || 0;
               const region = getRegionByCode(code);
@@ -329,14 +339,14 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
               );
             })}
 
-            {/* 2. 地方の太い外周・境界線を描画 */}
+            {/* 3. 地方の太い外周・境界線 */}
             {areas.map(([code, , coords]) => {
               return (
                 <polygon
                   key={`border-${code}`}
                   points={coordsToPoints(coords)}
                   fill="none"
-                  stroke="#0f172a"
+                  stroke="#1e293b"
                   strokeWidth="2.5"
                   strokeLinejoin="round"
                 />
