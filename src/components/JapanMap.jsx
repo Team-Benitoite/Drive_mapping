@@ -30,55 +30,19 @@ function hexToRgba(hex, alpha = 0.5) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-// 各都道府県の中心座標（吹き出しの表示基準位置：894x894基準）
 const PREF_CENTERS = {
-  1: { x: 740, y: 160 },  // 北海道
-  2: { x: 697, y: 290 },  // 青森
-  3: { x: 724, y: 349 },  // 岩手
-  4: { x: 718, y: 411 },  // 宮城
-  5: { x: 665, y: 351 },  // 秋田
-  6: { x: 665, y: 411 },  // 山形
-  7: { x: 696, y: 465 },  // 福島
-  8: { x: 727, y: 519 },  // 茨城
-  9: { x: 681, y: 513 },  // 栃木
-  10: { x: 636, y: 513 }, // 群馬
-  11: { x: 657, y: 550 }, // 埼玉
-  12: { x: 728, y: 587 }, // 千葉
-  13: { x: 669, y: 576 }, // 東京
-  14: { x: 665, y: 608 }, // 神奈川
-  15: { x: 610, y: 453 }, // 新潟
-  16: { x: 543, y: 509 }, // 富山
-  17: { x: 499, y: 493 }, // 石川
-  18: { x: 484, y: 549 }, // 福井
-  19: { x: 620, y: 587 }, // 山梨
-  20: { x: 578, y: 550 }, // 長野
-  21: { x: 529, y: 567 }, // 岐阜
-  22: { x: 609, y: 632 }, // 静岡
-  23: { x: 537, y: 632 }, // 愛知
-  24: { x: 482, y: 655 }, // 三重
-  25: { x: 487, y: 589 }, // 滋賀
-  26: { x: 432, y: 581 }, // 京都
-  27: { x: 417, y: 634 }, // 大阪
-  28: { x: 372, y: 588 }, // 兵庫
-  29: { x: 453, y: 643 }, // 奈良
-  30: { x: 438, y: 677 }, // 和歌山
-  31: { x: 325, y: 567 }, // 鳥取
-  32: { x: 276, y: 567 }, // 島根
-  33: { x: 325, y: 605 }, // 岡山
-  34: { x: 276, y: 605 }, // 広島
-  35: { x: 229, y: 588 }, // 山口
-  36: { x: 345, y: 692 }, // 徳島
-  37: { x: 345, y: 660 }, // 香川
-  38: { x: 271, y: 674 }, // 愛媛
-  39: { x: 302, y: 716 }, // 高知
-  40: { x: 167, y: 628 }, // 福岡
-  41: { x: 118, y: 628 }, // 佐賀
-  42: { x: 91,  y: 637 }, // 長崎
-  43: { x: 139, y: 691 }, // 熊本
-  44: { x: 185, y: 648 }, // 大分
-  45: { x: 185, y: 701 }, // 宮崎
-  46: { x: 139, y: 741 }, // 鹿児島
-  47: { x: 87,  y: 795 }   // 沖縄
+  1: { x: 740, y: 160 }, 2: { x: 697, y: 290 }, 3: { x: 724, y: 349 }, 4: { x: 718, y: 411 },
+  5: { x: 665, y: 351 }, 6: { x: 665, y: 411 }, 7: { x: 696, y: 465 }, 8: { x: 727, y: 519 },
+  9: { x: 681, y: 513 }, 10: { x: 636, y: 513 }, 11: { x: 657, y: 550 }, 12: { x: 728, y: 587 },
+  13: { x: 669, y: 576 }, 14: { x: 665, y: 608 }, 15: { x: 610, y: 453 }, 16: { x: 543, y: 509 },
+  17: { x: 499, y: 493 }, 18: { x: 484, y: 549 }, 19: { x: 620, y: 587 }, 20: { x: 578, y: 550 },
+  21: { x: 529, y: 567 }, 22: { x: 609, y: 632 }, 23: { x: 537, y: 632 }, 24: { x: 482, y: 655 },
+  25: { x: 487, y: 589 }, 26: { x: 432, y: 581 }, 27: { x: 417, y: 634 }, 28: { x: 372, y: 588 },
+  29: { x: 453, y: 643 }, 30: { x: 438, y: 677 }, 31: { x: 325, y: 567 }, 32: { x: 276, y: 567 },
+  33: { x: 325, y: 605 }, 34: { x: 276, y: 605 }, 35: { x: 229, y: 588 }, 36: { x: 345, y: 692 },
+  37: { x: 345, y: 660 }, 38: { x: 271, y: 674 }, 39: { x: 302, y: 716 }, 40: { x: 167, y: 628 },
+  41: { x: 118, y: 628 }, 42: { x: 91, y: 637 }, 43: { x: 139, y: 691 }, 44: { x: 185, y: 648 },
+  45: { x: 185, y: 701 }, 46: { x: 139, y: 741 }, 47: { x: 87, y: 795 }
 };
 
 const areas = [
@@ -138,7 +102,6 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
   const [scale, setScale] = useState({ x: 1, y: 1 });
   const [hoveredPref, setHoveredPref] = useState(null);
 
-  // --- ドラッグ＆ズームのステート管理 ---
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -151,6 +114,15 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
       return false;
     }
   });
+
+  // カスタムイベントでヘッダーからのトグル通知を受信
+  useEffect(() => {
+    const handleToggle = () => {
+      setHeatOn(localStorage.getItem('dm_heatmap_on') === '1');
+    };
+    window.addEventListener('dm_heatmap_toggle', handleToggle);
+    return () => window.removeEventListener('dm_heatmap_toggle', handleToggle);
+  }, []);
 
   useEffect(() => {
     function updateScale() {
@@ -167,15 +139,14 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
     return () => window.removeEventListener('resize', updateScale);
   }, []);
 
-  // --- マウス操作（ドラッグ・ズーム）処理 ---
   function handleWheel(e) {
     e.preventDefault();
-    const zoomFactor = e.deltaY < 0 ? 1.15 : 0.85;
+    const zoomFactor = e.deltaY < 0 ? 1.12 : 0.88;
     setZoom((prevZoom) => Math.min(Math.max(prevZoom * zoomFactor, 0.8), 3.5));
   }
 
   function handleMouseDown(e) {
-    if (e.button !== 0) return; // 左クリックのみ
+    if (e.button !== 0) return;
     setIsDragging(true);
     dragStartRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
   }
@@ -198,22 +169,16 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
   }
 
   function handleClick(event, code) {
-    if (isDragging) return; // ドラッグ移動中の誤クリック防止
+    if (isDragging) return;
     event.preventDefault();
     navigate(hrefForCode ? hrefForCode(code) : `/routes?prefecture_code=${code}`);
   }
 
-  function toggleHeat() {
-    const next = !heatOn;
-    setHeatOn(next);
-    localStorage.setItem('dm_heatmap_on', next ? '1' : '0');
-  }
-
   function heatColor(count) {
-    if (count <= 0) return 'rgba(0,0,0,0)';
-    if (count <= 10) return 'rgba(82, 190, 0, 0.30)';
-    if (count <= 20) return 'rgba(237, 233, 0, 0.30)';
-    return 'rgba(240, 23, 23, 0.30)';
+    if (count <= 0) return 'rgba(255,255,255,0.2)';
+    if (count <= 10) return 'rgba(82, 190, 0, 0.50)';
+    if (count <= 20) return 'rgba(237, 233, 0, 0.60)';
+    return 'rgba(240, 23, 23, 0.60)';
   }
 
   function coordsToPoints(coords) {
@@ -251,9 +216,8 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
         width: '100%',
         height: 'calc(100vh - 120px)',
         minHeight: '600px',
-        background: '#f8fafc',
-        borderRadius: '16px',
-        boxShadow: 'inset 0 0 20px rgba(0,0,0,0.03)'
+        background: '#ffffff', // 背景をすっきり白に
+        userSelect: 'none'
       }}
     >
       {/* ズーム & リセットコントロールUI */}
@@ -264,7 +228,6 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
       </div>
 
       <div className={`dm-map-wrap ${heatOn ? 'heat-on' : ''}`}>
-        {/* ドラッグ＆拡大のTransformを適用する領域 */}
         <div 
           className="dm-map-stage"
           style={{
@@ -277,29 +240,31 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
             margin: '0 auto'
           }}
         >
-          {/* 投稿件数のON/OFFスイッチ */}
-          <div className="dm-map-togglebar">
-            <span>投稿件数</span>
-            <button type="button" aria-pressed={heatOn} onClick={toggleHeat}>
-              {heatOn ? 'ON' : 'OFF'}
-            </button>
+          {/* 画像（黒枠線を隠すために少しだけ拡大マスク） */}
+          <div style={{ overflow: 'hidden', margin: '-5px' }}>
+            <img
+              ref={imageRef}
+              src="/map.jpg"
+              useMap="#image-map"
+              alt="日本地図"
+              draggable="false" // 画像ドラッグ動作を禁止[cite: 1, 2, 7]
+              style={{
+                width: 'calc(100% + 10px)',
+                height: 'auto',
+                display: 'block',
+                userSelect: 'none',
+                pointerEvents: 'none'
+              }}
+              onLoad={() => {
+                const image = imageRef.current;
+                if (!image || !image.naturalWidth || !image.naturalHeight) return;
+                setScale({
+                  x: image.clientWidth / image.naturalWidth,
+                  y: image.clientHeight / image.naturalHeight,
+                });
+              }}
+            />
           </div>
-
-          <img
-            ref={imageRef}
-            src="/map.jpg"
-            useMap="#image-map"
-            alt="日本地図"
-            style={{ width: '100%', height: 'auto', display: 'block' }}
-            onLoad={() => {
-              const image = imageRef.current;
-              if (!image || !image.naturalWidth || !image.naturalHeight) return;
-              setScale({
-                x: image.clientWidth / image.naturalWidth,
-                y: image.clientHeight / image.naturalHeight,
-              });
-            }}
-          />
 
           <map name="image-map">
             {areas.map(([code, name, coords]) => {
@@ -322,7 +287,7 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
             })}
           </map>
 
-          {/* SVG オーバーレイ（都道府県の色付け） */}
+          {/* SVG オーバーレイ（地方太線と着色） */}
           <svg
             className="dm-heat-overlay"
             viewBox="0 0 894 894"
@@ -339,6 +304,7 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
               zIndex: 2,
             }}
           >
+            {/* 1. 都道府県の色塗り・通常線 */}
             {areas.map(([code, , coords]) => {
               const count = counts[code] || 0;
               const region = getRegionByCode(code);
@@ -348,7 +314,7 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
                 fillColor = heatColor(count);
               } else {
                 const baseColor = hoveredPref === code ? region.hover : region.color;
-                fillColor = hexToRgba(baseColor, hoveredPref === code ? 0.75 : 0.45);
+                fillColor = hexToRgba(baseColor, hoveredPref === code ? 0.85 : 0.65);
               }
 
               return (
@@ -356,20 +322,33 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
                   key={code}
                   points={coordsToPoints(coords)}
                   fill={fillColor}
-                  stroke="rgba(0,0,0,0.25)"
+                  stroke="#475569"
                   strokeWidth="1"
                   style={{ transition: 'fill 0.15s ease' }}
                 />
               );
             })}
+
+            {/* 2. 地方の太い外周・境界線を描画 */}
+            {areas.map(([code, , coords]) => {
+              return (
+                <polygon
+                  key={`border-${code}`}
+                  points={coordsToPoints(coords)}
+                  fill="none"
+                  stroke="#0f172a"
+                  strokeWidth="2.5"
+                  strokeLinejoin="round"
+                />
+              );
+            })}
           </svg>
 
-          {/* ★ いいね集計が高い都道府県に表示するポップアップ吹き出し（Pin & Popup） */}
+          {/* 人気都道府県の吹き出し */}
           {topPrefectures.map((item) => {
             const center = PREF_CENTERS[item.prefecture_code];
             if (!center) return null;
 
-            // 各座標の比率を計算 (894px 基準)
             const posX = (center.x / 894) * 100;
             const posY = (center.y / 894) * 100;
 
@@ -390,7 +369,7 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
                 <div className="popup-card">
                   <span className="popup-rank">★ 人気 Top</span>
                   {item.image_url ? (
-                    <img src={item.image_url} alt={item.title} className="popup-img" />
+                    <img src={item.image_url} alt={item.title} className="popup-img" draggable="false" />
                   ) : (
                     <div className="popup-img-placeholder">No Image</div>
                   )}

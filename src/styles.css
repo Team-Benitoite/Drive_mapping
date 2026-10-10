@@ -1081,3 +1081,29 @@ hr {
   border-top: 8px solid rgba(255, 255, 255, 0.95);
   margin: 0 auto;
 }
+
+/* styles.css の末尾に追加・更新 */
+
+/* 外枠のカード線などを消して地図のみを表示させる */
+.dm-map-viewport {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* 画像ドラッグおよびテキスト選択の無効化 */
+.dm-map-viewport img,
+.dm-map-viewport svg {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+  user-select: none;
+}
+
+/* 地方凡例のスタイル */
+.dm-region-legend {
+  justify-content: center;
+  margin-top: 16px;
+}
