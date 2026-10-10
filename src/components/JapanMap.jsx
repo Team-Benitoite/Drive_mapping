@@ -99,13 +99,11 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
   const containerRef = useRef(null);
   const imageRef = useRef(null);
   
-  const [scale, setScale] = useState({ x: 1, y: 1 });
   const [hoveredPref, setHoveredPref] = useState(null);
-
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   
-  // マウス押下位置とドラッグ移動判定用の参照
+  // ドラッグ操作判定用の参照
   const mouseDownPosRef = useRef({ x: 0, y: 0 });
   const isMovedRef = useRef(false);
   const [isMouseDown, setIsMouseDown] = useState(false);
@@ -127,28 +125,12 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
     return () => window.removeEventListener('dm_heatmap_toggle', handleToggle);
   }, []);
 
-  useEffect(() => {
-    function updateScale() {
-      const image = imageRef.current;
-      if (!image || !image.naturalWidth || !image.naturalHeight) return;
-      setScale({
-        x: image.clientWidth / image.naturalWidth,
-        y: image.clientHeight / image.naturalHeight,
-      });
-    }
-
-    updateScale();
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
-  }, []);
-
   function handleWheel(e) {
     e.preventDefault();
     const zoomFactor = e.deltaY < 0 ? 1.12 : 0.88;
     setZoom((prevZoom) => Math.min(Math.max(prevZoom * zoomFactor, 0.8), 3.5));
   }
 
-  // ★ クリックとドラッグ移動を分離する処理
   function handleMouseDown(e) {
     if (e.button !== 0) return;
     setIsMouseDown(true);
@@ -160,9 +142,9 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
   function handleMouseMove(e) {
     if (!isMouseDown) return;
     
-    // 5px以上移動した場合のみドラッグ移動と判定
     const dx = Math.abs(e.clientX - mouseDownPosRef.current.x);
     const dy = Math.abs(e.clientY - mouseDownPosRef.current.y);
+    // 5px以上の移動でドラッグ判定に切り替え
     if (dx > 5 || dy > 5) {
       isMovedRef.current = true;
     }
@@ -182,13 +164,9 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
     setPan({ x: 0, y: 0 });
   }
 
-  // ★ 実際にドラッグ移動が行われた場合はクリックによる遷移をキャンセルする[cite: 2]
-  function handleClick(event, code) {
-    if (isMovedRef.current) {
-      event.preventDefault();
-      return;
-    }
-    event.preventDefault();
+  // 都道府県クリック時の遷移（ドラッグ移動していない場合のみ発火）
+  function handlePrefClick(code) {
+    if (isMovedRef.current) return;
     navigate(hrefForCode ? hrefForCode(code) : `/routes?prefecture_code=${code}`);
   }
 
@@ -206,16 +184,6 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
       points.push(`${values[index]},${values[index + 1]}`);
     }
     return points.join(' ');
-  }
-
-  function scaledCoords(coords) {
-    return coords
-      .split(',')
-      .map((value, index) => {
-        const ratio = index % 2 === 0 ? scale.x : scale.y;
-        return Math.round(Number(value) * ratio);
-      })
-      .join(',');
   }
 
   return (
@@ -238,7 +206,7 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
         userSelect: 'none'
       }}
     >
-      {/* コントロールUI */}
+      {/* ズーム & リセットコントロールUI */}
       <div className="dm-map-controls" style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 10, display: 'flex', gap: '8px' }}>
         <button type="button" onClick={() => setZoom((z) => Math.min(z * 1.2, 3.5))} className="map-btn">+</button>
         <button type="button" onClick={() => setZoom((z) => Math.max(z * 0.8, 0.8))} className="map-btn">-</button>
@@ -259,10 +227,10 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
             lineHeight: 0
           }}
         >
+          {/* 下地の地図画像 */}
           <img
             ref={imageRef}
             src="/map.jpg"
-            useMap="#image-map"
             alt="日本地図"
             draggable="false"
             style={{
@@ -272,37 +240,9 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
               userSelect: 'none',
               pointerEvents: 'none'
             }}
-            onLoad={() => {
-              const image = imageRef.current;
-              if (!image || !image.naturalWidth || !image.naturalHeight) return;
-              setScale({
-                x: image.clientWidth / image.naturalWidth,
-                y: image.clientHeight / image.naturalHeight,
-              });
-            }}
           />
 
-          <map name="image-map">
-            {areas.map(([code, name, coords]) => {
-              const count = counts[code] || 0;
-              const region = getRegionByCode(code);
-              return (
-                <area
-                  key={code}
-                  alt={name}
-                  title={`${prefectureMap[code] || name}（${region.name}） / 投稿 ${count} 件`}
-                  href={hrefForCode ? hrefForCode(code) : `/routes?prefecture_code=${code}`}
-                  data-pref={code}
-                  coords={scaledCoords(coords)}
-                  shape="poly"
-                  onClick={(event) => handleClick(event, code)}
-                  onMouseEnter={() => setHoveredPref(code)}
-                  onMouseLeave={() => setHoveredPref(null)}
-                />
-              );
-            })}
-          </map>
-
+          {/* SVG オーバーレイ（SVGポリゴン自身に直接クリック判定を持たせる） */}
           <svg
             className="dm-heat-overlay"
             viewBox="0 0 894 894"
@@ -315,11 +255,10 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
               width: '100%',
               height: '100%',
               display: 'block',
-              pointerEvents: 'none',
               zIndex: 2,
             }}
           >
-            {/* 黒枠線のマスク */}
+            {/* 黒枠線マスク */}
             <rect
               x="0"
               y="0"
@@ -328,10 +267,11 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
               fill="none"
               stroke="#fafafa"
               strokeWidth="8"
+              style={{ pointerEvents: 'none' }}
             />
 
-            {/* 都道府県ポリゴン塗りと境界線 */}
-            {areas.map(([code, , coords]) => {
+            {/* 1. 都道府県ポリゴン（直接クリックとホバーを検知） */}
+            {areas.map(([code, name, coords]) => {
               const count = counts[code] || 0;
               const region = getRegionByCode(code);
 
@@ -350,12 +290,21 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
                   fill={fillColor}
                   stroke="#475569"
                   strokeWidth="1"
-                  style={{ transition: 'fill 0.15s ease' }}
-                />
+                  style={{ 
+                    transition: 'fill 0.15s ease', 
+                    cursor: 'pointer',
+                    pointerEvents: 'auto'
+                  }}
+                  onClick={() => handlePrefClick(code)}
+                  onMouseEnter={() => setHoveredPref(code)}
+                  onMouseLeave={() => setHoveredPref(null)}
+                >
+                  <title>{`${prefectureMap[code] || name}（${region.name}） / 投稿 ${count} 件`}</title>
+                </polygon>
               );
             })}
 
-            {/* 地方境界太線 */}
+            {/* 2. 地方境界太線 */}
             {areas.map(([code, , coords]) => {
               return (
                 <polygon
@@ -365,12 +314,13 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
                   stroke="#1e293b"
                   strokeWidth="2.5"
                   strokeLinejoin="round"
+                  style={{ pointerEvents: 'none' }}
                 />
               );
             })}
           </svg>
 
-          {/* 人気都道府県ポップアップ */}
+          {/* 人気都道府県の吹き出しポップアップ */}
           {topPrefectures.map((item) => {
             const center = PREF_CENTERS[item.prefecture_code];
             if (!center) return null;
@@ -390,7 +340,12 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
                   zIndex: 10,
                   pointerEvents: 'auto'
                 }}
-                onClick={() => navigate(`/routes?prefecture_code=${item.prefecture_code}`)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!isMovedRef.current) {
+                    navigate(`/routes?prefecture_code=${item.prefecture_code}`);
+                  }
+                }}
               >
                 <div className="popup-card">
                   <span className="popup-rank">★ 人気 Top</span>
