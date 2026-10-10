@@ -104,7 +104,11 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
 
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
+  
+  // マウス押下位置とドラッグ移動判定用の参照
+  const mouseDownPosRef = useRef({ x: 0, y: 0 });
+  const isMovedRef = useRef(false);
+  const [isMouseDown, setIsMouseDown] = useState(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
 
   const [heatOn, setHeatOn] = useState(() => {
@@ -144,14 +148,25 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
     setZoom((prevZoom) => Math.min(Math.max(prevZoom * zoomFactor, 0.8), 3.5));
   }
 
+  // ★ クリックとドラッグ移動を分離する処理
   function handleMouseDown(e) {
     if (e.button !== 0) return;
-    setIsDragging(true);
+    setIsMouseDown(true);
+    isMovedRef.current = false;
+    mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
     dragStartRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
   }
 
   function handleMouseMove(e) {
-    if (!isDragging) return;
+    if (!isMouseDown) return;
+    
+    // 5px以上移動した場合のみドラッグ移動と判定
+    const dx = Math.abs(e.clientX - mouseDownPosRef.current.x);
+    const dy = Math.abs(e.clientY - mouseDownPosRef.current.y);
+    if (dx > 5 || dy > 5) {
+      isMovedRef.current = true;
+    }
+
     setPan({
       x: e.clientX - dragStartRef.current.x,
       y: e.clientY - dragStartRef.current.y,
@@ -159,7 +174,7 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
   }
 
   function handleMouseUp() {
-    setIsDragging(false);
+    setIsMouseDown(false);
   }
 
   function resetView() {
@@ -167,8 +182,12 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
     setPan({ x: 0, y: 0 });
   }
 
+  // ★ 実際にドラッグ移動が行われた場合はクリックによる遷移をキャンセルする[cite: 2]
   function handleClick(event, code) {
-    if (isDragging) return;
+    if (isMovedRef.current) {
+      event.preventDefault();
+      return;
+    }
     event.preventDefault();
     navigate(hrefForCode ? hrefForCode(code) : `/routes?prefecture_code=${code}`);
   }
@@ -211,7 +230,7 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
       style={{
         position: 'relative',
         overflow: 'hidden',
-        cursor: isDragging ? 'grabbing' : 'grab',
+        cursor: isMouseDown ? 'grabbing' : 'grab',
         width: '100%',
         height: 'calc(100vh - 120px)',
         minHeight: '600px',
@@ -219,7 +238,7 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
         userSelect: 'none'
       }}
     >
-      {/* ズーム & リセットコントロールUI */}
+      {/* コントロールUI */}
       <div className="dm-map-controls" style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 10, display: 'flex', gap: '8px' }}>
         <button type="button" onClick={() => setZoom((z) => Math.min(z * 1.2, 3.5))} className="map-btn">+</button>
         <button type="button" onClick={() => setZoom((z) => Math.max(z * 0.8, 0.8))} className="map-btn">-</button>
@@ -232,7 +251,7 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
             transformOrigin: 'center center',
-            transition: isDragging ? 'none' : 'transform 0.1s ease-out',
+            transition: isMouseDown ? 'none' : 'transform 0.1s ease-out',
             position: 'relative',
             width: '100%',
             maxWidth: '894px',
@@ -240,7 +259,6 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
             lineHeight: 0
           }}
         >
-          {/* 土台画像 (894 x 894) */}
           <img
             ref={imageRef}
             src="/map.jpg"
@@ -264,7 +282,6 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
             }}
           />
 
-          {/* クリック判定マップ[cite: 3] */}
           <map name="image-map">
             {areas.map(([code, name, coords]) => {
               const count = counts[code] || 0;
@@ -286,7 +303,6 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
             })}
           </map>
 
-          {/* SVG オーバーレイ（ズレを解消するため preserveAspectRatio="none" に統合） */}
           <svg
             className="dm-heat-overlay"
             viewBox="0 0 894 894"
@@ -303,18 +319,18 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
               zIndex: 2,
             }}
           >
-            {/* ★1. map.jpg に元々入っている外側の「黒い正方形枠線」を覆い隠す白い枠 mask */}
+            {/* 黒枠線のマスク */}
             <rect
               x="0"
               y="0"
               width="894"
               height="894"
               fill="none"
-              stroke="#fafafa" // 背景と同じ色
-              strokeWidth="8"  // 黒枠線を上から被せて完全に消す
+              stroke="#fafafa"
+              strokeWidth="8"
             />
 
-            {/* 2. 都道府県ポリゴン塗り */}
+            {/* 都道府県ポリゴン塗りと境界線 */}
             {areas.map(([code, , coords]) => {
               const count = counts[code] || 0;
               const region = getRegionByCode(code);
@@ -339,7 +355,7 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
               );
             })}
 
-            {/* 3. 地方の太い外周・境界線 */}
+            {/* 地方境界太線 */}
             {areas.map(([code, , coords]) => {
               return (
                 <polygon
@@ -354,7 +370,7 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
             })}
           </svg>
 
-          {/* 人気都道府県の吹き出し */}
+          {/* 人気都道府県ポップアップ */}
           {topPrefectures.map((item) => {
             const center = PREF_CENTERS[item.prefecture_code];
             if (!center) return null;

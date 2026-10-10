@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import ProfileAvatar from './ProfileAvatar.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
@@ -10,7 +10,6 @@ export default function Layout({ children }) {
 
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // ヒートマップ（投稿件数）ON/OFFステートをヘッダー側で保持
   const [heatOn, setHeatOn] = useState(() => {
     try {
       return localStorage.getItem('dm_heatmap_on') === '1';
@@ -23,11 +22,9 @@ export default function Layout({ children }) {
     const next = !heatOn;
     setHeatOn(next);
     localStorage.setItem('dm_heatmap_on', next ? '1' : '0');
-    // カスタムイベントで JapanMap に変更を即座に通知
     window.dispatchEvent(new Event('dm_heatmap_toggle'));
   };
 
-  // アカウント検索機能[cite: 3]
   const [accountQuery, setAccountQuery] = useState('');
   const [accountResults, setAccountResults] = useState([]);
   const [followedIds, setFollowedIds] = useState(() => new Set());
@@ -115,10 +112,10 @@ export default function Layout({ children }) {
         </main>
       ) : (
         <main className="container">
-          {/* ヘッダー操作エリア：三本バーと投稿件数トグルボタン */}
-          <div className="auth-header-bar" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px', position: 'relative', marginBottom: '16px' }}>
+          {/* ヘッダー操作バー */}
+          <div className="auth-header-bar" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px', position: 'relative', marginBottom: '16px' }}>
             
-            {/* ★ 三本バーの横に配置した投稿件数トグルボタン */}
+            {/* 1. 投稿件数トグルボタン */}
             <button
               type="button"
               onClick={toggleHeat}
@@ -150,7 +147,28 @@ export default function Layout({ children }) {
               </span>
             </button>
 
-            {/* 三本バーボタン */}
+            {/* ★ 2. 追加：投稿一覧ボタン */}
+            <Link
+              href="/routes"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '6px 14px',
+                borderRadius: '20px',
+                border: '1px solid #cbd5e1',
+                background: '#ffffff',
+                color: '#334155',
+                fontWeight: 'bold',
+                fontSize: '13px',
+                textDecoration: 'none',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              投稿一覧
+            </Link>
+
+            {/* 3. 三本バーメニューボタン */}
             <button
               type="button"
               className="menu-toggle-btn"
@@ -218,7 +236,6 @@ export default function Layout({ children }) {
 
           {children}
 
-          {/* モーダル表示 */}
           {searchOpen && (
             <div className="account-modal" role="dialog" onClick={() => setSearchOpen(false)}>
               <div className="account-modal-content" onClick={(e) => e.stopPropagation()}>
