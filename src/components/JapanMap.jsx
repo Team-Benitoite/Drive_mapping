@@ -45,6 +45,7 @@ const PREF_CENTERS = {
   45: { x: 185, y: 701 }, 46: { x: 139, y: 741 }, 47: { x: 87, y: 795 }
 };
 
+// 都道府県ポリゴンデータ（佐渡島・淡路島を追加）
 const areas = [
   [47, '沖縄県', '76,774,98,774,99,818,76,817'],
   [46, '鹿児島県', '111,720,111,762,136,763,136,749,161,750,161,773,167,774,196,754,196,731,168,731,168,720'],
@@ -64,6 +65,7 @@ const areas = [
   [31, '鳥取県', '301,550,302,584,348,584,348,550'],
   [33, '岡山県', '301,584,302,626,348,626,348,584'],
   [28, '兵庫県', '348,550,349,626,397,627,396,550'],
+  [28, '兵庫県（淡路島）', '383,627,396,627,396,649,383,649'], // ★ 淡路島を追加（兵庫県）
   [27, '大阪府', '397,627,397,612,437,612,437,656,410,656,410,627'],
   [26, '京都府', '397,550,397,612,468,612,468,567,428,566,428,550'],
   [29, '奈良県', '438,612,438,675,468,675,469,612'],
@@ -77,6 +79,7 @@ const areas = [
   [23, '愛知県', '506,612,506,632,517,632,518,653,568,653,568,612'],
   [20, '長野県', '554,522,554,612,602,612,602,563,612,563,612,488,572,488,572,522'],
   [15, '新潟県', '647,418,638,418,572,468,572,488,648,488'],
+  [15, '新潟県（佐渡島）', '547,451,570,451,570,463,547,463'], // ★ 佐渡島を追加（新潟県）
   [10, '群馬県', '613,488,613,538,659,537,659,488'],
   [19, '山梨県', '602,563,637,563,637,612,603,612'],
   [22, '静岡県', '568,612,568,653,599,653,630,633,630,654,651,654,651,627,637,626,637,612'],
@@ -103,7 +106,6 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   
-  // ドラッグ操作判定用の参照
   const mouseDownPosRef = useRef({ x: 0, y: 0 });
   const isMovedRef = useRef(false);
   const [isMouseDown, setIsMouseDown] = useState(false);
@@ -144,7 +146,6 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
     
     const dx = Math.abs(e.clientX - mouseDownPosRef.current.x);
     const dy = Math.abs(e.clientY - mouseDownPosRef.current.y);
-    // 5px以上の移動でドラッグ判定に切り替え
     if (dx > 5 || dy > 5) {
       isMovedRef.current = true;
     }
@@ -164,7 +165,6 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
     setPan({ x: 0, y: 0 });
   }
 
-  // 都道府県クリック時の遷移（ドラッグ移動していない場合のみ発火）
   function handlePrefClick(code) {
     if (isMovedRef.current) return;
     navigate(hrefForCode ? hrefForCode(code) : `/routes?prefecture_code=${code}`);
@@ -206,7 +206,6 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
         userSelect: 'none'
       }}
     >
-      {/* ズーム & リセットコントロールUI */}
       <div className="dm-map-controls" style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 10, display: 'flex', gap: '8px' }}>
         <button type="button" onClick={() => setZoom((z) => Math.min(z * 1.2, 3.5))} className="map-btn">+</button>
         <button type="button" onClick={() => setZoom((z) => Math.max(z * 0.8, 0.8))} className="map-btn">-</button>
@@ -227,7 +226,6 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
             lineHeight: 0
           }}
         >
-          {/* 下地の地図画像 */}
           <img
             ref={imageRef}
             src="/map.jpg"
@@ -242,7 +240,6 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
             }}
           />
 
-          {/* SVG オーバーレイ（SVGポリゴン自身に直接クリック判定を持たせる） */}
           <svg
             className="dm-heat-overlay"
             viewBox="0 0 894 894"
@@ -258,7 +255,7 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
               zIndex: 2,
             }}
           >
-            {/* 黒枠線マスク */}
+            {/* 外枠線のマスク */}
             <rect
               x="0"
               y="0"
@@ -270,8 +267,8 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
               style={{ pointerEvents: 'none' }}
             />
 
-            {/* 1. 都道府県ポリゴン（直接クリックとホバーを検知） */}
-            {areas.map(([code, name, coords]) => {
+            {/* 都道府県・各島のポリゴン（太線枠は削除し標準枠線のみ） */}
+            {areas.map(([code, name, coords], idx) => {
               const count = counts[code] || 0;
               const region = getRegionByCode(code);
 
@@ -285,7 +282,7 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
 
               return (
                 <polygon
-                  key={code}
+                  key={`${code}-${idx}`}
                   points={coordsToPoints(coords)}
                   fill={fillColor}
                   stroke="#475569"
@@ -301,21 +298,6 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
                 >
                   <title>{`${prefectureMap[code] || name}（${region.name}） / 投稿 ${count} 件`}</title>
                 </polygon>
-              );
-            })}
-
-            {/* 2. 地方境界太線 */}
-            {areas.map(([code, , coords]) => {
-              return (
-                <polygon
-                  key={`border-${code}`}
-                  points={coordsToPoints(coords)}
-                  fill="none"
-                  stroke="#1e293b"
-                  strokeWidth="2.5"
-                  strokeLinejoin="round"
-                  style={{ pointerEvents: 'none' }}
-                />
               );
             })}
           </svg>
