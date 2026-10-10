@@ -1,101 +1,75 @@
 import { useEffect, useState } from 'react';
 import JapanMap from '../components/JapanMap.jsx';
-import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
-import { getPrefectureName } from '../utils/prefectures.js';
-import { Link } from '../utils/navigation.jsx';
 
 export default function HomePage() {
-  const { user } = useAuth();
   const [counts, setCounts] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [topPrefectures, setTopPrefectures] = useState([]);
 
   useEffect(() => {
-    async function loadCounts() {
-      if (!supabase) {
-        setLoading(false);
-        return;
-      }
+    async function loadData() {
+      if (!supabase) return;
 
-      const { data, error } = await supabase
+      // 1. 各都道府県の投稿数を取得
+      const { data: routePrefs } = await supabase
         .from('route_prefectures')
         .select('prefecture_code')
         .eq('is_main', true);
 
-      if (!error && data) {
+      if (routePrefs) {
         const nextCounts = {};
-        data.forEach((route) => {
+        routePrefs.forEach((route) => {
           const code = Number(route.prefecture_code);
           if (code) nextCounts[code] = (nextCounts[code] || 0) + 1;
         });
         setCounts(nextCounts);
       }
 
-      setLoading(false);
+      // 2. 全ユーザーの「いいね数」を集計して人気の高い都道府県 TOP 3 を取得
+      // （※ route_likes と routes を結合してイイネ数順に抽出）
+      const { data: popularRoutes } = await supabase
+        .from('routes')
+        .select(`
+          id,
+          title,
+          like_count,
+          route_photos(photo_path),
+          route_prefectures!inner(prefecture_code)
+        `)
+        .order('like_count', { ascending: false })
+        .limit(10);
+
+      if (popularRoutes) {
+        // 都道府県ごとに最もイイネ数が多い投稿を1つ選択してTop3に絞り込む
+        const prefMap = new Map();
+        popularRoutes.forEach((route) => {
+          const code = route.route_prefectures[0]?.prefecture_code;
+          if (code && !prefMap.has(code)) {
+            const photoPath = route.route_photos?.[0]?.photo_path;
+            const imageUrl = photoPath
+              ? supabase.storage.from('route-photos').getPublicUrl(photoPath).data.publicUrl
+              : null;
+
+            prefMap.set(code, {
+              prefecture_code: Number(code),
+              title: route.title,
+              like_count: route.like_count || 0,
+              image_url: imageUrl,
+            });
+          }
+        });
+
+        setTopPrefectures(Array.from(prefMap.values()).slice(0, 3));
+      }
     }
 
-    loadCounts();
+    loadData();
   }, []);
 
   return (
-    <>
-      <h1>Drive Mapping</h1>
-      <p>都道府県をクリックすると投稿一覧へ移動します。</p>
-
-      <div className="wrap">
-        <div className="card">
-          <div className="map-wrap">
-            <JapanMap counts={counts} />
-          </div>
-        </div>
-
-        <div className="home-sidebar-slot">
-          <div className="home-sidebar">
-            <section className="card home-menu-card">
-              <h3>メニュー</h3>
-              <ul className="home-menu-list">
-                <li>
-                  <Link href="/routes">投稿一覧</Link>
-                </li>
-                {user && (
-                  <>
-                    <li>
-                      <Link href="/routes/new">投稿する</Link>
-                    </li>
-                    <li>
-                      <Link href="/favorites">お気に入り</Link>
-                    </li>
-                  </>
-                )}
-              </ul>
-            </section>
-
-            <section className="card home-count-card">
-              <h3>投稿数</h3>
-              <div className="home-count-scroll">
-                {loading ? (
-                  <p>読み込んでいます...</p>
-                ) : Object.keys(counts).length === 0 ? (
-                  <p>まだ投稿がありません。</p>
-                ) : (
-                  <ul className="home-count-list">
-                    {Object.entries(counts)
-                      .filter(([, count]) => count > 0)
-                      .map(([code, count]) => (
-                        <li key={code}>
-                          <Link href={`/routes?prefecture_code=${code}`}>
-                            {getPrefectureName(code)}
-                          </Link>
-                          ：{count} 件
-                        </li>
-                      ))}
-                  </ul>
-                )}
-              </div>
-            </section>
-          </div>
-        </div>
-      </div>
-    </>
+    <div className="home-top-container" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '10px' }}>
+      {/* マウスでドラッグ・ズーム操作ができるマップコンポーネント */}
+      <JapanMap counts={counts} topPrefectures={topPrefectures} />
+    </div>
   );
 }

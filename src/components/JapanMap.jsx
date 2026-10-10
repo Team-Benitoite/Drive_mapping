@@ -2,9 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { prefectureMap } from '../utils/prefectures.js';
 import { navigate } from '../utils/navigation.jsx';
 
-// -----------------------------------------------------------------
-// 地方ごとのカラーマップ定義
-// -----------------------------------------------------------------
 export const REGIONS = {
   hokkaidoTohoku: { id: 'hokkaidoTohoku', name: '北海道・東北', color: '#3B82F6', hover: '#2563EB', prefecture: [1, 2, 3, 4, 5, 6, 7] },
   kanto: { id: 'kanto', name: '関東', color: '#8B5CF6', hover: '#7C3AED', prefecture: [8, 9, 10, 11, 12, 13, 14] },
@@ -15,9 +12,6 @@ export const REGIONS = {
   kyushuOkinawa: { id: 'kyushuOkinawa', name: '九州・沖縄', color: '#EF4444', hover: '#DC2626', prefecture: [40, 41, 42, 43, 44, 45, 46, 47] }
 };
 
-// -----------------------------------------------------------------
-// 都道府県コードから該当する地方オブジェクトを取得する関数
-// -----------------------------------------------------------------
 export function getRegionByCode(code) {
   const numCode = Number(code);
   for (const regKey in REGIONS) {
@@ -28,7 +22,6 @@ export function getRegionByCode(code) {
   return { id: 'other', name: 'その他', color: '#6B7280', hover: '#4B5563' };
 }
 
-// HEXカラーをRGBA文字列に変換するヘルパー関数
 function hexToRgba(hex, alpha = 0.5) {
   if (!hex || !hex.startsWith('#')) return hex;
   const r = parseInt(hex.slice(1, 3), 16);
@@ -37,7 +30,57 @@ function hexToRgba(hex, alpha = 0.5) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-// 都道府県ポリゴン座標データ[cite: 3]
+// 各都道府県の中心座標（吹き出しの表示基準位置：894x894基準）
+const PREF_CENTERS = {
+  1: { x: 740, y: 160 },  // 北海道
+  2: { x: 697, y: 290 },  // 青森
+  3: { x: 724, y: 349 },  // 岩手
+  4: { x: 718, y: 411 },  // 宮城
+  5: { x: 665, y: 351 },  // 秋田
+  6: { x: 665, y: 411 },  // 山形
+  7: { x: 696, y: 465 },  // 福島
+  8: { x: 727, y: 519 },  // 茨城
+  9: { x: 681, y: 513 },  // 栃木
+  10: { x: 636, y: 513 }, // 群馬
+  11: { x: 657, y: 550 }, // 埼玉
+  12: { x: 728, y: 587 }, // 千葉
+  13: { x: 669, y: 576 }, // 東京
+  14: { x: 665, y: 608 }, // 神奈川
+  15: { x: 610, y: 453 }, // 新潟
+  16: { x: 543, y: 509 }, // 富山
+  17: { x: 499, y: 493 }, // 石川
+  18: { x: 484, y: 549 }, // 福井
+  19: { x: 620, y: 587 }, // 山梨
+  20: { x: 578, y: 550 }, // 長野
+  21: { x: 529, y: 567 }, // 岐阜
+  22: { x: 609, y: 632 }, // 静岡
+  23: { x: 537, y: 632 }, // 愛知
+  24: { x: 482, y: 655 }, // 三重
+  25: { x: 487, y: 589 }, // 滋賀
+  26: { x: 432, y: 581 }, // 京都
+  27: { x: 417, y: 634 }, // 大阪
+  28: { x: 372, y: 588 }, // 兵庫
+  29: { x: 453, y: 643 }, // 奈良
+  30: { x: 438, y: 677 }, // 和歌山
+  31: { x: 325, y: 567 }, // 鳥取
+  32: { x: 276, y: 567 }, // 島根
+  33: { x: 325, y: 605 }, // 岡山
+  34: { x: 276, y: 605 }, // 広島
+  35: { x: 229, y: 588 }, // 山口
+  36: { x: 345, y: 692 }, // 徳島
+  37: { x: 345, y: 660 }, // 香川
+  38: { x: 271, y: 674 }, // 愛媛
+  39: { x: 302, y: 716 }, // 高知
+  40: { x: 167, y: 628 }, // 福岡
+  41: { x: 118, y: 628 }, // 佐賀
+  42: { x: 91,  y: 637 }, // 長崎
+  43: { x: 139, y: 691 }, // 熊本
+  44: { x: 185, y: 648 }, // 大分
+  45: { x: 185, y: 701 }, // 宮崎
+  46: { x: 139, y: 741 }, // 鹿児島
+  47: { x: 87,  y: 795 }   // 沖縄
+};
+
 const areas = [
   [47, '沖縄県', '76,774,98,774,99,818,76,817'],
   [46, '鹿児島県', '111,720,111,762,136,763,136,749,161,750,161,773,167,774,196,754,196,731,168,731,168,720'],
@@ -88,10 +131,18 @@ const areas = [
   [1, '北海道', '672,80,672,187,638,213,638,246,689,246,689,228,712,227,753,256,802,228,845,228,846,158,812,158,716,80'],
 ];
 
-export default function JapanMap({ counts = {}, hrefForCode }) {
+export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode }) {
+  const containerRef = useRef(null);
   const imageRef = useRef(null);
+  
   const [scale, setScale] = useState({ x: 1, y: 1 });
   const [hoveredPref, setHoveredPref] = useState(null);
+
+  // --- ドラッグ＆ズームのステート管理 ---
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
 
   const [heatOn, setHeatOn] = useState(() => {
     try {
@@ -105,7 +156,6 @@ export default function JapanMap({ counts = {}, hrefForCode }) {
     function updateScale() {
       const image = imageRef.current;
       if (!image || !image.naturalWidth || !image.naturalHeight) return;
-
       setScale({
         x: image.clientWidth / image.naturalWidth,
         y: image.clientHeight / image.naturalHeight,
@@ -117,7 +167,38 @@ export default function JapanMap({ counts = {}, hrefForCode }) {
     return () => window.removeEventListener('resize', updateScale);
   }, []);
 
+  // --- マウス操作（ドラッグ・ズーム）処理 ---
+  function handleWheel(e) {
+    e.preventDefault();
+    const zoomFactor = e.deltaY < 0 ? 1.15 : 0.85;
+    setZoom((prevZoom) => Math.min(Math.max(prevZoom * zoomFactor, 0.8), 3.5));
+  }
+
+  function handleMouseDown(e) {
+    if (e.button !== 0) return; // 左クリックのみ
+    setIsDragging(true);
+    dragStartRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+  }
+
+  function handleMouseMove(e) {
+    if (!isDragging) return;
+    setPan({
+      x: e.clientX - dragStartRef.current.x,
+      y: e.clientY - dragStartRef.current.y,
+    });
+  }
+
+  function handleMouseUp() {
+    setIsDragging(false);
+  }
+
+  function resetView() {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }
+
   function handleClick(event, code) {
+    if (isDragging) return; // ドラッグ移動中の誤クリック防止
     event.preventDefault();
     navigate(hrefForCode ? hrefForCode(code) : `/routes?prefecture_code=${code}`);
   }
@@ -154,132 +235,177 @@ export default function JapanMap({ counts = {}, hrefForCode }) {
       .join(',');
   }
 
-    return (
-        <div className={`dm-map-wrap ${heatOn ? 'heat-on' : ''}`}>
-        {/* 1. dm-map-stage に position: relative と line-height: 0 を追加 */}
-        <div className="dm-map-stage" style={{ position: 'relative', display: 'inline-block', width: '100%', lineHeight: 0 }}>
-            
-            {/* トグルバー */}
-            <div className="dm-map-togglebar">
+  return (
+    <div 
+      className="dm-map-viewport" 
+      ref={containerRef}
+      onWheel={handleWheel}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      style={{
+        position: 'relative',
+        overflow: 'hidden',
+        cursor: isDragging ? 'grabbing' : 'grab',
+        width: '100%',
+        height: 'calc(100vh - 120px)',
+        minHeight: '600px',
+        background: '#f8fafc',
+        borderRadius: '16px',
+        boxShadow: 'inset 0 0 20px rgba(0,0,0,0.03)'
+      }}
+    >
+      {/* ズーム & リセットコントロールUI */}
+      <div className="dm-map-controls" style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 10, display: 'flex', gap: '8px' }}>
+        <button type="button" onClick={() => setZoom((z) => Math.min(z * 1.2, 3.5))} className="map-btn">+</button>
+        <button type="button" onClick={() => setZoom((z) => Math.max(z * 0.8, 0.8))} className="map-btn">-</button>
+        <button type="button" onClick={resetView} className="map-btn reset-btn">リセット</button>
+      </div>
+
+      <div className={`dm-map-wrap ${heatOn ? 'heat-on' : ''}`}>
+        {/* ドラッグ＆拡大のTransformを適用する領域 */}
+        <div 
+          className="dm-map-stage"
+          style={{
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            transformOrigin: 'center center',
+            transition: isDragging ? 'none' : 'transform 0.1s ease-out',
+            position: 'relative',
+            width: '100%',
+            maxWidth: '894px',
+            margin: '0 auto'
+          }}
+        >
+          {/* 投稿件数のON/OFFスイッチ */}
+          <div className="dm-map-togglebar">
             <span>投稿件数</span>
             <button type="button" aria-pressed={heatOn} onClick={toggleHeat}>
-                {heatOn ? 'ON' : 'OFF'}
+              {heatOn ? 'ON' : 'OFF'}
             </button>
-            </div>
+          </div>
 
-            {/* 土台の地図画像 */}
-            <img
+          <img
             ref={imageRef}
             src="/map.jpg"
             useMap="#image-map"
             alt="日本地図"
             style={{ width: '100%', height: 'auto', display: 'block' }}
             onLoad={() => {
-                const image = imageRef.current;
-                if (!image || !image.naturalWidth || !image.naturalHeight) return;
-                setScale({
+              const image = imageRef.current;
+              if (!image || !image.naturalWidth || !image.naturalHeight) return;
+              setScale({
                 x: image.clientWidth / image.naturalWidth,
                 y: image.clientHeight / image.naturalHeight,
-                });
+              });
             }}
-            />
+          />
 
-            {/* クリック判定用のHTMLマップ[cite: 3] */}
-            <map name="image-map">
+          <map name="image-map">
             {areas.map(([code, name, coords]) => {
-                const count = counts[code] || 0;
-                const region = getRegionByCode(code);
-                return (
+              const count = counts[code] || 0;
+              const region = getRegionByCode(code);
+              return (
                 <area
-                    key={code}
-                    alt={name}
-                    title={`${prefectureMap[code] || name}（${region.name}） / 投稿 ${count} 件`}
-                    href={hrefForCode ? hrefForCode(code) : `/routes?prefecture_code=${code}`}
-                    data-pref={code}
-                    coords={scaledCoords(coords)}
-                    shape="poly"
-                    onClick={(event) => handleClick(event, code)}
-                    onMouseEnter={() => setHoveredPref(code)}
-                    onMouseLeave={() => setHoveredPref(null)}
+                  key={code}
+                  alt={name}
+                  title={`${prefectureMap[code] || name}（${region.name}） / 投稿 ${count} 件`}
+                  href={hrefForCode ? hrefForCode(code) : `/routes?prefecture_code=${code}`}
+                  data-pref={code}
+                  coords={scaledCoords(coords)}
+                  shape="poly"
+                  onClick={(event) => handleClick(event, code)}
+                  onMouseEnter={() => setHoveredPref(code)}
+                  onMouseLeave={() => setHoveredPref(null)}
                 />
-                );
+              );
             })}
-            </map>
+          </map>
 
-            {/* 2. SVG オーバーレイ（preserveAspectRatio="none" にして画像とぴったりサイズを合わせる） */}
-            <svg
+          {/* SVG オーバーレイ（都道府県の色付け） */}
+          <svg
             className="dm-heat-overlay"
             viewBox="0 0 894 894"
             preserveAspectRatio="none"
             aria-hidden="true"
             style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                display: 'block',
-                pointerEvents: 'none', // クリックを下の area に透過させる[cite: 1, 2, 3]
-                zIndex: 2,
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              display: 'block',
+              pointerEvents: 'none',
+              zIndex: 2,
             }}
-            >
+          >
             {areas.map(([code, , coords]) => {
-                const count = counts[code] || 0;
-                const region = getRegionByCode(code);
+              const count = counts[code] || 0;
+              const region = getRegionByCode(code);
 
-                let fillColor;
-                if (heatOn) {
+              let fillColor;
+              if (heatOn) {
                 fillColor = heatColor(count);
-                } else {
+              } else {
                 const baseColor = hoveredPref === code ? region.hover : region.color;
                 fillColor = hexToRgba(baseColor, hoveredPref === code ? 0.75 : 0.45);
-                }
+              }
 
-                return (
+              return (
                 <polygon
-                    key={code}
-                    points={coordsToPoints(coords)}
-                    fill={fillColor}
-                    stroke="rgba(0,0,0,0.25)"
-                    strokeWidth="1"
-                    style={{
-                    transition: 'fill 0.15s ease',
-                    }}
+                  key={code}
+                  points={coordsToPoints(coords)}
+                  fill={fillColor}
+                  stroke="rgba(0,0,0,0.25)"
+                  strokeWidth="1"
+                  style={{ transition: 'fill 0.15s ease' }}
                 />
-                );
+              );
             })}
-            </svg>
-        </div>
+          </svg>
 
-        {/* 地方凡例 (OFFの時表示) */}
-        {!heatOn && (
-            <div className="dm-region-legend" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px', fontSize: '12px' }}>
-            {Object.values(REGIONS).map((reg) => (
-                <span key={reg.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#fff', padding: '4px 8px', borderRadius: '12px', border: '1px solid #e6e6e6' }}>
-                <span style={{ width: '10px', height: '10px', backgroundColor: reg.color, borderRadius: '2px', display: 'inline-block' }} />
-                {reg.name}
-                </span>
-            ))}
-            </div>
-        )}
+          {/* ★ いいね集計が高い都道府県に表示するポップアップ吹き出し（Pin & Popup） */}
+          {topPrefectures.map((item) => {
+            const center = PREF_CENTERS[item.prefecture_code];
+            if (!center) return null;
 
-        {/* ヒートマップ凡例 (ONの時表示)[cite: 3] */}
-        {heatOn && (
-            <div className="dm-map-legend" aria-label="凡例">
-            <span className="chip">
-                <span className="dot" style={{ background: 'rgba(82, 190, 0, 0.76)' }} />
-                1〜10件
-            </span>
-            <span className="chip">
-                <span className="dot" style={{ background: 'rgba(237, 233, 0, 0.89)' }} />
-                11〜20件
-            </span>
-            <span className="chip">
-                <span className="dot" style={{ background: 'rgba(240, 23, 23, 0.88)' }} />
-                21件以上
-            </span>
-            </div>
-        )}
+            // 各座標の比率を計算 (894px 基準)
+            const posX = (center.x / 894) * 100;
+            const posY = (center.y / 894) * 100;
+
+            return (
+              <div
+                key={item.prefecture_code}
+                className="map-top-popup"
+                style={{
+                  position: 'absolute',
+                  left: `${posX}%`,
+                  top: `${posY}%`,
+                  transform: 'translate(-50%, -100%)',
+                  zIndex: 10,
+                  pointerEvents: 'auto'
+                }}
+                onClick={() => navigate(`/routes?prefecture_code=${item.prefecture_code}`)}
+              >
+                <div className="popup-card">
+                  <span className="popup-rank">★ 人気 Top</span>
+                  {item.image_url ? (
+                    <img src={item.image_url} alt={item.title} className="popup-img" />
+                  ) : (
+                    <div className="popup-img-placeholder">No Image</div>
+                  )}
+                  <div className="popup-content">
+                    <span className="popup-pref">{prefectureMap[item.prefecture_code]}</span>
+                    <h4 className="popup-title">{item.title || '人気のドライブコース'}</h4>
+                    <span className="popup-likes">♥ {item.like_count} Likes</span>
+                  </div>
+                </div>
+                <div className="popup-arrow" />
+              </div>
+            );
+          })}
         </div>
+      </div>
+    </div>
   );
 }
