@@ -286,7 +286,7 @@ h3 {
   left: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none; /* マウス操作を下の <map> へ落とす[cite: 1, 2] */
+  pointer-events: none;
   z-index: 2;
 }
 
@@ -991,107 +991,13 @@ hr {
   font-size: 12px;
 }
 
-/* 人気都道府県の吹き出し（Popup Card） */
-.map-top-popup {
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.map-top-popup:hover {
-  transform: translate(-50%, -105%) scale(1.05) !important;
-}
-
-.popup-card {
-  width: 160px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(8px);
-  border-radius: 12px;
-  padding: 8px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  position: relative;
-}
-
-.popup-rank {
-  font-size: 10px;
-  font-weight: 800;
-  color: #d97706;
-  background: #fef3c7;
-  padding: 2px 6px;
-  border-radius: 6px;
-  width: fit-content;
-}
-
-.popup-img {
-  width: 100%;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-.popup-img-placeholder {
-  width: 100%;
-  height: 80px;
-  background: #e2e8f0;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  color: #94a3b8;
-}
-
-.popup-content {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.popup-pref {
-  font-size: 11px;
-  font-weight: 700;
-  color: #3b82f6;
-}
-
-.popup-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.popup-likes {
-  font-size: 10px;
-  color: #ef4444;
-  font-weight: 600;
-}
-
-/* 吹き出しの下三角 */
-.popup-arrow {
-  width: 0;
-  height: 0;
-  border-left: 7px solid transparent;
-  border-right: 7px solid transparent;
-  border-top: 8px solid rgba(255, 255, 255, 0.95);
-  margin: 0 auto;
-}
-
-/* styles.css の末尾に追加・更新 */
-
-/* 外枠のカード線などを消して地図のみを表示させる */
+/* マップ外枠・ドラッグ制御 */
 .dm-map-viewport {
   border: none !important;
   box-shadow: none !important;
   background: transparent !important;
 }
 
-/* 画像ドラッグおよびテキスト選択の無効化 */
 .dm-map-viewport img,
 .dm-map-viewport svg {
   -webkit-user-drag: none;
@@ -1102,15 +1008,10 @@ hr {
   user-select: none;
 }
 
-/* 地方凡例のスタイル */
 .dm-region-legend {
   justify-content: center;
   margin-top: 16px;
 }
-
-/* ==========================================================================
-デザインの追加スタイル
-   ========================================================================== */
 
 /* 1. 操作指示ガイダンス（手袋アニメーション） */
 .drag-guide-overlay {
@@ -1219,6 +1120,18 @@ hr {
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
+}
+
+.popup-img-placeholder {
+  width: 100%;
+  height: 85px;
+  background: #e2e8f0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #94a3b8;
 }
 
 .popup-title {
