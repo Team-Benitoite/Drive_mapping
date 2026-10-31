@@ -3,13 +3,13 @@ import { prefectureMap } from '../utils/prefectures.js';
 import { navigate } from '../utils/navigation.jsx';
 
 export const REGIONS = {
-  hokkaidoTohoku: { id: 'hokkaidoTohoku', name: '北海道・東北', color: '#3B82F6', hover: '#2563EB', prefecture: [1, 2, 3, 4, 5, 6, 7] },
-  kanto: { id: 'kanto', name: '関東', color: '#8B5CF6', hover: '#7C3AED', prefecture: [8, 9, 10, 11, 12, 13, 14] },
-  chubu: { id: 'chubu', name: '中部・北陸', color: '#10B981', hover: '#059669', prefecture: [15, 16, 17, 18, 19, 20, 21, 22, 23] },
-  kinki: { id: 'kinki', name: '近畿', color: '#F59E0B', hover: '#D97706', prefecture: [24, 25, 26, 27, 28, 29, 30] },
-  chugoku: { id: 'chugoku', name: '中国', color: '#EC4899', hover: '#DB2777', prefecture: [31, 32, 33, 34, 35] },
-  shikoku: { id: 'shikoku', name: '四国', color: '#06B6D4', hover: '#0891B2', prefecture: [36, 37, 38, 39] },
-  kyushuOkinawa: { id: 'kyushuOkinawa', name: '九州・沖縄', color: '#EF4444', hover: '#DC2626', prefecture: [40, 41, 42, 43, 44, 45, 46, 47] }
+  hokkaidoTohoku: { id: 'hokkaidoTohoku', name: '北海道・東北', color: '#60A5FA', hover: '#2563EB', prefecture: [1, 2, 3, 4, 5, 6, 7] },
+  kanto: { id: 'kanto', name: '関東', color: '#A78BFA', hover: '#7C3AED', prefecture: [8, 9, 10, 11, 12, 13, 14] },
+  chubu: { id: 'chubu', name: '中部・北陸', color: '#34D399', hover: '#10B981', prefecture: [15, 16, 17, 18, 19, 20, 21, 22, 23] },
+  kinki: { id: 'kinki', name: '近畿', color: '#FBBF24', hover: '#F59E0B', prefecture: [24, 25, 26, 27, 28, 29, 30] },
+  chugoku: { id: 'chugoku', name: '中国', color: '#F472B6', hover: '#EC4899', prefecture: [31, 32, 33, 34, 35] },
+  shikoku: { id: 'shikoku', name: '四国', color: '#22D3EE', hover: '#06B6D4', prefecture: [36, 37, 38, 39] },
+  kyushuOkinawa: { id: 'kyushuOkinawa', name: '九州・沖縄', color: '#F87171', hover: '#EF4444', prefecture: [40, 41, 42, 43, 44, 45, 46, 47] }
 };
 
 export function getRegionByCode(code) {
@@ -45,7 +45,6 @@ const PREF_CENTERS = {
   45: { x: 185, y: 701 }, 46: { x: 139, y: 741 }, 47: { x: 87, y: 795 }
 };
 
-// 都道府県ポリゴンデータ（佐渡島・淡路島の座標を画像枠線にピタリ合わせる修正）
 const areas = [
   [47, '沖縄県', '76,774,98,774,99,818,76,817'],
   [46, '鹿児島県', '111,720,111,762,136,763,136,749,161,750,161,773,167,774,196,754,196,731,168,731,168,720'],
@@ -65,7 +64,7 @@ const areas = [
   [31, '鳥取県', '301,550,302,584,348,584,348,550'],
   [33, '岡山県', '301,584,302,626,348,626,348,584'],
   [28, '兵庫県', '348,550,349,626,397,627,396,550'],
-  [28, '兵庫県（淡路島）', '384,633,384,648,399,648,398,633'], // ★ 淡路島（黒枠線の位置へ調整）
+  [28, '兵庫県（淡路島）', '384,633,384,648,399,648,398,633'],
   [27, '大阪府', '397,627,397,612,437,612,437,656,410,656,410,627'],
   [26, '京都府', '397,550,397,612,468,612,468,567,428,566,428,550'],
   [29, '奈良県', '438,612,438,675,468,675,469,612'],
@@ -79,7 +78,7 @@ const areas = [
   [23, '愛知県', '506,612,506,632,517,632,518,653,568,653,568,612'],
   [20, '長野県', '554,522,554,612,602,612,602,563,612,563,612,488,572,488,572,522'],
   [15, '新潟県', '647,418,638,418,572,468,572,488,648,488'],
-  [15, '新潟県（佐渡島）', '582,425,568,425,550,439,563,439'], // ★ 佐渡島（黒ひし形枠線の位置へ調整）
+  [15, '新潟県（佐渡島）', '582,425,568,425,550,439,563,439'],
   [10, '群馬県', '613,488,613,538,659,537,659,488'],
   [19, '山梨県', '602,563,637,563,637,612,603,612'],
   [22, '静岡県', '568,612,568,653,599,653,630,633,630,654,651,654,651,627,637,626,637,612'],
@@ -105,7 +104,8 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
   const [hoveredPref, setHoveredPref] = useState(null);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  
+  const [showGuide, setShowGuide] = useState(true);
+
   const mouseDownPosRef = useRef({ x: 0, y: 0 });
   const isMovedRef = useRef(false);
   const [isMouseDown, setIsMouseDown] = useState(false);
@@ -118,6 +118,11 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
       return false;
     }
   });
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowGuide(false), 4000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const handleToggle = () => {
@@ -137,19 +142,18 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
     if (e.button !== 0) return;
     setIsMouseDown(true);
     isMovedRef.current = false;
+    setShowGuide(false);
     mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
     dragStartRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
   }
 
   function handleMouseMove(e) {
     if (!isMouseDown) return;
-    
     const dx = Math.abs(e.clientX - mouseDownPosRef.current.x);
     const dy = Math.abs(e.clientY - mouseDownPosRef.current.y);
     if (dx > 5 || dy > 5) {
       isMovedRef.current = true;
     }
-
     setPan({
       x: e.clientX - dragStartRef.current.x,
       y: e.clientY - dragStartRef.current.y,
@@ -172,9 +176,9 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
 
   function heatColor(count) {
     if (count <= 0) return 'rgba(255,255,255,0.2)';
-    if (count <= 10) return 'rgba(82, 190, 0, 0.60)';
-    if (count <= 20) return 'rgba(237, 233, 0, 0.70)';
-    return 'rgba(240, 23, 23, 0.70)';
+    if (count <= 10) return 'rgba(52, 211, 153, 0.65)';
+    if (count <= 20) return 'rgba(251, 191, 36, 0.75)';
+    return 'rgba(248, 113, 113, 0.75)';
   }
 
   function coordsToPoints(coords) {
@@ -202,10 +206,20 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
         width: '100%',
         height: 'calc(100vh - 120px)',
         minHeight: '600px',
-        background: '#fafafa',
+        background: '#FDFBF7',
+        borderRadius: '24px',
+        border: '3px solid #059669',
+        boxShadow: '0 12px 32px rgba(5, 150, 105, 0.08)',
         userSelect: 'none'
       }}
     >
+      {showGuide && (
+        <div className="drag-guide-overlay">
+          <div className="drag-hand-icon">✋</div>
+          <span>ドラッグして地図を動かせます</span>
+        </div>
+      )}
+
       <div className="dm-map-controls" style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 10, display: 'flex', gap: '8px' }}>
         <button type="button" onClick={() => setZoom((z) => Math.min(z * 1.2, 3.5))} className="map-btn">+</button>
         <button type="button" onClick={() => setZoom((z) => Math.max(z * 0.8, 0.8))} className="map-btn">-</button>
@@ -255,19 +269,17 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
               zIndex: 2,
             }}
           >
-            {/* 外枠線のマスク */}
             <rect
               x="0"
               y="0"
               width="894"
               height="894"
               fill="none"
-              stroke="#fafafa"
+              stroke="#FDFBF7"
               strokeWidth="8"
               style={{ pointerEvents: 'none' }}
             />
 
-            {/* 都道府県・各島のポリゴン（太線枠は削除し標準枠線のみ） */}
             {areas.map(([code, name, coords], idx) => {
               const count = counts[code] || 0;
               const region = getRegionByCode(code);
@@ -285,8 +297,8 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
                   key={`${code}-${idx}`}
                   points={coordsToPoints(coords)}
                   fill={fillColor}
-                  stroke="#475569"
-                  strokeWidth="1"
+                  stroke="#0F172A"
+                  strokeWidth="1.2"
                   style={{ 
                     transition: 'fill 0.15s ease', 
                     cursor: 'pointer',
@@ -302,7 +314,6 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
             })}
           </svg>
 
-          {/* 人気都道府県の吹き出しポップアップ */}
           {topPrefectures.map((item) => {
             const center = PREF_CENTERS[item.prefecture_code];
             if (!center) return null;
@@ -329,20 +340,23 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
                   }
                 }}
               >
-                <div className="popup-card">
-                  <span className="popup-rank">★ 人気 Top</span>
+                <div className="signboard-card">
+                  <div className="signboard-dots">
+                    <span className="dot-screws"></span>
+                    <span className="dot-screws"></span>
+                  </div>
+                  <div className="signboard-header">
+                    <span className="popup-pref">{prefectureMap[item.prefecture_code]}</span>
+                    <span className="popup-likes">♥ {item.like_count}</span>
+                  </div>
                   {item.image_url ? (
                     <img src={item.image_url} alt={item.title} className="popup-img" draggable="false" />
                   ) : (
                     <div className="popup-img-placeholder">No Image</div>
                   )}
-                  <div className="popup-content">
-                    <span className="popup-pref">{prefectureMap[item.prefecture_code]}</span>
-                    <h4 className="popup-title">{item.title || '人気のドライブコース'}</h4>
-                    <span className="popup-likes">♥ {item.like_count} Likes</span>
-                  </div>
+                  <h4 className="popup-title">{item.title || '人気のドライブコース'}</h4>
                 </div>
-                <div className="popup-arrow" />
+                <div className="signboard-arrow" />
               </div>
             );
           })}
