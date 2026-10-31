@@ -82,13 +82,24 @@ npm run lint
 
 - `tsconfig.json`: 参照のまとめ役
 - `tsconfig.app.json`: `src` 配下のアプリコード用（`strict` 有効）
-- `tsconfig.node.json`: `vite.config.ts` 用
+- `tsconfig.node.json`: Vite設定・Playwright設定・回帰テスト用
 
 ### 型定義の置き場所
 
 - `src/types/database.ts`: [supabase/schema.sql](supabase/schema.sql) に対応するテーブルの型。Supabaseクライアントは `createClient<Database>` で生成しているため、`supabase.from('routes').select(...)` の戻り値に列の型が付きます。**スキーマを変更したときは、このファイルも合わせて更新してください。**
 - `src/types/models.ts`: 画面やコンポーネントで使い回す型（投稿一覧の要素、プロフィール、都道府県ごとの投稿数など）。
 - `src/vite-env.d.ts`: `import.meta.env` で参照する `VITE_` 環境変数の型。環境変数を追加したときはここにも追記してください。
+
+## ブラウザ回帰テスト
+
+```bash
+npx playwright install chromium
+npm run test:e2e
+```
+
+テスト専用の開発サーバーを起動し、SupabaseのHTTP応答を模擬して検索履歴、お気に入り更新失敗と再試行、メニュー遷移、地図と人気順表示を検証します。実DBには接続しません。実Supabaseの認証・RLS・Storage権限は別途接続試験が必要です。
+
+インストール済みのEdgeで実行する場合、PowerShellでは `$env:PLAYWRIGHT_CHANNEL='msedge'` を設定してから実行できます。
 
 ## MVS機能
 

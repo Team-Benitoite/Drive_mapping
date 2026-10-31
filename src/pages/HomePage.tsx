@@ -1,102 +1,77 @@
 import { useEffect, useState } from 'react';
 import JapanMap from '../components/JapanMap';
-import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { getPrefectureName } from '../utils/prefectures';
-import { Link } from '../utils/navigation';
-import type { PrefectureCounts } from '../types/models';
+import { getPublicPhotoUrl } from '../utils/routeData';
+import { getErrorMessage } from '../utils/errors';
+import type { PrefectureCounts, TopPrefecture } from '../types/models';
 
 export default function HomePage() {
-  const { user } = useAuth();
   const [counts, setCounts] = useState<PrefectureCounts>({});
-  const [loading, setLoading] = useState(true);
+  const [topPrefectures, setTopPrefectures] = useState<TopPrefecture[]>([]);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    async function loadCounts() {
-      if (!supabase) {
-        setLoading(false);
-        return;
-      }
+    let cancelled = false;
 
-      const { data, error } = await supabase
-        .from('route_prefectures')
-        .select('prefecture_code')
-        .eq('is_main', true);
+    async function loadData() {
+      if (!supabase) return;
+      const nextCounts: PrefectureCounts = {};
+      const popularByPrefecture = new Map<number, TopPrefecture>();
 
-      if (!error && data) {
-        const nextCounts: PrefectureCounts = {};
-        data.forEach((route) => {
-          const code = Number(route.prefecture_code);
-          if (code) nextCounts[code] = (nextCounts[code] || 0) + 1;
-        });
+      try {
+        // ページ単位で集計し、取得上限を超える投稿もランキングに含める。
+        const pageSize = 1000;
+        for (let offset = 0; !cancelled; offset += pageSize) {
+          const { data, error: fetchError } = await supabase
+            .from('routes')
+            .select(`
+              id, title, prefecture_code,
+              route_likes(user_id),
+              route_photos(storage_path, thumb_path, sort_order)
+            `)
+            .order('id', { ascending: true })
+            .order('sort_order', { foreignTable: 'route_photos', ascending: true })
+            .range(offset, offset + pageSize - 1);
+          if (fetchError) throw fetchError;
+          if (cancelled) return;
+
+          for (const route of data || []) {
+            const code = route.prefecture_code;
+            nextCounts[code] = (nextCounts[code] || 0) + 1;
+            const likeCount = route.route_likes.length;
+            const previous = popularByPrefecture.get(code);
+            if (!previous || likeCount > previous.like_count) {
+              const photo = route.route_photos[0];
+              popularByPrefecture.set(code, {
+                prefecture_code: code,
+                title: route.title,
+                like_count: likeCount,
+                image_url: getPublicPhotoUrl(photo?.thumb_path || photo?.storage_path) || null,
+              });
+            }
+          }
+          if (!data || data.length < pageSize) break;
+        }
+        if (cancelled) return;
         setCounts(nextCounts);
+        setTopPrefectures(
+          [...popularByPrefecture.values()]
+            .sort((left, right) => right.like_count - left.like_count || left.prefecture_code - right.prefecture_code)
+            .slice(0, 3),
+        );
+      } catch (fetchError) {
+        if (!cancelled) setError(getErrorMessage(fetchError, '投稿データの取得に失敗しました。'));
       }
-
-      setLoading(false);
     }
 
-    loadCounts();
+    void loadData();
+    return () => { cancelled = true; };
   }, []);
 
   return (
-    <>
-      <h1>Drive Mapping</h1>
-      <p>都道府県をクリックすると投稿一覧へ移動します。</p>
-
-      <div className="wrap">
-        <div className="card">
-          <div className="map-wrap">
-            <JapanMap counts={counts} />
-          </div>
-        </div>
-
-        <div className="home-sidebar-slot">
-          <div className="home-sidebar">
-            <section className="card home-menu-card">
-              <h3>メニュー</h3>
-              <ul className="home-menu-list">
-                <li>
-                  <Link href="/routes">投稿一覧</Link>
-                </li>
-                {user && (
-                  <>
-                    <li>
-                      <Link href="/routes/new">投稿する</Link>
-                    </li>
-                    <li>
-                      <Link href="/favorites">お気に入り</Link>
-                    </li>
-                  </>
-                )}
-              </ul>
-            </section>
-
-            <section className="card home-count-card">
-              <h3>投稿数</h3>
-              <div className="home-count-scroll">
-                {loading ? (
-                  <p>読み込んでいます...</p>
-                ) : Object.keys(counts).length === 0 ? (
-                  <p>まだ投稿がありません。</p>
-                ) : (
-                  <ul className="home-count-list">
-                    {Object.entries(counts)
-                      .filter(([, count]) => count > 0)
-                      .map(([code, count]) => (
-                        <li key={code}>
-                          <Link href={`/routes?prefecture_code=${code}`}>
-                            {getPrefectureName(code)}
-                          </Link>
-                          ：{count} 件
-                        </li>
-                      ))}
-                  </ul>
-                )}
-              </div>
-            </section>
-          </div>
-        </div>
-      </div>
-    </>
+    <div className="home-top-container" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '10px' }}>
+      {error && <p className="error" role="alert">{error}</p>}
+      <JapanMap counts={counts} topPrefectures={topPrefectures} />
+    </div>
   );
 }

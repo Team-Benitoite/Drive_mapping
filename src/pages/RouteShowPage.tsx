@@ -11,6 +11,7 @@ import { getPublicPhotoUrl, isOwner, likeCount } from '../utils/routeData';
 import { getAuthHref, Link, navigate } from '../utils/navigation';
 import type { PointType } from '../types/database';
 import type { RouteDetail } from '../types/models';
+import { getErrorMessage } from '../utils/errors';
 
 const pointLabel: Record<PointType, string> = {
   start: 'スタート',
@@ -23,6 +24,7 @@ export default function RouteShowPage({ id }: { id: number }) {
   const [route, setRoute] = useState<RouteDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [favoriteError, setFavoriteError] = useState('');
   const [busy, setBusy] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
@@ -35,6 +37,7 @@ export default function RouteShowPage({ id }: { id: number }) {
   async function loadRoute() {
     setLoading(true);
     setError('');
+    setFavoriteError('');
 
     if (!supabase) {
       setLoading(false);
@@ -99,22 +102,26 @@ export default function RouteShowPage({ id }: { id: number }) {
     if (!supabase) return;
 
     setBusy(true);
+    setFavoriteError('');
 
-    if (liked) {
-      await supabase
-        .from('route_likes')
-        .delete()
-        .eq('route_id', id)
-        .eq('user_id', user.id);
-    } else {
-      await supabase.from('route_likes').insert({
-        route_id: id,
-        user_id: user.id,
-      });
+    try {
+      const { error: updateError } = liked
+        ? await supabase
+            .from('route_likes')
+            .delete()
+            .eq('route_id', id)
+            .eq('user_id', user.id)
+        : await supabase.from('route_likes').insert({
+            route_id: id,
+            user_id: user.id,
+          });
+      if (updateError) throw updateError;
+      await loadRoute();
+    } catch (updateError) {
+      setFavoriteError(getErrorMessage(updateError, 'お気に入りの更新に失敗しました。'));
+    } finally {
+      setBusy(false);
     }
-
-    setBusy(false);
-    loadRoute();
   }
 
   async function deleteRoute() {
@@ -164,7 +171,7 @@ export default function RouteShowPage({ id }: { id: number }) {
         </div>
         <div className="actions">
           <button type="button" onClick={toggleLike} disabled={busy}>
-            {liked ? 'いいね解除' : 'いいね'} ({likeCount(route)})
+            {liked ? 'お気に入り解除' : 'お気に入り'} ({likeCount(route)})
           </button>
           {owner && (
             <>
@@ -179,6 +186,7 @@ export default function RouteShowPage({ id }: { id: number }) {
         </div>
       </div>
 
+      {favoriteError && <p className="error" role="alert">{favoriteError}</p>}
       <div className="detail-grid">
         <div className="stack">
           <section className="panel">

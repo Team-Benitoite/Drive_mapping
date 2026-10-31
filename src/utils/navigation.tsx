@@ -50,15 +50,18 @@ export interface LinkProps
   children?: ReactNode;
 }
 
-export function Link({ href, className, children, ...props }: LinkProps) {
+export function Link({ href, className, children, onClick, ...props }: LinkProps) {
   function handleClick(event: MouseEvent<HTMLAnchorElement>) {
+    onClick?.(event);
     if (
       event.defaultPrevented ||
       event.button !== 0 ||
       event.metaKey ||
       event.ctrlKey ||
       event.shiftKey ||
-      event.altKey
+      event.altKey ||
+      (props.target && props.target !== '_self') ||
+      props.download !== undefined
     ) {
       return;
     }

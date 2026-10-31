@@ -84,6 +84,14 @@ export interface RouteEditSource extends RouteRow {
 /** 都道府県コードごとの投稿数 */
 export type PrefectureCounts = Record<number, number>;
 
+/** 都道府県ごとの人気投稿を地図に表示するための情報 */
+export interface TopPrefecture {
+  prefecture_code: number;
+  title: string;
+  like_count: number;
+  image_url: string | null;
+}
+
 /** 投稿フォームの中間地点の入力値 */
 export interface MiddlePointInput {
   label: string;

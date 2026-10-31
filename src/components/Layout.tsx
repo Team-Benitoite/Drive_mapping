@@ -8,6 +8,24 @@ import type { ProfileSummary } from '../types/models';
 export default function Layout({ children }: { children: ReactNode }) {
   const { authError, loading, profile, user } = useAuth();
   const userName = profile?.name || user?.email || 'ユーザー';
+
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const [heatOn, setHeatOn] = useState(() => {
+    try {
+      return localStorage.getItem('dm_heatmap_on') === '1';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleHeat = () => {
+    const next = !heatOn;
+    setHeatOn(next);
+    localStorage.setItem('dm_heatmap_on', next ? '1' : '0');
+    window.dispatchEvent(new Event('dm_heatmap_toggle'));
+  };
+
   const [accountQuery, setAccountQuery] = useState('');
   const [accountResults, setAccountResults] = useState<ProfileSummary[]>([]);
   const [followedIds, setFollowedIds] = useState<Set<string>>(
@@ -20,7 +38,6 @@ export default function Layout({ children }: { children: ReactNode }) {
   async function handleAccountSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSearchError('');
-
     if (!supabase || !user || !accountQuery.trim()) return;
 
     setSearching(true);
@@ -98,62 +115,138 @@ export default function Layout({ children }: { children: ReactNode }) {
         </main>
       ) : (
         <main className="container">
-          <div className="auth">
-            {user ? (
-              <>
-                ログイン中：{userName} さん |{' '}
-                <Link href="/profile">プロフィール</Link> |{' '}
-                <Link href="/routes/new">投稿する</Link> |{' '}
-                <Link href="/logout">ログアウト</Link>
-                <form className="account-search" onSubmit={handleAccountSearch}>
-                  <input
-                    type="search"
-                    value={accountQuery}
-                    onChange={(event) => setAccountQuery(event.target.value)}
-                    placeholder="アカウント検索"
-                    aria-label="アカウント検索"
-                  />
-                  <button type="submit" disabled={searching}>
-                    検索
-                  </button>
-                </form>
-              </>
-            ) : (
-              <>
-                <Link href={getAuthHref('/login')}>ログイン</Link> /{' '}
-                <Link href={getAuthHref('/signup')}>新規登録</Link>
-              </>
+          {/* ヘッダー操作バー */}
+          <div className="auth-header-bar" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px', position: 'relative', marginBottom: '16px' }}>
+
+            {/* 1. 投稿件数トグルボタン */}
+            <button
+              type="button"
+              onClick={toggleHeat}
+              aria-pressed={heatOn}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 14px',
+                borderRadius: '20px',
+                border: '1px solid #cbd5e1',
+                background: heatOn ? '#3b82f6' : '#ffffff',
+                color: heatOn ? '#ffffff' : '#334155',
+                fontWeight: 'bold',
+                fontSize: '13px',
+                cursor: 'pointer',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <span>投稿件数</span>
+              <span style={{
+                background: heatOn ? '#ffffff' : '#e2e8f0',
+                color: heatOn ? '#3b82f6' : '#64748b',
+                padding: '2px 8px',
+                borderRadius: '10px',
+                fontSize: '11px'
+              }}>
+                {heatOn ? 'ON' : 'OFF'}
+              </span>
+            </button>
+
+            {/* ★ 2. 追加：投稿一覧ボタン */}
+            <Link
+              href="/routes"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '6px 14px',
+                borderRadius: '20px',
+                border: '1px solid #cbd5e1',
+                background: '#ffffff',
+                color: '#334155',
+                fontWeight: 'bold',
+                fontSize: '13px',
+                textDecoration: 'none',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              投稿一覧
+            </Link>
+
+            {/* 3. 三本バーメニューボタン */}
+            <button
+              type="button"
+              className="menu-toggle-btn"
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label="メニューを開く"
+              style={{ fontSize: '18px', padding: '6px 14px', cursor: 'pointer', borderRadius: '20px' }}
+            >
+              ☰ メニュー
+            </button>
+
+            {/* ドロップダウンメニュー */}
+            {menuOpen && (
+              <div
+                className="auth-dropdown-menu"
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #ccc',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+                  zIndex: 100,
+                  minWidth: '260px',
+                  marginTop: '6px'
+                }}
+              >
+                {user ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div>ログイン中：<strong>{userName}</strong> さん</div>
+                    <hr style={{ margin: '4px 0' }} />
+                    <Link href="/profile" onClick={() => setMenuOpen(false)}>プロフィール</Link>
+                    <Link href="/routes/new" onClick={() => setMenuOpen(false)}>投稿する</Link>
+                    <Link href="/favorites" onClick={() => setMenuOpen(false)}>お気に入り</Link>
+                    <Link href="/logout" onClick={() => setMenuOpen(false)}>ログアウト</Link>
+
+                    <form className="account-search" onSubmit={handleAccountSearch} style={{ marginTop: '8px' }}>
+                      <input
+                        type="search"
+                        value={accountQuery}
+                        onChange={(event) => setAccountQuery(event.target.value)}
+                        placeholder="アカウント検索"
+                        aria-label="アカウント検索"
+                      />
+                      <button type="submit" disabled={searching}>
+                        検索
+                      </button>
+                    </form>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <Link href={getAuthHref('/login')} onClick={() => setMenuOpen(false)}>ログイン</Link> /{' '}
+                    <Link href={getAuthHref('/signup')} onClick={() => setMenuOpen(false)}>新規登録</Link>
+                  </div>
+                )}
+              </div>
             )}
           </div>
+
           {authError && (
             <div className="notice">
-              Supabaseへの接続に失敗しています。.env の
-              `VITE_SUPABASE_URL` と `VITE_SUPABASE_ANON_KEY`、または
-              Supabaseプロジェクトの状態を確認してください。
+              Supabaseへの接続に失敗しています。
             </div>
           )}
+
           {children}
+
           {searchOpen && (
-            <div
-              className="account-modal"
-              role="dialog"
-              aria-modal="true"
-              aria-label="アカウント検索結果"
-              onClick={() => setSearchOpen(false)}
-            >
-              <div
-                className="account-modal-content"
-                onClick={(event) => event.stopPropagation()}
-              >
+            <div className="account-modal" role="dialog" onClick={() => setSearchOpen(false)}>
+              <div className="account-modal-content" onClick={(e) => e.stopPropagation()}>
                 <div className="account-modal-header">
                   <h2>アカウント検索</h2>
-                  <button
-                    type="button"
-                    onClick={() => setSearchOpen(false)}
-                    aria-label="閉じる"
-                  >
-                    ×
-                  </button>
+                  <button type="button" onClick={() => setSearchOpen(false)}>×</button>
                 </div>
                 {searchError && <p className="error">{searchError}</p>}
                 {!searchError && accountResults.length === 0 && (
@@ -162,19 +255,10 @@ export default function Layout({ children }: { children: ReactNode }) {
                 <div className="account-result-list">
                   {accountResults.map((result) => (
                     <div key={result.id} className="account-result">
-                      <ProfileAvatar
-                        profile={result}
-                        userId={result.id}
-                        size="medium"
-                      />
+                      <ProfileAvatar profile={result} userId={result.id} size="medium" />
                       <p className="meta">{result.bio || '自己紹介は未入力です。'}</p>
-                      <button
-                        type="button"
-                        onClick={() => toggleSearchFollow(result.id)}
-                      >
-                        {followedIds.has(result.id)
-                          ? 'フォロー解除'
-                          : 'フォローする'}
+                      <button type="button" onClick={() => toggleSearchFollow(result.id)}>
+                        {followedIds.has(result.id) ? 'フォロー解除' : 'フォローする'}
                       </button>
                     </div>
                   ))}
