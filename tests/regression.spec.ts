@@ -134,6 +134,36 @@ for (const liked of [false, true]) {
   });
 }
 
+test('画面外へ出た吹き出しは隠し、スクロールで戻ると同じ位置に再表示する', async ({ page }) => {
+  await mockApi(page);
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  await page.goto('/');
+  const popup = page.locator('.map-top-popup').first();
+  await expect(popup).toHaveAttribute('data-onscreen', 'true');
+  await expect(popup).toBeVisible();
+  const before = await popup.boundingBox();
+
+  const viewport = page.locator('.dm-map-viewport');
+  const box = (await viewport.boundingBox())!;
+  const centerX = box.x + box.width / 2;
+  const centerY = box.y + box.height / 2;
+  // 地図を右へドラッグして、先頭の吹き出しを表示領域の外へ送り出す。
+  await page.mouse.move(centerX, centerY);
+  await page.mouse.down();
+  await page.mouse.move(centerX + 520, centerY, { steps: 10 });
+  await page.mouse.up();
+
+  await expect(popup).toHaveAttribute('data-onscreen', 'false');
+  await expect(popup).toBeHidden();
+
+  await page.getByRole('button', { name: 'リセット' }).click();
+  await expect(popup).toHaveAttribute('data-onscreen', 'true');
+  await expect(popup).toBeVisible();
+  const after = await popup.boundingBox();
+  expect(Math.round(after!.x)).toBe(Math.round(before!.x));
+  expect(Math.round(after!.y)).toBe(Math.round(before!.y));
+});
+
 test('メニューのカスタムクリックでもSPA遷移と認証復帰先を維持する', async ({ page }) => {
   await mockApi(page);
   await page.goto('/routes?prefecture_code=13');

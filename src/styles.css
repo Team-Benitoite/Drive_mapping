@@ -1053,11 +1053,44 @@ hr {
 /* 2. 看板風ポップアップ吹き出し（Signboard Style） */
 .map-top-popup {
   cursor: pointer;
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* 画面外では非表示。visibilityの遷移は離散的なので、
+     表示へ戻るときは即座にvisible、隠すときはフェードアウト後にhiddenとなる。 */
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.22s ease,
+    visibility 0.22s linear;
+}
+
+.map-top-popup.is-onscreen {
+  opacity: 1;
+  visibility: visible;
 }
 
 .map-top-popup:hover {
   transform: translate(-50%, -108%) scale(1.06) !important;
+}
+
+/* スクロールで画面内へ戻った吹き出しは、ふわっと立ち上がって復帰する。 */
+.map-top-popup .signboard-card,
+.map-top-popup .signboard-arrow {
+  transform-origin: bottom center;
+  transform: scale(0.92);
+  transition: transform 0.26s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.map-top-popup.is-onscreen .signboard-card,
+.map-top-popup.is-onscreen .signboard-arrow {
+  transform: scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-top-popup,
+  .map-top-popup .signboard-card,
+  .map-top-popup .signboard-arrow {
+    transition: none;
+  }
 }
 
 .signboard-card {

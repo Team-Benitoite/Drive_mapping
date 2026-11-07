@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react';
 import { prefectureMap } from '../utils/prefectures';
 import { navigate } from '../utils/navigation';
 import type { PrefectureCounts, TopPrefecture } from '../types/models';
@@ -45,6 +45,23 @@ const PREF_CENTERS: Record<number, { x: number; y: number }> = {
   41: { x: 118, y: 628 }, 42: { x: 91, y: 637 }, 43: { x: 139, y: 691 }, 44: { x: 185, y: 648 },
   45: { x: 185, y: 701 }, 46: { x: 139, y: 741 }, 47: { x: 87, y: 795 }
 };
+
+// 吹き出しの画面内判定のしきい値（px）。
+// 表示は「完全に表示領域の内側」を条件とし、非表示は HIDE_SLACK 分はみ出すまで待つ。
+// 2つの値に差を付けることで、境界付近のドラッグで表示／非表示が点滅するのを防ぐ。
+const SHOW_MARGIN = 0;
+const HIDE_SLACK = 4;
+
+type ClipRect = { left: number; top: number; right: number; bottom: number };
+
+function isInsideClip(rect: DOMRect, clip: ClipRect, margin: number) {
+  return (
+    rect.left >= clip.left + margin &&
+    rect.right <= clip.right - margin &&
+    rect.top >= clip.top + margin &&
+    rect.bottom <= clip.bottom - margin
+  );
+}
 
 const areas: [code: number, name: string, coords: string][] = [
   [47, '沖縄県', '76,774,98,774,99,818,76,817'],
@@ -107,6 +124,12 @@ export interface JapanMapProps {
 export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode }: JapanMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const popupRefs = useRef(new Map<number, HTMLDivElement>());
+
+  // 画面内に収まっている吹き出しだけを true にする。初期値は空＝全て非表示。
+  const [visiblePopups, setVisiblePopups] = useState<Record<number, boolean>>({});
+  const visiblePopupsRef = useRef<Record<number, boolean>>({});
 
   const [hoveredPref, setHoveredPref] = useState<number | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -125,6 +148,85 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
       return false;
     }
   });
+
+  // 地図ビューポート（はみ出しを隠す枠）とブラウザ表示領域の重なりを実際の表示範囲とする。
+  const updatePopupVisibility = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const bounds = container.getBoundingClientRect();
+    const clip: ClipRect = {
+      left: Math.max(bounds.left, 0),
+      top: Math.max(bounds.top, 0),
+      right: Math.min(bounds.right, window.innerWidth),
+      bottom: Math.min(bounds.bottom, window.innerHeight),
+    };
+    const clipWidth = clip.right - clip.left;
+    const clipHeight = clip.bottom - clip.top;
+
+    const previous = visiblePopupsRef.current;
+    const next: Record<number, boolean> = {};
+
+    popupRefs.current.forEach((element, code) => {
+      const rect = element.getBoundingClientRect();
+
+      if (clipWidth <= 0 || clipHeight <= 0 || rect.width === 0 || rect.height === 0) {
+        next[code] = false;
+        return;
+      }
+
+      if (rect.width > clipWidth || rect.height > clipHeight) {
+        // 拡大しすぎて吹き出しが表示範囲より大きい場合は、矢印が指す位置が見えているかで判定する。
+        const tipX = rect.left + rect.width / 2;
+        const tipY = rect.bottom;
+        next[code] = tipX >= clip.left && tipX <= clip.right && tipY >= clip.top && tipY <= clip.bottom;
+        return;
+      }
+
+      next[code] = isInsideClip(rect, clip, previous[code] ? -HIDE_SLACK : SHOW_MARGIN);
+    });
+
+    const codes = Object.keys(next);
+    const changed =
+      codes.length !== Object.keys(previous).length ||
+      codes.some((code) => next[Number(code)] !== previous[Number(code)]);
+    if (!changed) return;
+
+    visiblePopupsRef.current = next;
+    setVisiblePopups(next);
+  }, []);
+
+  // パン・ズーム・データ更新のたびに再判定する（描画前に確定させてちらつきを防ぐ）。
+  useLayoutEffect(() => {
+    updatePopupVisibility();
+    const frame = requestAnimationFrame(updatePopupVisibility);
+    return () => cancelAnimationFrame(frame);
+  }, [pan, zoom, topPrefectures, updatePopupVisibility]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const stage = stageRef.current;
+
+    // ズーム時のtransformアニメーション終了後の位置でも判定し直す。
+    function handleTransitionEnd(event: TransitionEvent) {
+      if (event.propertyName === 'transform') updatePopupVisibility();
+    }
+
+    window.addEventListener('resize', updatePopupVisibility);
+    window.addEventListener('scroll', updatePopupVisibility, { passive: true });
+    stage?.addEventListener('transitionend', handleTransitionEnd);
+
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => updatePopupVisibility());
+    if (container) observer?.observe(container);
+    if (stage) observer?.observe(stage);
+
+    return () => {
+      window.removeEventListener('resize', updatePopupVisibility);
+      window.removeEventListener('scroll', updatePopupVisibility);
+      stage?.removeEventListener('transitionend', handleTransitionEnd);
+      observer?.disconnect();
+    };
+  }, [updatePopupVisibility]);
 
   useEffect(() => {
     const timer = setTimeout(() => setShowGuide(false), 4000);
@@ -241,6 +343,7 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
       <div className={`dm-map-wrap ${heatOn ? 'heat-on' : ''}`}>
         <div
           className="dm-map-stage"
+          ref={stageRef}
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
             transformOrigin: 'center center',
@@ -257,6 +360,7 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
             src="/map.jpg"
             alt="日本地図"
             draggable="false"
+            onLoad={updatePopupVisibility}
             style={{
               width: '100%',
               height: 'auto',
@@ -330,21 +434,31 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
 
             const posX = (center.x / 894) * 100;
             const posY = (center.y / 894) * 100;
+            // 画面外の吹き出しはvisibility:hiddenで隠す。
+            // DOMには残すので、スクロールで戻ったときは同じ位置へフェードインで復帰する。
+            const isOnScreen = visiblePopups[item.prefecture_code] === true;
 
             return (
               <div
                 key={item.prefecture_code}
-                className="map-top-popup"
+                ref={(element) => {
+                  if (element) popupRefs.current.set(item.prefecture_code, element);
+                  else popupRefs.current.delete(item.prefecture_code);
+                }}
+                className={`map-top-popup ${isOnScreen ? 'is-onscreen' : 'is-offscreen'}`}
+                data-onscreen={isOnScreen ? 'true' : 'false'}
+                aria-hidden={isOnScreen ? undefined : true}
                 style={{
                   position: 'absolute',
                   left: `${posX}%`,
                   top: `${posY}%`,
                   transform: 'translate(-50%, -100%)',
                   zIndex: 10,
-                  pointerEvents: 'auto'
+                  pointerEvents: isOnScreen ? 'auto' : 'none'
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (!isOnScreen) return;
                   if (!isMovedRef.current) {
                     navigate(`/routes?prefecture_code=${item.prefecture_code}`);
                   }
