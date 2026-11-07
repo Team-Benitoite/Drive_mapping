@@ -1,0 +1,7 @@
+{
+  "name": "Drive Mapping",
+  "description": "Drive route mapping and sharing application for Japan road trips.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
