@@ -1,11 +1,19 @@
-import { useEffect, useMemo, useState } from 'react';
-import RouteCard from '../components/RouteCard.jsx';
-import PrefectureSelect from '../components/PrefectureSelect.jsx';
-import { supabase } from '../lib/supabase.js';
-import { loadProfilesByIds } from '../utils/profileData.js';
-import { Link, navigate } from '../utils/navigation.jsx';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import RouteCard from '../components/RouteCard';
+import PrefectureSelect from '../components/PrefectureSelect';
+import { supabase } from '../lib/supabase';
+import { loadProfilesByIds } from '../utils/profileData';
+import { Link, navigate } from '../utils/navigation';
+import { getErrorMessage } from '../utils/errors';
+import type { RouteListItem } from '../types/models';
 
-function readInitialFilters() {
+interface RouteFilters {
+  q: string;
+  prefectureCode: string;
+  userId: string;
+}
+
+function readInitialFilters(): RouteFilters {
   const params = new URLSearchParams(window.location.search);
   return {
     q: params.get('q') || '',
@@ -15,16 +23,15 @@ function readInitialFilters() {
 }
 
 export default function RoutesIndexPage() {
-  const initialFilters = useMemo(readInitialFilters, []);
-  const [q, setQ] = useState(initialFilters.q);
-  const [prefectureCode, setPrefectureCode] = useState(
-    initialFilters.prefectureCode,
-  );
-  const [routes, setRoutes] = useState([]);
+  const [filters, setFilters] = useState(readInitialFilters);
+  const { q, prefectureCode, userId } = filters;
+  const requestId = useRef(0);
+  const [routes, setRoutes] = useState<RouteListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  async function loadRoutes(filters = { q, prefectureCode, userId: initialFilters.userId }) {
+  const loadRoutes = useCallback(async (filters: RouteFilters) => {
+    const currentRequest = ++requestId.current;
     setLoading(true);
     setError('');
 
@@ -39,7 +46,7 @@ export default function RoutesIndexPage() {
         `
           *,
           route_photos(storage_path, thumb_path, sort_order),
-          route_favorites(user_id)
+          route_likes(user_id)
         `,
       )
       .order('created_at', { ascending: false })
@@ -51,7 +58,7 @@ export default function RoutesIndexPage() {
     if (filters.q.trim()) {
       const keyword = filters.q.trim().replaceAll(',', ' ');
       query = query.or(
-        `title.ifavorite.%${keyword}%,summary.ifavorite.%${keyword}%,description.ifavorite.%${keyword}%`,
+        `title.ilike.%${keyword}%,summary.ilike.%${keyword}%,description.ilike.%${keyword}%`,
       );
     }
 
@@ -64,6 +71,7 @@ export default function RoutesIndexPage() {
     }
 
     const { data, error: fetchError } = await query;
+    if (currentRequest !== requestId.current) return;
 
     if (fetchError) {
       setError(fetchError.message);
@@ -72,6 +80,7 @@ export default function RoutesIndexPage() {
         const profiles = await loadProfilesByIds(
           (data || []).map((route) => route.user_id),
         );
+        if (currentRequest !== requestId.current) return;
         setRoutes(
           (data || []).map((route) => ({
             ...route,
@@ -79,26 +88,37 @@ export default function RoutesIndexPage() {
           })),
         );
       } catch (profileError) {
-        setError(profileError.message);
+        if (currentRequest !== requestId.current) return;
+        setError(
+          getErrorMessage(profileError, 'プロフィールの取得に失敗しました。'),
+        );
       }
     }
 
     setLoading(false);
-  }
-
-  useEffect(() => {
-    loadRoutes(initialFilters);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function handleSubmit(event) {
+  useEffect(() => {
+    function syncFilters() {
+      const nextFilters = readInitialFilters();
+      setFilters(nextFilters);
+      void loadRoutes(nextFilters);
+    }
+    syncFilters();
+    window.addEventListener('popstate', syncFilters);
+    return () => {
+      window.removeEventListener('popstate', syncFilters);
+      requestId.current += 1;
+    };
+  }, [loadRoutes]);
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const params = new URLSearchParams();
     if (q.trim()) params.set('q', q.trim());
     if (prefectureCode) params.set('prefecture_code', prefectureCode);
-    if (initialFilters.userId) params.set('user_id', initialFilters.userId);
+    if (userId) params.set('user_id', userId);
     navigate(`/routes${params.toString() ? `?${params.toString()}` : ''}`);
-    loadRoutes({ q, prefectureCode, userId: initialFilters.userId });
   }
 
   return (
@@ -117,11 +137,11 @@ export default function RoutesIndexPage() {
           type="search"
           placeholder="キーワード（タイトル/概要/説明）"
           value={q}
-          onChange={(event) => setQ(event.target.value)}
+          onChange={(event) => setFilters({ ...filters, q: event.target.value })}
         />
         <PrefectureSelect
           value={prefectureCode}
-          onChange={setPrefectureCode}
+          onChange={(value) => setFilters({ ...filters, prefectureCode: value })}
         />
         <button type="submit">検索</button>
       </form>

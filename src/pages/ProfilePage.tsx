@@ -1,17 +1,23 @@
-import { useEffect, useMemo, useState } from 'react';
-import AuthGuard from '../components/AuthGuard.jsx';
-import JapanMap from '../components/JapanMap.jsx';
-import ProfileAvatar from '../components/ProfileAvatar.jsx';
-import RouteCard from '../components/RouteCard.jsx';
-import { useAuth } from '../contexts/AuthContext.jsx';
-import { profileIconBucket, supabase } from '../lib/supabase.js';
-import { getPrefectureName } from '../utils/prefectures.js';
-import { loadProfilesByIds } from '../utils/profileData.js';
-import { getAuthHref, Link, navigate } from '../utils/navigation.jsx';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import AuthGuard from '../components/AuthGuard';
+import JapanMap from '../components/JapanMap';
+import ProfileAvatar from '../components/ProfileAvatar';
+import RouteCard from '../components/RouteCard';
+import { useAuth } from '../contexts/AuthContext';
+import { profileIconBucket, supabase } from '../lib/supabase';
+import { getPrefectureName } from '../utils/prefectures';
+import { loadProfilesByIds } from '../utils/profileData';
+import { getAuthHref, Link, navigate } from '../utils/navigation';
+import { getErrorMessage } from '../utils/errors';
+import type {
+  PrefectureCounts,
+  ProfileSummary,
+  RouteListItem,
+} from '../types/models';
 
-function safeStorageName(file) {
+function safeStorageName(file: File): string {
   const extension = file.name.includes('.')
-    ? file.name.split('.').pop().toLowerCase()
+    ? file.name.split('.').pop()?.toLowerCase() || 'jpg'
     : 'jpg';
   const token =
     typeof crypto !== 'undefined' && crypto.randomUUID
@@ -20,7 +26,23 @@ function safeStorageName(file) {
   return `${token}.${extension}`;
 }
 
-function ProfileList({ currentUserId, followedIds, onToggleFollow, saving, title, profiles }) {
+interface ProfileListProps {
+  currentUserId: string | undefined;
+  followedIds: Set<string>;
+  onToggleFollow: (followeeId: string) => void;
+  saving: boolean;
+  title: string;
+  profiles: ProfileSummary[];
+}
+
+function ProfileList({
+  currentUserId,
+  followedIds,
+  onToggleFollow,
+  saving,
+  title,
+  profiles,
+}: ProfileListProps) {
   return (
     <section className="panel">
       <h2>{title}</h2>
@@ -55,22 +77,26 @@ function ProfileList({ currentUserId, followedIds, onToggleFollow, saving, title
   );
 }
 
-export default function ProfilePage({ id }) {
+export default function ProfilePage({ id }: { id?: string }) {
   const { profile: currentProfile, setProfile, user } = useAuth();
   const targetId = id || user?.id;
   const isOwnProfile = Boolean(user?.id && targetId === user.id);
-  const [profile, setLocalProfile] = useState(null);
+  const [profile, setLocalProfile] = useState<ProfileSummary | null>(null);
   const [form, setForm] = useState({ bio: '' });
-  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [password, setPassword] = useState('');
-  const [routes, setRoutes] = useState([]);
-  const [counts, setCounts] = useState({});
-  const [followingProfiles, setFollowingProfiles] = useState([]);
-  const [followerProfiles, setFollowerProfiles] = useState([]);
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [currentUserFolloweeIds, setCurrentUserFolloweeIds] = useState(
-    () => new Set(),
+  const [routes, setRoutes] = useState<RouteListItem[]>([]);
+  const [counts, setCounts] = useState<PrefectureCounts>({});
+  const [followingProfiles, setFollowingProfiles] = useState<ProfileSummary[]>(
+    [],
   );
+  const [followerProfiles, setFollowerProfiles] = useState<ProfileSummary[]>(
+    [],
+  );
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [currentUserFolloweeIds, setCurrentUserFolloweeIds] = useState<
+    Set<string>
+  >(() => new Set());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -114,7 +140,7 @@ export default function ProfilePage({ id }) {
         `
           *,
           route_photos(storage_path, thumb_path, sort_order),
-          route_favorites(user_id)
+          route_likes(user_id)
         `,
       )
       .eq('user_id', targetId)
@@ -132,7 +158,7 @@ export default function ProfilePage({ id }) {
 
     setRoutes((routeData || []).map((route) => ({ ...route, profile: profileData })));
 
-    const nextCounts = {};
+    const nextCounts: PrefectureCounts = {};
     (routeData || []).forEach((route) => {
       const code = Number(route.prefecture_code);
       if (code) nextCounts[code] = (nextCounts[code] || 0) + 1;
@@ -194,8 +220,14 @@ export default function ProfilePage({ id }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetId, user?.id]);
 
-  async function handleProfileSubmit(event) {
+  async function handleProfileSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!supabase || !user) {
+      setError('Supabase環境変数が未設定です。');
+      return;
+    }
+
     setSaving(true);
     setError('');
     setMessage('');
@@ -231,14 +263,22 @@ export default function ProfilePage({ id }) {
       setAvatarFile(null);
       setMessage('プロフィールを保存しました。');
     } catch (submitError) {
-      setError(submitError.message || 'プロフィールの保存に失敗しました。');
+      setError(
+        getErrorMessage(submitError, 'プロフィールの保存に失敗しました。'),
+      );
     } finally {
       setSaving(false);
     }
   }
 
-  async function handlePasswordSubmit(event) {
+  async function handlePasswordSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!supabase) {
+      setError('Supabase環境変数が未設定です。');
+      return;
+    }
+
     setSaving(true);
     setError('');
     setMessage('');
@@ -251,18 +291,19 @@ export default function ProfilePage({ id }) {
       setPassword('');
       setMessage('パスワードを変更しました。');
     } catch (submitError) {
-      setError(submitError.message || 'パスワード変更に失敗しました。');
+      setError(getErrorMessage(submitError, 'パスワード変更に失敗しました。'));
     } finally {
       setSaving(false);
     }
   }
 
-  async function toggleFollow(followeeId = targetId) {
+  async function toggleFollow(followeeId: string | undefined = targetId) {
     if (!user) {
       navigate(getAuthHref('/login'));
       return;
     }
     if (!followeeId || followeeId === user.id) return;
+    if (!supabase) return;
 
     setSaving(true);
     setError('');
@@ -284,7 +325,7 @@ export default function ProfilePage({ id }) {
 
       await loadProfile();
     } catch (followError) {
-      setError(followError.message || 'フォローの更新に失敗しました。');
+      setError(getErrorMessage(followError, 'フォローの更新に失敗しました。'));
     } finally {
       setSaving(false);
     }

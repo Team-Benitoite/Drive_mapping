@@ -1,13 +1,34 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { hasSupabaseEnv, supabase } from '../lib/supabase.js';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+} from 'react';
+import type { User } from '@supabase/supabase-js';
+import { hasSupabaseEnv, supabase } from '../lib/supabase';
+import type { ProfileSummary } from '../types/models';
+import { getErrorMessage } from '../utils/errors';
 
-const AuthContext = createContext(null);
+export interface AuthContextValue {
+  hasSupabaseEnv: boolean;
+  authError: string;
+  loading: boolean;
+  profile: ProfileSummary | null;
+  setProfile: Dispatch<SetStateAction<ProfileSummary | null>>;
+  user: User | null;
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null);
 const AUTH_TIMEOUT_MS = 8000;
 
-function withTimeout(promise, ms) {
+function withTimeout<T>(promise: PromiseLike<T>, ms: number): Promise<T> {
   return Promise.race([
     promise,
-    new Promise((_, reject) => {
+    new Promise<never>((_, reject) => {
       window.setTimeout(
         () => reject(new Error('Supabaseへの接続がタイムアウトしました。')),
         ms,
@@ -16,9 +37,9 @@ function withTimeout(promise, ms) {
   ]);
 }
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<ProfileSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState('');
 
@@ -45,8 +66,10 @@ export function AuthProvider({ children }) {
         if (!cancelled) {
           setUser(null);
           setAuthError(
-            error.message ||
+            getErrorMessage(
+              error,
               'Supabaseへの接続に失敗しました。.env の設定を確認してください。',
+            ),
           );
         }
       } finally {
@@ -94,7 +117,7 @@ export function AuthProvider({ children }) {
     };
   }, [user]);
 
-  const value = useMemo(
+  const value = useMemo<AuthContextValue>(
     () => ({
       hasSupabaseEnv,
       authError,
@@ -109,7 +132,7 @@ export function AuthProvider({ children }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext);
   if (!context) throw new Error('useAuth must be used inside AuthProvider');
   return context;

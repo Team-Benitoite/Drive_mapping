@@ -1,12 +1,20 @@
-import { displayProfileName, getPublicAvatarUrl } from '../utils/profileData.js';
-import { Link } from '../utils/navigation.jsx';
+import { displayProfileName, getPublicAvatarUrl } from '../utils/profileData';
+import { Link } from '../utils/navigation';
+import type { ProfileSummary } from '../types/models';
+
+export interface ProfileAvatarProps {
+  profile: ProfileSummary | null | undefined;
+  userId?: string | null;
+  size?: 'small' | 'medium' | 'large';
+  showName?: boolean;
+}
 
 export default function ProfileAvatar({
   profile,
   userId,
   size = 'small',
   showName = true,
-}) {
+}: ProfileAvatarProps) {
   const name = displayProfileName(profile);
   const avatarUrl = getPublicAvatarUrl(profile?.avatar_path);
   const content = (

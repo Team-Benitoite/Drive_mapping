@@ -1,14 +1,36 @@
-import { useEffect, useMemo, useState } from 'react';
-import AuthGuard from '../components/AuthGuard.jsx';
-import PrefectureSelect from '../components/PrefectureSelect.jsx';
-import { useAuth } from '../contexts/AuthContext.jsx';
-import { storageBucket, supabase } from '../lib/supabase.js';
-import { isGoogleMapsUrl } from '../utils/googleMaps.js';
-import { prefectures } from '../utils/prefectures.js';
-import { getPublicPhotoUrl, isOwner, normalizeMiddlePoints } from '../utils/routeData.js';
-import { Link, navigate } from '../utils/navigation.jsx';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import AuthGuard from '../components/AuthGuard';
+import PrefectureSelect from '../components/PrefectureSelect';
+import { useAuth } from '../contexts/AuthContext';
+import { storageBucket, supabase } from '../lib/supabase';
+import { isGoogleMapsUrl } from '../utils/googleMaps';
+import { prefectures } from '../utils/prefectures';
+import { getPublicPhotoUrl, isOwner, normalizeMiddlePoints } from '../utils/routeData';
+import { Link, navigate } from '../utils/navigation';
+import { getErrorMessage } from '../utils/errors';
+import type { TablesInsert } from '../types/database';
+import type {
+  MiddlePointInput,
+  RouteDetailPhoto,
+} from '../types/models';
 
-const emptyForm = {
+export interface RouteFormValues {
+  title: string;
+  summary: string;
+  description: string;
+  address: string;
+  siteUrl: string;
+  googleMapsUrl: string;
+  prefectureCode: string;
+  subPrefectureCodes: string[];
+  startLabel: string;
+  startAddress: string;
+  middlePoints: MiddlePointInput[];
+  goalLabel: string;
+  goalAddress: string;
+}
+
+const emptyForm: RouteFormValues = {
   title: '',
   summary: '',
   description: '',
@@ -24,9 +46,9 @@ const emptyForm = {
   goalAddress: '',
 };
 
-function safeStorageName(file) {
+function safeStorageName(file: File): string {
   const extension = file.name.includes('.')
-    ? file.name.split('.').pop().toLowerCase()
+    ? file.name.split('.').pop()?.toLowerCase() || 'jpg'
     : 'jpg';
   const token =
     typeof crypto !== 'undefined' && crypto.randomUUID
@@ -35,8 +57,11 @@ function safeStorageName(file) {
   return `${token}.${extension}`;
 }
 
-function buildPointRows(routeId, form) {
-  const rows = [];
+function buildPointRows(
+  routeId: number,
+  form: RouteFormValues,
+): TablesInsert<'route_points'>[] {
+  const rows: TablesInsert<'route_points'>[] = [];
 
   if (form.startLabel.trim() || form.startAddress.trim()) {
     rows.push({
@@ -71,13 +96,18 @@ function buildPointRows(routeId, form) {
   return rows;
 }
 
-export default function RouteFormPage({ mode, id }) {
+export interface RouteFormPageProps {
+  mode: 'create' | 'edit';
+  id?: number;
+}
+
+export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
   const isEditMode = mode === 'edit';
   const { user } = useAuth();
-  const [form, setForm] = useState(emptyForm);
-  const [files, setFiles] = useState([]);
-  const [existingPhotos, setExistingPhotos] = useState([]);
-  const [deletePhotoIds, setDeletePhotoIds] = useState([]);
+  const [form, setForm] = useState<RouteFormValues>(emptyForm);
+  const [files, setFiles] = useState<File[]>([]);
+  const [existingPhotos, setExistingPhotos] = useState<RouteDetailPhoto[]>([]);
+  const [deletePhotoIds, setDeletePhotoIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(isEditMode);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -90,7 +120,10 @@ export default function RouteFormPage({ mode, id }) {
     [deletePhotoIds.length, existingPhotos.length, files.length],
   );
 
-  function updateField(field, value) {
+  function updateField<Field extends keyof RouteFormValues>(
+    field: Field,
+    value: RouteFormValues[Field],
+  ) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
@@ -101,7 +134,11 @@ export default function RouteFormPage({ mode, id }) {
     ]);
   }
 
-  function updateMiddlePoint(index, field, value) {
+  function updateMiddlePoint(
+    index: number,
+    field: keyof MiddlePointInput,
+    value: string,
+  ) {
     updateField(
       'middlePoints',
       form.middlePoints.map((point, currentIndex) =>
@@ -110,7 +147,7 @@ export default function RouteFormPage({ mode, id }) {
     );
   }
 
-  function removeMiddlePoint(index) {
+  function removeMiddlePoint(index: number) {
     updateField(
       'middlePoints',
       form.middlePoints.filter((_point, currentIndex) => currentIndex !== index),
@@ -119,7 +156,7 @@ export default function RouteFormPage({ mode, id }) {
 
   useEffect(() => {
     async function loadRoute() {
-      if (!isEditMode || !supabase || !user) {
+      if (!isEditMode || id === undefined || !supabase || !user) {
         setLoading(false);
         return;
       }
@@ -202,7 +239,7 @@ export default function RouteFormPage({ mode, id }) {
     loadRoute();
   }, [id, isEditMode, user]);
 
-  function validate() {
+  function validate(): string {
     if (!form.title.trim() || form.title.length > 100) {
       return 'タイトルは必須（100文字以内）です。';
     }
@@ -230,12 +267,15 @@ export default function RouteFormPage({ mode, id }) {
     return '';
   }
 
-  async function savePrefectures(routeId) {
+  async function savePrefectures(
+    client: NonNullable<typeof supabase>,
+    routeId: number,
+  ) {
     if (isEditMode) {
-      await supabase.from('route_prefectures').delete().eq('route_id', routeId);
+      await client.from('route_prefectures').delete().eq('route_id', routeId);
     }
 
-    const rows = [
+    const rows: TablesInsert<'route_prefectures'>[] = [
       {
         route_id: routeId,
         prefecture_code: Number(form.prefectureCode),
@@ -251,28 +291,34 @@ export default function RouteFormPage({ mode, id }) {
     ];
 
     if (rows.length) {
-      const { error: insertError } = await supabase
+      const { error: insertError } = await client
         .from('route_prefectures')
         .insert(rows);
       if (insertError) throw insertError;
     }
   }
 
-  async function savePoints(routeId) {
+  async function savePoints(
+    client: NonNullable<typeof supabase>,
+    routeId: number,
+  ) {
     if (isEditMode) {
-      await supabase.from('route_points').delete().eq('route_id', routeId);
+      await client.from('route_points').delete().eq('route_id', routeId);
     }
 
     const rows = buildPointRows(routeId, form);
     if (rows.length) {
-      const { error: insertError } = await supabase
+      const { error: insertError } = await client
         .from('route_points')
         .insert(rows);
       if (insertError) throw insertError;
     }
   }
 
-  async function deleteSelectedPhotos(routeId) {
+  async function deleteSelectedPhotos(
+    client: NonNullable<typeof supabase>,
+    routeId: number,
+  ) {
     if (!deletePhotoIds.length) return;
 
     const targets = existingPhotos.filter((photo) =>
@@ -280,13 +326,13 @@ export default function RouteFormPage({ mode, id }) {
     );
     const paths = targets
       .flatMap((photo) => [photo.storage_path, photo.thumb_path])
-      .filter(Boolean);
+      .filter((path): path is string => Boolean(path));
 
     if (paths.length) {
-      await supabase.storage.from(storageBucket).remove(paths);
+      await client.storage.from(storageBucket).remove(paths);
     }
 
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await client
       .from('route_photos')
       .delete()
       .eq('route_id', routeId)
@@ -295,13 +341,17 @@ export default function RouteFormPage({ mode, id }) {
     if (deleteError) throw deleteError;
   }
 
-  async function uploadPhotos(routeId) {
+  async function uploadPhotos(
+    client: NonNullable<typeof supabase>,
+    userId: string,
+    routeId: number,
+  ) {
     if (!files.length) return;
 
-    const rows = [];
+    const rows: TablesInsert<'route_photos'>[] = [];
     for (const [index, file] of files.entries()) {
-      const storagePath = `${user.id}/${routeId}/${safeStorageName(file)}`;
-      const { error: uploadError } = await supabase.storage
+      const storagePath = `${userId}/${routeId}/${safeStorageName(file)}`;
+      const { error: uploadError } = await client.storage
         .from(storageBucket)
         .upload(storagePath, file);
 
@@ -315,20 +365,22 @@ export default function RouteFormPage({ mode, id }) {
       });
     }
 
-    const { error: insertError } = await supabase
+    const { error: insertError } = await client
       .from('route_photos')
       .insert(rows);
     if (insertError) throw insertError;
   }
 
-  async function handleSubmit(event) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
 
-    if (!supabase) {
+    if (!supabase || !user) {
       setError('Supabase環境変数が未設定です。');
       return;
     }
+
+    const client = supabase;
 
     const validationError = validate();
     if (validationError) {
@@ -340,7 +392,7 @@ export default function RouteFormPage({ mode, id }) {
 
     try {
       let routeId = id;
-      const routePayload = {
+      const routePayload: TablesInsert<'routes'> = {
         user_id: user.id,
         title: form.title.trim(),
         summary: form.summary.trim() || null,
@@ -352,13 +404,14 @@ export default function RouteFormPage({ mode, id }) {
       };
 
       if (isEditMode) {
-        const { error: updateError } = await supabase
+        if (routeId === undefined) throw new Error('投稿IDが不明です。');
+        const { error: updateError } = await client
           .from('routes')
           .update(routePayload)
-          .eq('id', id);
+          .eq('id', routeId);
         if (updateError) throw updateError;
       } else {
-        const { data, error: insertError } = await supabase
+        const { data, error: insertError } = await client
           .from('routes')
           .insert(routePayload)
           .select('id')
@@ -367,14 +420,14 @@ export default function RouteFormPage({ mode, id }) {
         routeId = data.id;
       }
 
-      await savePrefectures(routeId);
-      await savePoints(routeId);
-      await deleteSelectedPhotos(routeId);
-      await uploadPhotos(routeId);
+      await savePrefectures(client, routeId);
+      await savePoints(client, routeId);
+      await deleteSelectedPhotos(client, routeId);
+      await uploadPhotos(client, user.id, routeId);
 
       navigate(`/routes/${routeId}`);
     } catch (submitError) {
-      setError(submitError.message || '保存に失敗しました。');
+      setError(getErrorMessage(submitError, '保存に失敗しました。'));
     } finally {
       setSubmitting(false);
     }

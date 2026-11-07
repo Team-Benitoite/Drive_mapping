@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
-import { prefectureMap } from '../utils/prefectures.js';
-import { navigate } from '../utils/navigation.jsx';
+import { useEffect, useRef, useState, type MouseEvent } from 'react';
+import { prefectureMap } from '../utils/prefectures';
+import { navigate } from '../utils/navigation';
+import type { PrefectureCounts, TopPrefecture } from '../types/models';
 
 export const REGIONS = {
   hokkaidoTohoku: { id: 'hokkaidoTohoku', name: '北海道・東北', color: '#60A5FA', hover: '#2563EB', prefecture: [1, 2, 3, 4, 5, 6, 7] },
@@ -12,17 +13,17 @@ export const REGIONS = {
   kyushuOkinawa: { id: 'kyushuOkinawa', name: '九州・沖縄', color: '#F87171', hover: '#EF4444', prefecture: [40, 41, 42, 43, 44, 45, 46, 47] }
 };
 
-export function getRegionByCode(code) {
+export function getRegionByCode(code: number) {
   const numCode = Number(code);
-  for (const regKey in REGIONS) {
-    if (REGIONS[regKey].prefecture.includes(numCode)) {
-      return REGIONS[regKey];
+  for (const region of Object.values(REGIONS)) {
+    if (region.prefecture.includes(numCode)) {
+      return region;
     }
   }
   return { id: 'other', name: 'その他', color: '#6B7280', hover: '#4B5563' };
 }
 
-function hexToRgba(hex, alpha = 0.5) {
+function hexToRgba(hex: string, alpha = 0.5) {
   if (!hex || !hex.startsWith('#')) return hex;
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -30,7 +31,7 @@ function hexToRgba(hex, alpha = 0.5) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-const PREF_CENTERS = {
+const PREF_CENTERS: Record<number, { x: number; y: number }> = {
   1: { x: 740, y: 160 }, 2: { x: 697, y: 290 }, 3: { x: 724, y: 349 }, 4: { x: 718, y: 411 },
   5: { x: 665, y: 351 }, 6: { x: 665, y: 411 }, 7: { x: 696, y: 465 }, 8: { x: 727, y: 519 },
   9: { x: 681, y: 513 }, 10: { x: 636, y: 513 }, 11: { x: 657, y: 550 }, 12: { x: 728, y: 587 },
@@ -45,7 +46,7 @@ const PREF_CENTERS = {
   45: { x: 185, y: 701 }, 46: { x: 139, y: 741 }, 47: { x: 87, y: 795 }
 };
 
-const areas = [
+const areas: [code: number, name: string, coords: string][] = [
   [47, '沖縄県', '76,774,98,774,99,818,76,817'],
   [46, '鹿児島県', '111,720,111,762,136,763,136,749,161,750,161,773,167,774,196,754,196,731,168,731,168,720'],
   [43, '熊本県', '123,662,123,704,111,713,111,720,167,719,168,662'],
@@ -97,11 +98,17 @@ const areas = [
   [1, '北海道', '672,80,672,187,638,213,638,246,689,246,689,228,712,227,753,256,802,228,845,228,846,158,812,158,716,80'],
 ];
 
-export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode }) {
-  const containerRef = useRef(null);
-  const imageRef = useRef(null);
-  
-  const [hoveredPref, setHoveredPref] = useState(null);
+export interface JapanMapProps {
+  counts: PrefectureCounts;
+  topPrefectures?: TopPrefecture[];
+  hrefForCode?: (code: number) => string;
+}
+
+export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode }: JapanMapProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+
+  const [hoveredPref, setHoveredPref] = useState<number | null>(null);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [showGuide, setShowGuide] = useState(true);
@@ -132,13 +139,19 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
     return () => window.removeEventListener('dm_heatmap_toggle', handleToggle);
   }, []);
 
-  function handleWheel(e) {
-    e.preventDefault();
-    const zoomFactor = e.deltaY < 0 ? 1.12 : 0.88;
-    setZoom((prevZoom) => Math.min(Math.max(prevZoom * zoomFactor, 0.8), 3.5));
-  }
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    function handleWheel(event: WheelEvent) {
+      event.preventDefault();
+      const zoomFactor = event.deltaY < 0 ? 1.12 : 0.88;
+      setZoom((value) => Math.min(Math.max(value * zoomFactor, 0.8), 3.5));
+    }
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, []);
 
-  function handleMouseDown(e) {
+  function handleMouseDown(e: MouseEvent<HTMLDivElement>) {
     if (e.button !== 0) return;
     setIsMouseDown(true);
     isMovedRef.current = false;
@@ -147,7 +160,7 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
     dragStartRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
   }
 
-  function handleMouseMove(e) {
+  function handleMouseMove(e: MouseEvent<HTMLDivElement>) {
     if (!isMouseDown) return;
     const dx = Math.abs(e.clientX - mouseDownPosRef.current.x);
     const dy = Math.abs(e.clientY - mouseDownPosRef.current.y);
@@ -169,19 +182,19 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
     setPan({ x: 0, y: 0 });
   }
 
-  function handlePrefClick(code) {
+  function handlePrefClick(code: number) {
     if (isMovedRef.current) return;
     navigate(hrefForCode ? hrefForCode(code) : `/routes?prefecture_code=${code}`);
   }
 
-  function heatColor(count) {
+  function heatColor(count: number) {
     if (count <= 0) return 'rgba(255,255,255,0.2)';
     if (count <= 10) return 'rgba(52, 211, 153, 0.65)';
     if (count <= 20) return 'rgba(251, 191, 36, 0.75)';
     return 'rgba(248, 113, 113, 0.75)';
   }
 
-  function coordsToPoints(coords) {
+  function coordsToPoints(coords: string) {
     const values = coords.split(',');
     const points = [];
     for (let index = 0; index < values.length; index += 2) {
@@ -191,10 +204,9 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
   }
 
   return (
-    <div 
-      className="dm-map-viewport" 
+    <div
+      className="dm-map-viewport"
       ref={containerRef}
-      onWheel={handleWheel}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
@@ -227,7 +239,7 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
       </div>
 
       <div className={`dm-map-wrap ${heatOn ? 'heat-on' : ''}`}>
-        <div 
+        <div
           className="dm-map-stage"
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
@@ -258,7 +270,7 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
             className="dm-heat-overlay"
             viewBox="0 0 894 894"
             preserveAspectRatio="none"
-            aria-hidden="true"
+            aria-label="都道府県を選択"
             style={{
               position: 'absolute',
               top: 0,
@@ -284,16 +296,25 @@ export default function JapanMap({ counts = {}, topPrefectures = [], hrefForCode
               return (
                 <polygon
                   key={`${code}-${idx}`}
+                  data-pref={code}
+                  role="link"
+                  tabIndex={0}
+                  aria-label={name}
                   points={coordsToPoints(coords)}
                   fill={fillColor}
                   stroke="#0F172A"
                   strokeWidth="1.2"
-                  style={{ 
-                    transition: 'fill 0.15s ease', 
+                  style={{
+                    transition: 'fill 0.15s ease',
                     cursor: 'pointer',
                     pointerEvents: 'auto'
                   }}
                   onClick={() => handlePrefClick(code)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      navigate(hrefForCode ? hrefForCode(code) : `/routes?prefecture_code=${code}`);
+                    }
+                  }}
                   onMouseEnter={() => setHoveredPref(code)}
                   onMouseLeave={() => setHoveredPref(null)}
                 >

@@ -1,7 +1,8 @@
-import { useAuth } from '../contexts/AuthContext.jsx';
-import { getAuthHref, getCurrentPath, Link } from '../utils/navigation.jsx';
+import type { ReactNode } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { getAuthHref, getCurrentPath, Link } from '../utils/navigation';
 
-export default function AuthGuard({ children }) {
+export default function AuthGuard({ children }: { children: ReactNode }) {
   const { user } = useAuth();
 
   if (!user) {
@@ -23,5 +24,5 @@ export default function AuthGuard({ children }) {
     );
   }
 
-  return children;
+  return <>{children}</>;
 }

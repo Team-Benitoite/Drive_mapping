@@ -1,11 +1,12 @@
-import { useState } from 'react';
-import { supabase } from '../lib/supabase.js';
+import { useState, type FormEvent } from 'react';
+import type { AuthError, AuthResponse } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
 import {
   getAuthHref,
   getAuthReturnPath,
   Link,
   navigate,
-} from '../utils/navigation.jsx';
+} from '../utils/navigation';
 
 export default function SignupPage() {
   const [name, setName] = useState('');
@@ -16,7 +17,7 @@ export default function SignupPage() {
   const [submitting, setSubmitting] = useState(false);
   const returnTo = getAuthReturnPath();
 
-  async function handleSubmit(event) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
     setSuccess('');
@@ -40,8 +41,8 @@ export default function SignupPage() {
 
     setSubmitting(true);
 
-    let data;
-    let signUpError;
+    let data: AuthResponse['data'];
+    let signUpError: AuthError | null = null;
 
     try {
       const result = await supabase.auth.signUp({

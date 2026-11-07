@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
-import AuthGuard from '../components/AuthGuard.jsx';
-import RouteCard from '../components/RouteCard.jsx';
-import { useAuth } from '../contexts/AuthContext.jsx';
-import { supabase } from '../lib/supabase.js';
-import { loadProfilesByIds } from '../utils/profileData.js';
-import { Link } from '../utils/navigation.jsx';
+import AuthGuard from '../components/AuthGuard';
+import RouteCard from '../components/RouteCard';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
+import { loadProfilesByIds } from '../utils/profileData';
+import { Link } from '../utils/navigation';
+import type { RouteListItem } from '../types/models';
 
 export default function FavoritesPage() {
   const { user } = useAuth();
-  const [routes, setRoutes] = useState([]);
+  const [routes, setRoutes] = useState<RouteListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -20,7 +21,7 @@ export default function FavoritesPage() {
       }
 
       const { data, error: fetchError } = await supabase
-        .from('route_favorites')
+        .from('route_likes')
         .select(
           `
             route_id,
@@ -28,7 +29,7 @@ export default function FavoritesPage() {
             routes(
               *,
               route_photos(storage_path, thumb_path, sort_order),
-              route_favorites(user_id)
+              route_likes(user_id)
             )
           `,
         )

@@ -1,12 +1,22 @@
+import type { RouteLocationPoint, RouteLocationSource } from '../types/models';
+
 const DIRECTIONS_URL = 'https://www.google.com/maps/dir/';
 const EMBED_DIRECTIONS_URL =
   'https://www.google.com/maps/embed/v1/directions';
 
-function pointLocation(point) {
+interface DirectionsParts {
+  origin: string;
+  destination: string;
+  waypoints: string[];
+}
+
+function pointLocation(point: RouteLocationPoint): string {
   return String(point?.address || point?.label || '').trim();
 }
 
-export function getRouteLocations(route) {
+export function getRouteLocations(
+  route: RouteLocationSource | null | undefined,
+): string[] {
   const locations = [...(route?.route_points || [])]
     .sort((left, right) => (left.sort_order || 0) - (right.sort_order || 0))
     .map(pointLocation)
@@ -24,7 +34,9 @@ export function getRouteLocations(route) {
   return locations;
 }
 
-function getDirectionsParts(route) {
+function getDirectionsParts(
+  route: RouteLocationSource | null | undefined,
+): DirectionsParts | null {
   const locations = getRouteLocations(route);
   if (locations.length < 2) return null;
 
@@ -35,7 +47,9 @@ function getDirectionsParts(route) {
   };
 }
 
-export function buildGoogleMapsDirectionsUrl(route) {
+export function buildGoogleMapsDirectionsUrl(
+  route: RouteLocationSource | null | undefined,
+): string {
   const directions = getDirectionsParts(route);
   if (!directions) return '';
 
@@ -53,7 +67,10 @@ export function buildGoogleMapsDirectionsUrl(route) {
   return `${DIRECTIONS_URL}?${params.toString()}`;
 }
 
-export function buildGoogleMapsEmbedUrl(route, apiKey) {
+export function buildGoogleMapsEmbedUrl(
+  route: RouteLocationSource | null | undefined,
+  apiKey: string | null | undefined,
+): string {
   const directions = getDirectionsParts(route);
   const key = String(apiKey || '').trim();
   if (!directions || !key) return '';
@@ -72,7 +89,7 @@ export function buildGoogleMapsEmbedUrl(route, apiKey) {
   return `${EMBED_DIRECTIONS_URL}?${params.toString()}`;
 }
 
-export function isGoogleMapsUrl(value) {
+export function isGoogleMapsUrl(value: string | null | undefined): boolean {
   const input = String(value || '').trim();
   if (!input) return true;
 
@@ -94,7 +111,7 @@ export function isGoogleMapsUrl(value) {
   }
 }
 
-export function getSafeGoogleMapsUrl(value) {
+export function getSafeGoogleMapsUrl(value: string | null | undefined): string {
   const input = String(value || '').trim();
   return input && isGoogleMapsUrl(input) ? input : '';
 }

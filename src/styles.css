@@ -1061,6 +1061,7 @@ hr {
 }
 
 .signboard-card {
+  line-height: 1.4;
   width: 165px;
   background: #ffffff;
   border: 2.5px solid #059669;

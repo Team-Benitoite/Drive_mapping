@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import ProfileAvatar from './ProfileAvatar.jsx';
-import { useAuth } from '../contexts/AuthContext.jsx';
-import { supabase } from '../lib/supabase.js';
-import { getAuthHref, Link } from '../utils/navigation.jsx';
+import { useState, type FormEvent, type ReactNode } from 'react';
+import ProfileAvatar from './ProfileAvatar';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
+import { getAuthHref, Link } from '../utils/navigation';
+import type { ProfileSummary } from '../types/models';
 
-export default function Layout({ children }) {
+export default function Layout({ children }: { children: ReactNode }) {
   const { authError, loading, profile, user } = useAuth();
   const userName = profile?.name || user?.email || 'ユーザー';
 
@@ -26,13 +27,15 @@ export default function Layout({ children }) {
   };
 
   const [accountQuery, setAccountQuery] = useState('');
-  const [accountResults, setAccountResults] = useState([]);
-  const [followedIds, setFollowedIds] = useState(() => new Set());
+  const [accountResults, setAccountResults] = useState<ProfileSummary[]>([]);
+  const [followedIds, setFollowedIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchError, setSearchError] = useState('');
   const [searching, setSearching] = useState(false);
 
-  async function handleAccountSearch(event) {
+  async function handleAccountSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSearchError('');
     if (!supabase || !user || !accountQuery.trim()) return;
@@ -73,7 +76,7 @@ export default function Layout({ children }) {
     setSearching(false);
   }
 
-  async function toggleSearchFollow(profileId) {
+  async function toggleSearchFollow(profileId: string) {
     if (!supabase || !user || !profileId) return;
 
     if (followedIds.has(profileId)) {
@@ -114,11 +117,12 @@ export default function Layout({ children }) {
         <main className="container">
           {/* ヘッダー操作バー */}
           <div className="auth-header-bar" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px', position: 'relative', marginBottom: '16px' }}>
-            
+
             {/* 1. 投稿件数トグルボタン */}
             <button
               type="button"
               onClick={toggleHeat}
+              aria-pressed={heatOn}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -203,8 +207,9 @@ export default function Layout({ children }) {
                     <hr style={{ margin: '4px 0' }} />
                     <Link href="/profile" onClick={() => setMenuOpen(false)}>プロフィール</Link>
                     <Link href="/routes/new" onClick={() => setMenuOpen(false)}>投稿する</Link>
+                    <Link href="/favorites" onClick={() => setMenuOpen(false)}>お気に入り</Link>
                     <Link href="/logout" onClick={() => setMenuOpen(false)}>ログアウト</Link>
-                    
+
                     <form className="account-search" onSubmit={handleAccountSearch} style={{ marginTop: '8px' }}>
                       <input
                         type="search"

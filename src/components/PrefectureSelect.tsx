@@ -1,6 +1,16 @@
-import { prefectures } from '../utils/prefectures.js';
+import { prefectures } from '../utils/prefectures';
 
-export default function PrefectureSelect({ value, onChange, required = false }) {
+export interface PrefectureSelectProps {
+  value: string;
+  onChange: (value: string) => void;
+  required?: boolean;
+}
+
+export default function PrefectureSelect({
+  value,
+  onChange,
+  required = false,
+}: PrefectureSelectProps) {
   return (
     <select
       value={value}

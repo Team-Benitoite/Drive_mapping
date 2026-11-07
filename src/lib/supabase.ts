@@ -1,4 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '../types/database';
+
+export type AppSupabaseClient = SupabaseClient<Database>;
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -8,7 +11,7 @@ const placeholderValues = new Set([
   'your-supabase-anon-key',
 ]);
 
-export const storageBucket =
+export const storageBucket: string =
   import.meta.env.VITE_SUPABASE_STORAGE_BUCKET || 'route-photos';
 
 export const profileIconBucket = 'profile-icons';
@@ -20,7 +23,7 @@ const googleMapsPlaceholderValues = new Set([
   'your-google-maps-embed-api-key',
 ]);
 
-export const googleMapsApiKey = googleMapsPlaceholderValues.has(
+export const googleMapsApiKey: string = googleMapsPlaceholderValues.has(
   googleMapsEmbedApiKey,
 )
   ? ''
@@ -33,6 +36,7 @@ export const hasSupabaseEnv = Boolean(
     !placeholderValues.has(supabaseAnonKey),
 );
 
-export const supabase = hasSupabaseEnv
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null;
+export const supabase: AppSupabaseClient | null =
+  hasSupabaseEnv && supabaseUrl && supabaseAnonKey
+    ? createClient<Database>(supabaseUrl, supabaseAnonKey)
+    : null;

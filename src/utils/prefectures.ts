@@ -1,4 +1,9 @@
-export const prefectures = [
+export interface Prefecture {
+  code: number;
+  name: string;
+}
+
+export const prefectures: Prefecture[] = [
   { code: 1, name: '北海道' },
   { code: 2, name: '青森県' },
   { code: 3, name: '岩手県' },
@@ -48,10 +53,10 @@ export const prefectures = [
   { code: 47, name: '沖縄県' },
 ];
 
-export const prefectureMap = Object.fromEntries(
+export const prefectureMap: Record<number, string> = Object.fromEntries(
   prefectures.map((prefecture) => [prefecture.code, prefecture.name]),
 );
 
-export function getPrefectureName(code) {
+export function getPrefectureName(code: number | string | null | undefined): string {
   return prefectureMap[Number(code)] || '未設定';
 }

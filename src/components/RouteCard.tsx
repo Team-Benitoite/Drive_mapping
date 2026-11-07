@@ -1,8 +1,9 @@
-import ProfileAvatar from './ProfileAvatar.jsx';
-import { routeThumbnail } from '../utils/routeData.js';
-import { Link } from '../utils/navigation.jsx';
+import ProfileAvatar from './ProfileAvatar';
+import { routeThumbnail } from '../utils/routeData';
+import { Link } from '../utils/navigation';
+import type { RouteListItem } from '../types/models';
 
-export default function RouteCard({ route }) {
+export default function RouteCard({ route }: { route: RouteListItem }) {
   const thumbnail = routeThumbnail(route);
 
   return (

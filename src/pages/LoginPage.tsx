@@ -1,12 +1,13 @@
-import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext.jsx';
-import { supabase } from '../lib/supabase.js';
+import { useState, type FormEvent } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 import {
   getAuthHref,
   getAuthReturnPath,
   Link,
   navigate,
-} from '../utils/navigation.jsx';
+} from '../utils/navigation';
+import { getErrorMessage } from '../utils/errors';
 
 export default function LoginPage() {
   const { profile, user } = useAuth();
@@ -15,24 +16,30 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const returnTo = getAuthReturnPath();
-  const accountName =
+  const accountName: string =
     profile?.name || user?.user_metadata?.name || user?.email || 'ユーザー';
 
   async function handleLogout() {
     setError('');
+
+    if (!supabase) {
+      setError('Supabase環境変数が未設定です。');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
       const { error: signOutError } = await supabase.auth.signOut();
       if (signOutError) throw signOutError;
     } catch (signOutError) {
-      setError(signOutError.message || 'ログアウトに失敗しました。');
+      setError(getErrorMessage(signOutError, 'ログアウトに失敗しました。'));
     } finally {
       setSubmitting(false);
     }
   }
 
-  async function handleSubmit(event) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
     setSubmitting(true);
@@ -45,7 +52,7 @@ export default function LoginPage() {
       return;
     }
 
-    let signInError;
+    let signInError: Error | null = null;
 
     try {
       const result = await supabase.auth.signInWithPassword({

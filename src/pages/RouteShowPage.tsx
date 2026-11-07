@@ -1,38 +1,43 @@
 import { useEffect, useMemo, useState } from 'react';
-import { googleMapsApiKey, supabase } from '../lib/supabase.js';
-import { useAuth } from '../contexts/AuthContext.jsx';
+import { googleMapsApiKey, supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import {
   buildGoogleMapsDirectionsUrl,
   buildGoogleMapsEmbedUrl,
   getSafeGoogleMapsUrl,
-} from '../utils/googleMaps.js';
-import { getPrefectureName } from '../utils/prefectures.js';
-import { getPublicPhotoUrl, isOwner, favoriteCount } from '../utils/routeData.js';
-import { getAuthHref, Link, navigate } from '../utils/navigation.jsx';
+} from '../utils/googleMaps';
+import { getPrefectureName } from '../utils/prefectures';
+import { getPublicPhotoUrl, isOwner, likeCount } from '../utils/routeData';
+import { getAuthHref, Link, navigate } from '../utils/navigation';
+import type { PointType } from '../types/database';
+import type { RouteDetail } from '../types/models';
+import { getErrorMessage } from '../utils/errors';
 
-const pointLabel = {
+const pointLabel: Record<PointType, string> = {
   start: 'スタート',
   middle: '中間',
   goal: 'ゴール',
 };
 
-export default function RouteShowPage({ id }) {
+export default function RouteShowPage({ id }: { id: number }) {
   const { user } = useAuth();
-  const [route, setRoute] = useState(null);
+  const [route, setRoute] = useState<RouteDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [favoriteError, setFavoriteError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
   const owner = useMemo(() => isOwner(route, user), [route, user]);
-  const favorited = useMemo(
-    () => Boolean(route?.route_favorites?.some((favorite) => favorite.user_id === user?.id)),
+  const liked = useMemo(
+    () => Boolean(route?.route_likes?.some((like) => like.user_id === user?.id)),
     [route, user],
   );
 
   async function loadRoute() {
     setLoading(true);
     setError('');
+    setFavoriteError('');
 
     if (!supabase) {
       setLoading(false);
@@ -47,7 +52,7 @@ export default function RouteShowPage({ id }) {
           route_prefectures(prefecture_code, is_main),
           route_points(point_type, label, address, sort_order),
           route_photos(id, storage_path, thumb_path, sort_order),
-          route_favorites(user_id)
+          route_likes(user_id)
         `,
       )
       .eq('id', id)
@@ -78,7 +83,7 @@ export default function RouteShowPage({ id }) {
   useEffect(() => {
     if (!selectedPhoto) return undefined;
 
-    function handleKeyDown(event) {
+    function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setSelectedPhoto(null);
       }
@@ -88,33 +93,40 @@ export default function RouteShowPage({ id }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedPhoto]);
 
-  async function toggleFavorite() {
+  async function toggleLike() {
     if (!user) {
       navigate(getAuthHref('/login'));
       return;
     }
 
+    if (!supabase) return;
+
     setBusy(true);
+    setFavoriteError('');
 
-    if (favorited) {
-      await supabase
-        .from('route_favorites')
-        .delete()
-        .eq('route_id', id)
-        .eq('user_id', user.id);
-    } else {
-      await supabase.from('route_favorites').insert({
-        route_id: id,
-        user_id: user.id,
-      });
+    try {
+      const { error: updateError } = liked
+        ? await supabase
+            .from('route_likes')
+            .delete()
+            .eq('route_id', id)
+            .eq('user_id', user.id)
+        : await supabase.from('route_likes').insert({
+            route_id: id,
+            user_id: user.id,
+          });
+      if (updateError) throw updateError;
+      await loadRoute();
+    } catch (updateError) {
+      setFavoriteError(getErrorMessage(updateError, 'お気に入りの更新に失敗しました。'));
+    } finally {
+      setBusy(false);
     }
-
-    setBusy(false);
-    loadRoute();
   }
 
   async function deleteRoute() {
     if (!owner || !window.confirm('本当に削除しますか？')) return;
+    if (!supabase) return;
 
     setBusy(true);
     const { error: deleteError } = await supabase
@@ -158,8 +170,8 @@ export default function RouteShowPage({ id }) {
           </p>
         </div>
         <div className="actions">
-          <button type="button" onClick={toggleFavorite} disabled={busy}>
-            {favorited ? 'お気に入り解除' : 'お気に入り'} ({favoriteCount(route)})
+          <button type="button" onClick={toggleLike} disabled={busy}>
+            {liked ? 'お気に入り解除' : 'お気に入り'} ({likeCount(route)})
           </button>
           {owner && (
             <>
@@ -174,6 +186,7 @@ export default function RouteShowPage({ id }) {
         </div>
       </div>
 
+      {favoriteError && <p className="error" role="alert">{favoriteError}</p>}
       <div className="detail-grid">
         <div className="stack">
           <section className="panel">

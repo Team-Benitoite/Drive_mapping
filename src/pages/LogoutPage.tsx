@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { supabase } from '../lib/supabase.js';
-import { navigate } from '../utils/navigation.jsx';
+import { supabase } from '../lib/supabase';
+import { navigate } from '../utils/navigation';
 
 export default function LogoutPage() {
   useEffect(() => {

@@ -1,18 +1,32 @@
 import { useEffect, useMemo, useState } from 'react';
-import Layout from './components/Layout.jsx';
-import EnvNotice from './components/EnvNotice.jsx';
-import FavoritesPage from './pages/FavoritesPage.jsx';
-import HomePage from './pages/HomePage.jsx';
-import LoginPage from './pages/LoginPage.jsx';
-import LogoutPage from './pages/LogoutPage.jsx';
-import ProfilePage from './pages/ProfilePage.jsx';
-import RouteFormPage from './pages/RouteFormPage.jsx';
-import RouteShowPage from './pages/RouteShowPage.jsx';
-import RoutesIndexPage from './pages/RoutesIndexPage.jsx';
-import SignupPage from './pages/SignupPage.jsx';
-import { useAuth } from './contexts/AuthContext.jsx';
+import Layout from './components/Layout';
+import EnvNotice from './components/EnvNotice';
+import FavoritesPage from './pages/FavoritesPage';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import LogoutPage from './pages/LogoutPage';
+import ProfilePage from './pages/ProfilePage';
+import RouteFormPage from './pages/RouteFormPage';
+import RouteShowPage from './pages/RouteShowPage';
+import RoutesIndexPage from './pages/RoutesIndexPage';
+import SignupPage from './pages/SignupPage';
+import { useAuth } from './contexts/AuthContext';
 
-function parseRoute(pathname) {
+type AppRoute =
+  | { name: 'home' }
+  | { name: 'signup' }
+  | { name: 'login' }
+  | { name: 'logout' }
+  | { name: 'profile' }
+  | { name: 'favorites' }
+  | { name: 'routes_index' }
+  | { name: 'routes_create' }
+  | { name: 'routes_edit'; id: number }
+  | { name: 'routes_show'; id: number }
+  | { name: 'profile_show'; id: string }
+  | { name: 'not_found' };
+
+function parseRoute(pathname: string): AppRoute {
   if (pathname === '/') return { name: 'home' };
   if (pathname === '/signup') return { name: 'signup' };
   if (pathname === '/login') return { name: 'login' };
@@ -48,7 +62,7 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  const route = useMemo(
+  const route = useMemo<AppRoute>(
     () => parseRoute(new URL(locationKey).pathname),
     [locationKey],
   );
