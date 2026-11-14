@@ -346,7 +346,7 @@ button[type="submit"]:hover,
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  min-width: 270px;
+  min-width: 284px;
   max-width: calc(100vw - 32px);
   background: #ffffff;
   border: 3.5px solid var(--game-dark);
@@ -373,7 +373,7 @@ button[type="submit"]:hover,
   margin: 4px 0;
 }
 
-.auth-dropdown-menu a {
+.auth-dropdown-stack > a {
   display: flex;
   align-items: center;
   border-radius: 12px;
@@ -386,7 +386,7 @@ button[type="submit"]:hover,
   transition: all 0.12s ease;
 }
 
-.auth-dropdown-menu a:hover {
+.auth-dropdown-stack > a:hover {
   background: var(--game-yellow);
   border-color: var(--game-dark);
   transform: translateX(4px);
@@ -396,16 +396,45 @@ button[type="submit"]:hover,
 
 .auth-dropdown-guest {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
-.auth-dropdown-guest a {
-  flex: 1;
+.auth-dropdown-guest a.auth-guest-btn {
+  flex: 1 1 112px;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  border: 2px solid var(--game-dark);
-  border-radius: 999px;
-  box-shadow: 0 3px 0 var(--game-dark);
+  padding: 10px 16px;
+  border: 2.5px solid var(--game-dark);
+  border-radius: 12px;
+  background: #ffffff;
+  color: var(--game-dark);
+  font-size: 13.5px;
+  font-weight: 900;
+  line-height: 1.25;
+  box-shadow: var(--game-shadow-sm);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: var(--cursor-pointer);
+  transition:
+    background-color 0.14s ease,
+    color 0.14s ease,
+    transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.auth-dropdown-guest a.auth-guest-btn:hover {
+  background: var(--game-yellow);
+  color: var(--game-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 var(--game-dark);
+  text-decoration: none;
+}
+
+.auth-dropdown-guest a.auth-guest-btn:active {
+  transform: translateY(2px);
+  box-shadow: var(--game-shadow-active);
 }
 
 .account-search {
@@ -644,28 +673,6 @@ textarea:focus {
   color: var(--game-dark);
 }
 
-/* 左下装飾：方位磁石（コンパス） */
-.game-compass {
-  position: absolute;
-  bottom: 20px;
-  left: 22px;
-  width: 68px;
-  height: 68px;
-  z-index: 13;
-  pointer-events: none;
-  filter: drop-shadow(0 4px 0 rgba(15, 23, 42, 0.9));
-}
-
-.dm-map-viewport.has-cards .game-compass {
-  left: 282px;
-}
-
-.game-compass-svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
 /* モバイル位置情報プロンプトチップ */
 .mobile-geo-prompt-chip {
   position: absolute;
@@ -791,7 +798,7 @@ textarea:focus {
 .game-heat-legend {
   position: absolute;
   bottom: 22px;
-  left: 102px;
+  left: 22px;
   z-index: 14;
   background: #ffffff;
   border: 2.5px solid var(--game-dark);
@@ -806,7 +813,7 @@ textarea:focus {
 }
 
 .dm-map-viewport.has-cards .game-heat-legend {
-  left: 362px;
+  left: 282px;
 }
 
 .legend-title {
@@ -2168,18 +2175,10 @@ textarea:focus {
     border-width: 4px;
   }
 
-  .dm-map-viewport.has-cards .game-compass,
-  .game-compass {
-    left: 12px;
-    bottom: 14px;
-    width: 54px;
-    height: 54px;
-  }
-
   .dm-map-viewport.has-cards .game-heat-legend,
   .game-heat-legend {
     left: 12px;
-    bottom: 76px;
+    bottom: 64px;
     max-width: calc(100% - 24px);
     flex-wrap: wrap;
     padding: 5px 8px;

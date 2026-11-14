@@ -187,10 +187,18 @@ export default function Layout({ children }: { children: ReactNode }) {
                   </div>
                 ) : (
                   <div className="auth-dropdown-guest">
-                    <Link href={getAuthHref('/login')} onClick={() => setMenuOpen(false)}>
+                    <Link
+                      href={getAuthHref('/login')}
+                      className="auth-guest-btn"
+                      onClick={() => setMenuOpen(false)}
+                    >
                       ログイン
                     </Link>
-                    <Link href={getAuthHref('/signup')} onClick={() => setMenuOpen(false)}>
+                    <Link
+                      href={getAuthHref('/signup')}
+                      className="auth-guest-btn"
+                      onClick={() => setMenuOpen(false)}
+                    >
                       新規登録
                     </Link>
                   </div>

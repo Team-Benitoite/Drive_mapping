@@ -650,21 +650,6 @@ export default function JapanMap({
           <span className="game-badge-text">日本縦断ドライブ</span>
         </div>
 
-        {/* 左下装飾：ゲーム風方位磁石（コンパス）イラスト */}
-        <div className="game-compass" aria-hidden="true">
-          <svg viewBox="0 0 84 84" className="game-compass-svg">
-            <circle cx="42" cy="42" r="36" fill="#FFFFFF" stroke="#0F172A" strokeWidth="4" />
-            <circle cx="42" cy="42" r="29" fill="#E0F2FE" stroke="#0F172A" strokeWidth="2" />
-            <text x="42" y="19" textAnchor="middle" dominantBaseline="central" fontSize="10" fontWeight="900" fill="#EF4444">N</text>
-            <text x="42" y="65" textAnchor="middle" dominantBaseline="central" fontSize="9" fontWeight="900" fill="#0F172A">S</text>
-            <text x="65" y="42" textAnchor="middle" dominantBaseline="central" fontSize="9" fontWeight="900" fill="#0F172A">E</text>
-            <text x="19" y="42" textAnchor="middle" dominantBaseline="central" fontSize="9" fontWeight="900" fill="#0F172A">W</text>
-            <polygon points="42,23 48,42 42,39 36,42" fill="#EF4444" stroke="#0F172A" strokeWidth="2" strokeLinejoin="round" />
-            <polygon points="42,61 48,42 42,45 36,42" fill="#FFFFFF" stroke="#0F172A" strokeWidth="2" strokeLinejoin="round" />
-            <circle cx="42" cy="42" r="4.5" fill="#FACC15" stroke="#0F172A" strokeWidth="2" />
-          </svg>
-        </div>
-
         {/* モバイル専用：位置情報確認チップ */}
         {showLocationPrompt && (
           <div
