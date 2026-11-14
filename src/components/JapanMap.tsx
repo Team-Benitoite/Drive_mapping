@@ -166,47 +166,6 @@ const areas: [code: number, name: string, coords: string][] = [
   [1, '北海道', '672,80,672,187,638,213,638,246,689,246,689,228,712,227,753,256,802,228,845,228,846,158,812,158,716,80'],
 ];
 
-// 初期注目ルート（デフォルト）
-const DEFAULT_TOP_PREFECTURES: TopPrefecture[] = [
-  {
-    route_id: 1,
-    prefecture_code: 14,
-    title: '湘南海岸〜江の島 サンセットオーシャンロード',
-    like_count: 42,
-    image_url: '/src/assets/images/drive_shonan_coastal_1794028779907.jpg',
-  },
-  {
-    route_id: 2,
-    prefecture_code: 22,
-    title: '伊豆スカイライン＆富士山パノラマライン',
-    like_count: 36,
-    image_url: '/src/assets/images/drive_fuji_panorama_1794028779954.jpg',
-  },
-  {
-    route_id: 3,
-    prefecture_code: 1,
-    title: '美瑛 パッチワークの路＆青い池ドライブ',
-    like_count: 29,
-    image_url: '/src/assets/images/drive_biei_hills_1794028780301.jpg',
-  },
-];
-
-// 都道府県ホバー時の代表ルート（写真付きフォールバック名所ルート）
-const FALLBACK_PREF_ROUTES: Record<number, { title: string; image_url: string; likes: number }> = {
-  1: { title: '美瑛 パッチワークの路＆青い池ドライブ', image_url: '/src/assets/images/drive_biei_hills_1794028780301.jpg', likes: 29 },
-  13: { title: 'レインボーブリッジ＆お台場ベイエリアナイトクルーズ', image_url: '/src/assets/images/drive_shonan_coastal_1794028779907.jpg', likes: 28 },
-  14: { title: '湘南海岸〜江の島 サンセットオーシャンロード', image_url: '/src/assets/images/drive_shonan_coastal_1794028779907.jpg', likes: 42 },
-  17: { title: '千里浜なぎさドライブウェイ 砂浜オーシャンロード', image_url: '/src/assets/images/drive_shonan_coastal_1794028779907.jpg', likes: 24 },
-  20: { title: 'ビーナスライン 白樺湖〜霧ヶ峰高原パノラマ', image_url: '/src/assets/images/drive_fuji_panorama_1794028779954.jpg', likes: 31 },
-  22: { title: '伊豆スカイライン＆富士山パノラマライン', image_url: '/src/assets/images/drive_fuji_panorama_1794028779954.jpg', likes: 36 },
-  26: { title: '嵐山〜高雄パークウェイ 古都パノラマドライブ', image_url: '/src/assets/images/drive_fuji_panorama_1794028779954.jpg', likes: 27 },
-  27: { title: '阪神高速湾岸線＆南港サンセットクルーズ', image_url: '/src/assets/images/drive_shonan_coastal_1794028779907.jpg', likes: 22 },
-  28: { title: '明石海峡大橋＆淡路島サンセットライン', image_url: '/src/assets/images/drive_shonan_coastal_1794028779907.jpg', likes: 25 },
-  35: { title: '角島大橋 エメラルドグリーン海上ドライブルート', image_url: '/src/assets/images/drive_shonan_coastal_1794028779907.jpg', likes: 38 },
-  40: { title: '志賀島シーサイドライン＆海の中道ドライブ', image_url: '/src/assets/images/drive_shonan_coastal_1794028779907.jpg', likes: 26 },
-  47: { title: '古宇利大橋＆美ら海エメラルドオーシャンロード', image_url: '/src/assets/images/drive_shonan_coastal_1794028779907.jpg', likes: 39 },
-};
-
 export interface JapanMapProps {
   counts: PrefectureCounts;
   topPrefectures?: TopPrefecture[];
@@ -256,16 +215,7 @@ export default function JapanMap({
     }
   });
 
-  const displayCards = useMemo(() => {
-    const combined: TopPrefecture[] = [...topPrefectures];
-    for (const fallback of DEFAULT_TOP_PREFECTURES) {
-      if (combined.length >= 3) break;
-      if (!combined.some((item) => item.prefecture_code === fallback.prefecture_code)) {
-        combined.push(fallback);
-      }
-    }
-    return combined.slice(0, 3);
-  }, [topPrefectures]);
+  const displayCards = topPrefectures.slice(0, 3);
 
   useEffect(() => {
     const timer = setTimeout(() => setShowGuide(false), 4500);
@@ -512,45 +462,15 @@ export default function JapanMap({
     const region = getRegionByCode(hoveredPref);
     const count = counts[hoveredPref] || 0;
 
-    // 1. 実データがあり写真もある場合
-    if (popularRoutes[hoveredPref]) {
-      const live = popularRoutes[hoveredPref];
-      return {
-        prefecture_code: hoveredPref,
-        prefecture_name: prefName,
-        region_name: region.name,
-        route_id: live.route_id,
-        title: live.title,
-        like_count: live.like_count,
-        image_url: live.image_url || FALLBACK_PREF_ROUTES[hoveredPref]?.image_url || '/src/assets/images/drive_shonan_coastal_1794028779907.jpg',
-        count,
-      };
-    }
-
-    // 2. フォールバック名所ルートがある場合
-    const fallback = FALLBACK_PREF_ROUTES[hoveredPref];
-    if (fallback) {
-      return {
-        prefecture_code: hoveredPref,
-        prefecture_name: prefName,
-        region_name: region.name,
-        route_id: undefined,
-        title: fallback.title,
-        like_count: fallback.likes,
-        image_url: fallback.image_url,
-        count,
-      };
-    }
-
-    // 3. 一般的なご案内（写真付き）
+    const live = popularRoutes[hoveredPref];
     return {
       prefecture_code: hoveredPref,
       prefecture_name: prefName,
       region_name: region.name,
-      route_id: undefined,
-      title: `${prefName}の絶景オーシャン＆マウンテンドライブ`,
-      like_count: count > 0 ? count * 3 : 15,
-      image_url: '/src/assets/images/drive_fuji_panorama_1794028779954.jpg',
+      route_id: live?.route_id,
+      title: live?.title || `${prefName}の投稿はまだありません`,
+      like_count: live?.like_count ?? 0,
+      image_url: live?.image_url ?? null,
       count,
     };
   }, [hoveredPref, popularRoutes, counts]);
@@ -745,27 +665,34 @@ export default function JapanMap({
           <div
             className="pref-hover-popover"
             style={{
-              left: `${Math.min(Math.max(mousePos.x + 18, 20), (containerRef.current?.clientWidth || 900) - 275)}px`,
+              left: `${Math.max(20, mousePos.x + 293 > (containerRef.current?.clientWidth || 900) ? mousePos.x - 275 : mousePos.x + 18)}px`,
               top: `${Math.min(Math.max(mousePos.y - 65, 20), (containerRef.current?.clientHeight || 650) - 185)}px`,
             }}
             onClick={() => handlePrefClick(activeHoverRoute.prefecture_code)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') handlePrefClick(activeHoverRoute.prefecture_code);
+            }}
             role="button"
             tabIndex={0}
           >
             <div className="pref-hover-header">
               <span className="pref-hover-crown">👑</span>
               <span className="pref-hover-badge-title">
-                {activeHoverRoute.prefecture_name} No.1 ルート
+                {activeHoverRoute.prefecture_name}{activeHoverRoute.route_id ? ' No.1 ルート' : ''}
               </span>
               <span className="pref-hover-region">{activeHoverRoute.region_name}</span>
             </div>
             <div className="pref-hover-body">
               <div className="pref-hover-photo-wrap">
-                <img
-                  src={activeHoverRoute.image_url}
-                  alt={activeHoverRoute.title}
-                  className="pref-hover-img"
-                />
+                {activeHoverRoute.image_url ? (
+                  <img
+                    src={activeHoverRoute.image_url}
+                    alt={activeHoverRoute.title}
+                    className="pref-hover-img"
+                  />
+                ) : (
+                  <div className="dm-sea-card-placeholder">NO IMAGE</div>
+                )}
               </div>
               <div className="pref-hover-text-wrap">
                 <p className="pref-hover-route-title">{activeHoverRoute.title}</p>
@@ -778,7 +705,7 @@ export default function JapanMap({
               </div>
             </div>
             <div className="pref-hover-action">
-              <span>▶ クリックして詳細を見る</span>
+              <span>{activeHoverRoute.route_id ? '▶ クリックして詳細を見る' : '▶ 都道府県の投稿一覧を見る'}</span>
             </div>
           </div>
         )}
