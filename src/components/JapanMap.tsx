@@ -271,8 +271,10 @@ export default function JapanMap({
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
 
   const mouseDownPosRef = useRef({ x: 0, y: 0 });
+  const isPointerDownRef = useRef(false);
   const isMovedRef = useRef(false);
-  const [isMouseDown, setIsMouseDown] = useState(false);
+  const resetMovedTimerRef = useRef<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
 
   const [heatOn, setHeatOn] = useState(() => {
@@ -286,6 +288,14 @@ export default function JapanMap({
   useEffect(() => {
     const timer = setTimeout(() => setShowGuide(false), 4500);
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (resetMovedTimerRef.current !== null) {
+        window.clearTimeout(resetMovedTimerRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -442,6 +452,23 @@ export default function JapanMap({
     return () => container.removeEventListener('wheel', handleWheel);
   }, []);
 
+  function clearResetMovedTimer() {
+    if (resetMovedTimerRef.current !== null) {
+      window.clearTimeout(resetMovedTimerRef.current);
+      resetMovedTimerRef.current = null;
+    }
+  }
+
+  function scheduleResetMoved() {
+    clearResetMovedTimer();
+    if (isMovedRef.current) {
+      resetMovedTimerRef.current = window.setTimeout(() => {
+        isMovedRef.current = false;
+        resetMovedTimerRef.current = null;
+      }, 120);
+    }
+  }
+
   function handleContainerMouseMove(e: MouseEvent<HTMLDivElement>) {
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
@@ -451,22 +478,26 @@ export default function JapanMap({
       });
     }
 
-    if (isMouseDown) {
+    if (isPointerDownRef.current) {
       const dx = Math.abs(e.clientX - mouseDownPosRef.current.x);
       const dy = Math.abs(e.clientY - mouseDownPosRef.current.y);
-      if (dx > 5 || dy > 5) {
+      if (!isMovedRef.current && (dx > 6 || dy > 6)) {
         isMovedRef.current = true;
+        setIsDragging(true);
       }
-      setPan({
-        x: e.clientX - dragStartRef.current.x,
-        y: e.clientY - dragStartRef.current.y,
-      });
+      if (isMovedRef.current) {
+        setPan({
+          x: e.clientX - dragStartRef.current.x,
+          y: e.clientY - dragStartRef.current.y,
+        });
+      }
     }
   }
 
   function handleMouseDown(e: MouseEvent<HTMLDivElement>) {
     if (e.button !== 0) return;
-    setIsMouseDown(true);
+    clearResetMovedTimer();
+    isPointerDownRef.current = true;
     isMovedRef.current = false;
     setShowGuide(false);
     mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
@@ -474,13 +505,20 @@ export default function JapanMap({
   }
 
   function handleMouseUp() {
-    setIsMouseDown(false);
+    isPointerDownRef.current = false;
+    setIsDragging(false);
+    scheduleResetMoved();
   }
 
   function handleTouchStart(e: TouchEvent<HTMLDivElement>) {
-    if (e.touches.length !== 1) return;
+    if (e.touches.length !== 1) {
+      isPointerDownRef.current = false;
+      setIsDragging(false);
+      return;
+    }
     const touch = e.touches[0];
-    setIsMouseDown(true);
+    clearResetMovedTimer();
+    isPointerDownRef.current = true;
     isMovedRef.current = false;
     setShowGuide(false);
     mouseDownPosRef.current = { x: touch.clientX, y: touch.clientY };
@@ -488,21 +526,26 @@ export default function JapanMap({
   }
 
   function handleTouchMove(e: TouchEvent<HTMLDivElement>) {
-    if (!isMouseDown || e.touches.length !== 1) return;
+    if (!isPointerDownRef.current || e.touches.length !== 1) return;
     const touch = e.touches[0];
     const dx = Math.abs(touch.clientX - mouseDownPosRef.current.x);
     const dy = Math.abs(touch.clientY - mouseDownPosRef.current.y);
-    if (dx > 5 || dy > 5) {
+    if (!isMovedRef.current && (dx > 10 || dy > 10)) {
       isMovedRef.current = true;
+      setIsDragging(true);
     }
-    setPan({
-      x: touch.clientX - dragStartRef.current.x,
-      y: touch.clientY - dragStartRef.current.y,
-    });
+    if (isMovedRef.current) {
+      setPan({
+        x: touch.clientX - dragStartRef.current.x,
+        y: touch.clientY - dragStartRef.current.y,
+      });
+    }
   }
 
   function handleTouchEnd() {
-    setIsMouseDown(false);
+    isPointerDownRef.current = false;
+    setIsDragging(false);
+    scheduleResetMoved();
   }
 
   function resetView() {
@@ -510,14 +553,13 @@ export default function JapanMap({
     setPan(getInitialPan(hasCards));
   }
 
-  function handlePrefClick(code: number) {
-    if (isMovedRef.current) return;
-    const popular = popularRoutes[code];
-    if (popular?.route_id) {
-      navigate(`/routes/${popular.route_id}`);
-    } else {
-      navigate(hrefForCode ? hrefForCode(code) : `/routes?prefecture_code=${code}`);
-    }
+  function getPrefectureHref(code: number): string {
+    return hrefForCode ? hrefForCode(code) : `/routes?prefecture_code=${code}`;
+  }
+
+  function handlePrefClick(code: number, options?: { ignoreDragCheck?: boolean }) {
+    if (!options?.ignoreDragCheck && isMovedRef.current) return;
+    navigate(getPrefectureHref(code));
   }
 
   function getCardDetailHref(item: TopPrefecture): string {
@@ -851,7 +893,15 @@ export default function JapanMap({
               left: `${Math.min(Math.max(mousePos.x + 18, 20), (containerRef.current?.clientWidth || 900) - 275)}px`,
               top: `${Math.min(Math.max(mousePos.y - 65, 20), (containerRef.current?.clientHeight || 650) - 185)}px`,
             }}
-            onClick={() => handlePrefClick(activeHoverRoute.prefecture_code)}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            onClick={() => handlePrefClick(activeHoverRoute.prefecture_code, { ignoreDragCheck: true })}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                handlePrefClick(activeHoverRoute.prefecture_code, { ignoreDragCheck: true });
+              }
+            }}
             role="button"
             tabIndex={0}
           >
@@ -883,7 +933,7 @@ export default function JapanMap({
               </div>
             </div>
             <div className="pref-hover-action">
-              <span>▶ クリックして詳細を見る</span>
+              <span>▶ クリックして投稿一覧を見る</span>
             </div>
           </div>
         )}
@@ -895,7 +945,7 @@ export default function JapanMap({
             style={{
               transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
               transformOrigin: 'center center',
-              transition: isMouseDown ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+              transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
           >
             {/* map.jpg（ref維持用） */}
@@ -938,7 +988,10 @@ export default function JapanMap({
                     className={`game-pref-group ${isHovered ? 'is-hovered' : ''}`}
                     onClick={() => handlePrefClick(code)}
                     onKeyDown={(event) => {
-                      if (event.key === 'Enter') handlePrefClick(code);
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        handlePrefClick(code, { ignoreDragCheck: true });
+                      }
                     }}
                     onMouseEnter={() => setHoveredPref(code)}
                     onMouseLeave={() => setHoveredPref(null)}
@@ -976,12 +1029,13 @@ export default function JapanMap({
                 );
               })}
 
-              {/* モバイル現在地ピン（マーカー＆波紋アニメーション） */}
+              {/* モバイル・PC現在地ピン（マーカー＆波紋アニメーション：クリック透過） */}
               {currentLocationPref && PREF_CENTERS[currentLocationPref] && (
                 <g
                   className="current-location-marker"
                   transform={`translate(${PREF_CENTERS[currentLocationPref].x}, ${PREF_CENTERS[currentLocationPref].y - 8})`}
                   pointerEvents="none"
+                  style={{ pointerEvents: 'none' }}
                 >
                   {/* アニメーション波紋リング */}
                   <circle cx="0" cy="0" r="12" className="loc-pulse-ring" />
