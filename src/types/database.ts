@@ -228,7 +228,7 @@ export interface Database {
           },
         ];
       };
-      route_favorite: {
+      route_favorites: {
         Row: {
           id: number;
           route_id: number;
@@ -249,14 +249,14 @@ export interface Database {
         };
         Relationships: [
           {
-            foreignKeyName: 'route_favorite_route_id_fkey';
+            foreignKeyName: 'route_favorites_route_id_fkey';
             columns: ['route_id'];
             isOneToOne: false;
             referencedRelation: 'routes';
             referencedColumns: ['id'];
           },
           {
-            foreignKeyName: 'route_favorite_user_id_fkey';
+            foreignKeyName: 'route_favorites_user_id_fkey';
             columns: ['user_id'];
             isOneToOne: false;
             referencedRelation: 'users';

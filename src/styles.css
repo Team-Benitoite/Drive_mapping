@@ -108,7 +108,6 @@ select,
 input[type="submit"],
 input[type="button"],
 .route-card,
-.dm-sea-card,
 .game-pref-group,
 .pref-hover-popover {
   cursor: var(--cursor-pointer);
@@ -468,6 +467,7 @@ button[type="submit"]:hover,
   margin-top: 16px;
 }
 
+.panel > form > button[type="submit"],
 .form-panel > form > button[type="submit"] {
   margin-top: 22px;
 }
@@ -536,12 +536,7 @@ textarea:focus {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 20px;
-  padding: 14px 18px;
-  background: #ffffff;
-  border: 3px solid var(--game-dark);
-  border-radius: var(--game-radius);
-  box-shadow: var(--game-shadow-sm);
+  margin-bottom: 18px;
 }
 
 .search {
@@ -584,6 +579,7 @@ textarea:focus {
   box-shadow: var(--game-shadow-lg);
   cursor: var(--cursor-grab);
   user-select: none;
+  touch-action: none;
   background-color: #0284c7;
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.28) 1.5px, transparent 1.5px),
@@ -646,6 +642,28 @@ textarea:focus {
   font-size: 14px;
   font-weight: 900;
   color: var(--game-dark);
+}
+
+/* 左下装飾：方位磁石（コンパス） */
+.game-compass {
+  position: absolute;
+  bottom: 20px;
+  left: 22px;
+  width: 68px;
+  height: 68px;
+  z-index: 13;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 0 rgba(15, 23, 42, 0.9));
+}
+
+.dm-map-viewport.has-cards .game-compass {
+  left: 282px;
+}
+
+.game-compass-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 /* モバイル位置情報プロンプトチップ */
@@ -726,6 +744,13 @@ textarea:focus {
   animation: fadeInOut 4.5s forwards;
 }
 
+.drag-hand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 @keyframes fadeInOut {
   0% { opacity: 0; transform: translate(-50%, -12px); }
   10%, 85% { opacity: 1; transform: translate(-50%, 0); }
@@ -766,7 +791,7 @@ textarea:focus {
 .game-heat-legend {
   position: absolute;
   bottom: 22px;
-  left: 24px;
+  left: 102px;
   z-index: 14;
   background: #ffffff;
   border: 2.5px solid var(--game-dark);
@@ -781,7 +806,7 @@ textarea:focus {
 }
 
 .dm-map-viewport.has-cards .game-heat-legend {
-  left: 260px;
+  left: 362px;
 }
 
 .legend-title {
@@ -868,13 +893,13 @@ textarea:focus {
 }
 
 .game-event-card {
-  width: 228px;
+  width: 248px;
   background: #ffffff;
   border: 2.5px solid var(--game-dark);
   border-radius: 14px;
   padding: 6px;
   box-shadow: 4px 4px 0 var(--game-dark);
-  cursor: var(--cursor-pointer);
+  cursor: default;
   transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
   overflow: visible;
@@ -1011,20 +1036,60 @@ textarea:focus {
 
 .game-card-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
+  gap: 6px;
+  margin-top: 6px;
 }
 
-.game-card-command {
-  font-size: 10.5px;
+.game-card-action-link {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 6px;
+  border: 2px solid var(--game-dark);
+  border-radius: 9px;
+  font-size: 10px;
   font-weight: 900;
-  color: var(--game-blue);
-  transition: transform 0.15s ease;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 0 var(--game-dark);
+  cursor: var(--cursor-pointer);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
 }
 
-.game-event-card:hover .game-card-command {
-  transform: translateX(3px);
+.game-card-action-link.is-maps {
+  background: #e0f2fe;
   color: #0369a1;
+}
+
+.game-card-action-link.is-maps:hover {
+  background: #bae6fd;
+  color: var(--game-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 0 var(--game-dark);
+  text-decoration: none;
+}
+
+.game-card-action-link.is-detail {
+  background: var(--game-yellow);
+  color: var(--game-dark);
+}
+
+.game-card-action-link.is-detail:hover {
+  background: #fde047;
+  color: var(--game-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 0 var(--game-dark);
+  text-decoration: none;
+}
+
+.game-card-action-link:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 var(--game-dark);
 }
 
 /* ==========================================================================
@@ -1214,12 +1279,8 @@ textarea:focus {
   transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.game-pref-shadow {
-  transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
 .game-pref-top {
-  transition: fill 0.15s ease, stroke-width 0.15s ease;
+  transition: fill 0.15s ease, stroke-width 0.15s ease, filter 0.16s ease;
 }
 
 .game-pref-label {
@@ -1232,14 +1293,7 @@ textarea:focus {
   user-select: none;
 }
 
-/* バッジ位置固定：親 .game-pref-badge の SVG transform は上書きせず、内側のみ拡大アニメ */
-.game-pref-badge-inner {
-  transform-box: fill-box;
-  transform-origin: center;
-  transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-/* ホバー時：「ぽこっ」と持ち上がる立体アニメーション */
+/* ホバー時：「ぽこっ」と持ち上がる立体アニメーション（ホバー時のみ影を表示） */
 .game-pref-group:hover,
 .game-pref-group.is-hovered {
   transform: translateY(-6px);
@@ -1249,7 +1303,7 @@ textarea:focus {
 .game-pref-group.is-hovered .game-pref-top {
   stroke: #ffffff;
   stroke-width: 3.5px;
-  filter: drop-shadow(0 0 10px var(--game-yellow));
+  filter: drop-shadow(0 6px 0 #0f172a) drop-shadow(0 0 10px var(--game-yellow));
 }
 
 .game-pref-group:hover .game-pref-label,
@@ -1258,9 +1312,10 @@ textarea:focus {
   stroke-width: 2.8px;
 }
 
-.game-pref-group:hover .game-pref-badge-inner,
-.game-pref-group.is-hovered .game-pref-badge-inner {
-  transform: scale(1.14);
+/* 現在地ピンがタッチ・ドラッグ操作を奪わないようイベント透過 */
+.current-location-marker,
+.current-location-marker * {
+  pointer-events: none !important;
 }
 
 /* モバイル現在地マーカー波紋アニメーション */
@@ -1317,19 +1372,18 @@ textarea:focus {
 }
 
 .game-mobile-card {
-  flex: 0 0 250px;
+  flex: 0 0 264px;
   scroll-snap-align: start;
   background: #ffffff;
   border: 3px solid var(--game-dark);
   border-radius: var(--game-radius);
   overflow: hidden;
   box-shadow: var(--game-shadow-sm);
-  cursor: var(--cursor-pointer);
+  cursor: default;
 }
 
-.game-mobile-card:active {
-  transform: translateY(2px);
-  box-shadow: var(--game-shadow-active);
+.dm-mobile-card-actions {
+  margin-top: 8px;
 }
 
 .dm-mobile-card-thumb-wrap {
@@ -2114,11 +2168,19 @@ textarea:focus {
     border-width: 4px;
   }
 
+  .dm-map-viewport.has-cards .game-compass,
+  .game-compass {
+    left: 12px;
+    bottom: 14px;
+    width: 54px;
+    height: 54px;
+  }
+
   .dm-map-viewport.has-cards .game-heat-legend,
   .game-heat-legend {
     left: 12px;
-    bottom: 14px;
-    max-width: calc(100% - 170px);
+    bottom: 76px;
+    max-width: calc(100% - 24px);
     flex-wrap: wrap;
     padding: 5px 8px;
   }

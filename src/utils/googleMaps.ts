@@ -115,3 +115,30 @@ export function getSafeGoogleMapsUrl(value: string | null | undefined): string {
   const input = String(value || '').trim();
   return input && isGoogleMapsUrl(input) ? input : '';
 }
+
+export function buildGoogleMapsSearchUrl(query: string | null | undefined): string {
+  const trimmed = String(query || '').trim();
+  if (!trimmed) return '';
+  const params = new URLSearchParams({
+    api: '1',
+    query: trimmed,
+  });
+  return `https://www.google.com/maps/search/?${params.toString()}`;
+}
+
+export function getRouteGoogleMapsUrl(
+  route: RouteLocationSource & {
+    google_maps_url?: string | null;
+    title?: string | null;
+    prefecture_name?: string | null;
+  },
+): string {
+  const shared = getSafeGoogleMapsUrl(route.google_maps_url);
+  if (shared) return shared;
+  const directions = buildGoogleMapsDirectionsUrl(route);
+  if (directions) return directions;
+  const fallbackQuery =
+    String(route.address || '').trim() ||
+    [route.prefecture_name, route.title].filter(Boolean).join(' ').trim();
+  return buildGoogleMapsSearchUrl(fallbackQuery);
+}

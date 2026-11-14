@@ -5,6 +5,7 @@ import ProfileAvatar from '../components/ProfileAvatar';
 import RouteCard from '../components/RouteCard';
 import { useAuth } from '../contexts/AuthContext';
 import { profileIconBucket, supabase } from '../lib/supabase';
+import { getRouteGoogleMapsUrl } from '../utils/googleMaps';
 import { getPrefectureName } from '../utils/prefectures';
 import { getPublicPhotoUrl } from '../utils/routeData';
 import { loadProfilesByIds } from '../utils/profileData';
@@ -14,6 +15,7 @@ import type {
   PrefectureCounts,
   ProfileSummary,
   RouteListItem,
+  RouteLocationPoint,
   TopPrefecture,
 } from '../types/models';
 
@@ -87,7 +89,9 @@ export default function ProfilePage({ id }: { id?: string }) {
   const [form, setForm] = useState({ bio: '' });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [password, setPassword] = useState('');
-  const [routes, setRoutes] = useState<RouteListItem[]>([]);
+  const [routes, setRoutes] = useState<
+    (RouteListItem & { route_points?: RouteLocationPoint[] | null })[]
+  >([]);
   const [counts, setCounts] = useState<PrefectureCounts>({});
   const [followingProfiles, setFollowingProfiles] = useState<ProfileSummary[]>(
     [],
@@ -128,6 +132,13 @@ export default function ProfilePage({ id }: { id?: string }) {
           image_url:
             getPublicPhotoUrl(firstPhoto?.thumb_path || firstPhoto?.storage_path) ||
             null,
+          google_maps_url: getRouteGoogleMapsUrl({
+            address: route.address,
+            google_maps_url: route.google_maps_url,
+            route_points: route.route_points,
+            title: route.title,
+            prefecture_name: getPrefectureName(route.prefecture_code),
+          }),
         };
       });
   }, [routes]);
@@ -150,6 +161,13 @@ export default function ProfilePage({ id }: { id?: string }) {
           image_url:
             getPublicPhotoUrl(firstPhoto?.thumb_path || firstPhoto?.storage_path) ||
             null,
+          google_maps_url: getRouteGoogleMapsUrl({
+            address: route.address,
+            google_maps_url: route.google_maps_url,
+            route_points: route.route_points,
+            title: route.title,
+            prefecture_name: getPrefectureName(route.prefecture_code),
+          }),
         };
       }
     }
@@ -188,6 +206,7 @@ export default function ProfilePage({ id }: { id?: string }) {
       .select(
         `
           *,
+          route_points(label, address, sort_order),
           route_photos(storage_path, thumb_path, sort_order),
           route_likes(user_id)
         `,
@@ -487,6 +506,7 @@ export default function ProfilePage({ id }: { id?: string }) {
           popularRoutes={userPopularRoutes}
           showTopCards={routes.length > 0}
           strictTopCards={true}
+          topCardsTitle="自分の投稿のいいね人気順"
           hrefForCode={(code) =>
             `/routes?prefecture_code=${code}&user_id=${targetId}`
           }

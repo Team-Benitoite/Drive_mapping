@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import JapanMap from '../components/JapanMap';
 import { supabase } from '../lib/supabase';
+import { getRouteGoogleMapsUrl } from '../utils/googleMaps';
+import { getPrefectureName } from '../utils/prefectures';
 import { getPublicPhotoUrl } from '../utils/routeData';
 import { getErrorMessage } from '../utils/errors';
 import type { PrefectureCounts, TopPrefecture } from '../types/models';
@@ -26,7 +28,8 @@ export default function HomePage() {
           const { data, error: fetchError } = await supabase
             .from('routes')
             .select(`
-              id, title, prefecture_code,
+              id, title, prefecture_code, address, google_maps_url,
+              route_points(label, address, sort_order),
               route_likes(user_id),
               route_photos(storage_path, thumb_path, sort_order)
             `)
@@ -49,6 +52,13 @@ export default function HomePage() {
                 title: route.title,
                 like_count: likeCount,
                 image_url: getPublicPhotoUrl(photo?.thumb_path || photo?.storage_path) || null,
+                google_maps_url: getRouteGoogleMapsUrl({
+                  address: route.address,
+                  google_maps_url: route.google_maps_url,
+                  route_points: route.route_points,
+                  title: route.title,
+                  prefecture_name: getPrefectureName(code),
+                }),
               });
             }
           }

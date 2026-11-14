@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type TouchEvent } from 'react';
 import { prefectureMap } from '../utils/prefectures';
-import { navigate } from '../utils/navigation';
+import { buildGoogleMapsSearchUrl } from '../utils/googleMaps';
+import { Link, navigate } from '../utils/navigation';
 import type { PrefectureCounts, TopPrefecture } from '../types/models';
 
 export const REGIONS = {
@@ -174,6 +175,7 @@ const DEFAULT_TOP_PREFECTURES: TopPrefecture[] = [
     title: '湘南海岸〜江の島 サンセットオーシャンロード',
     like_count: 42,
     image_url: '/src/assets/images/drive_shonan_coastal_1794028779907.jpg',
+    google_maps_url: buildGoogleMapsSearchUrl('湘南海岸 江の島'),
   },
   {
     route_id: 2,
@@ -181,6 +183,7 @@ const DEFAULT_TOP_PREFECTURES: TopPrefecture[] = [
     title: '伊豆スカイライン＆富士山パノラマライン',
     like_count: 36,
     image_url: '/src/assets/images/drive_fuji_panorama_1794028779954.jpg',
+    google_maps_url: buildGoogleMapsSearchUrl('伊豆スカイライン 富士山'),
   },
   {
     route_id: 3,
@@ -188,6 +191,7 @@ const DEFAULT_TOP_PREFECTURES: TopPrefecture[] = [
     title: '美瑛 パッチワークの路＆青い池ドライブ',
     like_count: 29,
     image_url: '/src/assets/images/drive_biei_hills_1794028780301.jpg',
+    google_maps_url: buildGoogleMapsSearchUrl('美瑛 パッチワークの路 青い池'),
   },
 ];
 
@@ -214,6 +218,7 @@ export interface JapanMapProps {
   hrefForCode?: (code: number) => string;
   showTopCards?: boolean;
   strictTopCards?: boolean;
+  topCardsTitle?: string;
 }
 
 // 初期スケール & 表示位置（デスクトップでは左側カード群と重ならないよう右側へオフセット）
@@ -232,6 +237,7 @@ export default function JapanMap({
   hrefForCode,
   showTopCards = true,
   strictTopCards = false,
+  topCardsTitle = '注目の人気ドライブコース',
 }: JapanMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -471,6 +477,34 @@ export default function JapanMap({
     setIsMouseDown(false);
   }
 
+  function handleTouchStart(e: TouchEvent<HTMLDivElement>) {
+    if (e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    setIsMouseDown(true);
+    isMovedRef.current = false;
+    setShowGuide(false);
+    mouseDownPosRef.current = { x: touch.clientX, y: touch.clientY };
+    dragStartRef.current = { x: touch.clientX - pan.x, y: touch.clientY - pan.y };
+  }
+
+  function handleTouchMove(e: TouchEvent<HTMLDivElement>) {
+    if (!isMouseDown || e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    const dx = Math.abs(touch.clientX - mouseDownPosRef.current.x);
+    const dy = Math.abs(touch.clientY - mouseDownPosRef.current.y);
+    if (dx > 5 || dy > 5) {
+      isMovedRef.current = true;
+    }
+    setPan({
+      x: touch.clientX - dragStartRef.current.x,
+      y: touch.clientY - dragStartRef.current.y,
+    });
+  }
+
+  function handleTouchEnd() {
+    setIsMouseDown(false);
+  }
+
   function resetView() {
     setZoom(INITIAL_ZOOM);
     setPan(getInitialPan(hasCards));
@@ -486,14 +520,21 @@ export default function JapanMap({
     }
   }
 
-  // お気に入りカードクリック時：直接そのルートの詳細ページ（/routes/${route_id}）へ遷移
-  function handleCardClick(e: MouseEvent, item: TopPrefecture) {
-    e.stopPropagation();
+  function getCardDetailHref(item: TopPrefecture): string {
     if (item.route_id) {
-      navigate(`/routes/${item.route_id}`);
-    } else {
-      navigate(hrefForCode ? hrefForCode(item.prefecture_code) : `/routes?prefecture_code=${item.prefecture_code}`);
+      return `/routes/${item.route_id}`;
     }
+    return hrefForCode
+      ? hrefForCode(item.prefecture_code)
+      : `/routes?prefecture_code=${item.prefecture_code}`;
+  }
+
+  function getCardGoogleMapsUrl(item: TopPrefecture): string {
+    if (item.google_maps_url) {
+      return item.google_maps_url;
+    }
+    const prefName = prefectureMap[item.prefecture_code] || '';
+    return buildGoogleMapsSearchUrl(`${prefName} ${item.title}`.trim());
   }
 
   // 投稿件数ON時の分かりやすい多段階ヒートマップ色分け
@@ -589,6 +630,10 @@ export default function JapanMap({
         onMouseMove={handleContainerMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
       >
         {/* 【新機能】お気に入りカード hover 連動：盤面背景写真バックドロップ */}
         <div
@@ -605,9 +650,28 @@ export default function JapanMap({
           <span className="game-badge-text">日本縦断ドライブ</span>
         </div>
 
+        {/* 左下装飾：ゲーム風方位磁石（コンパス）イラスト */}
+        <div className="game-compass" aria-hidden="true">
+          <svg viewBox="0 0 84 84" className="game-compass-svg">
+            <circle cx="42" cy="42" r="36" fill="#FFFFFF" stroke="#0F172A" strokeWidth="4" />
+            <circle cx="42" cy="42" r="29" fill="#E0F2FE" stroke="#0F172A" strokeWidth="2" />
+            <text x="42" y="19" textAnchor="middle" dominantBaseline="central" fontSize="10" fontWeight="900" fill="#EF4444">N</text>
+            <text x="42" y="65" textAnchor="middle" dominantBaseline="central" fontSize="9" fontWeight="900" fill="#0F172A">S</text>
+            <text x="65" y="42" textAnchor="middle" dominantBaseline="central" fontSize="9" fontWeight="900" fill="#0F172A">E</text>
+            <text x="19" y="42" textAnchor="middle" dominantBaseline="central" fontSize="9" fontWeight="900" fill="#0F172A">W</text>
+            <polygon points="42,23 48,42 42,39 36,42" fill="#EF4444" stroke="#0F172A" strokeWidth="2" strokeLinejoin="round" />
+            <polygon points="42,61 48,42 42,45 36,42" fill="#FFFFFF" stroke="#0F172A" strokeWidth="2" strokeLinejoin="round" />
+            <circle cx="42" cy="42" r="4.5" fill="#FACC15" stroke="#0F172A" strokeWidth="2" />
+          </svg>
+        </div>
+
         {/* モバイル専用：位置情報確認チップ */}
         {showLocationPrompt && (
-          <div className="mobile-geo-prompt-chip">
+          <div
+            className="mobile-geo-prompt-chip"
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+          >
             <span className="geo-prompt-icon">📍</span>
             <span className="geo-prompt-text">現在地の近くを表示しますか？</span>
             <div className="geo-prompt-actions">
@@ -636,16 +700,31 @@ export default function JapanMap({
           </div>
         )}
 
-        {/* ガイダンス（ドラッグ案内） */}
+        {/* ガイダンス（ドラッグ案内：手のマーク） */}
         {showGuide && (
           <div className="drag-guide-overlay game-guide-overlay">
-            <span className="drag-hand-icon">🎮</span>
+            <span className="drag-hand-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                <path
+                  d="M9 11V5.5C9 4.67 9.67 4 10.5 4C11.33 4 12 4.67 12 5.5V10M12 5.5V4.5C12 3.67 12.67 3 13.5 3C14.33 3 15 3.67 15 4.5V10.5M15 6.5C15 5.67 15.67 5 16.5 5C17.33 5 18 5.67 18 6.5V14C18 17.87 14.87 21 11 21C7.69 21 5 18.31 5 15V12.5C5 11.67 5.67 11 6.5 11C7.33 11 8 11.67 8 12.5V14"
+                  fill="#FFFFFF"
+                  stroke="#0F172A"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
             <span>ドラッグしてマップをスクロール！</span>
           </div>
         )}
 
         {/* コントロールボタン */}
-        <div className="dm-map-controls game-controls">
+        <div
+          className="dm-map-controls game-controls"
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+        >
           <button
             type="button"
             onClick={() => setZoom((z) => Math.min(z * 1.2, 3.5))}
@@ -686,15 +765,22 @@ export default function JapanMap({
 
         {/* 左上海エリア：枠内にきれいに収まる注目ルートカードデッキ（カードがある場合のみ描画） */}
         {hasCards && (
-          <div className="dm-sea-deck game-card-deck" aria-label="人気ドライブコース">
+          <div
+            className="dm-sea-deck game-card-deck"
+            aria-label={topCardsTitle}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+          >
             <div className="game-deck-header-ribbon">
               <span className="game-ribbon-tag">POPULAR ROUTES</span>
-              <span className="game-ribbon-title">注目の人気ドライブコース</span>
+              <span className="game-ribbon-title">{topCardsTitle}</span>
             </div>
             <div className="dm-sea-deck-cards">
               {displayCards.map((item, idx) => {
                 const isCardHovered = hoveredPref === item.prefecture_code;
                 const prefLabel = formatPrefectureShortName(item.prefecture_code, prefectureMap[item.prefecture_code] || '');
+                const detailHref = getCardDetailHref(item);
+                const mapsHref = getCardGoogleMapsUrl(item);
                 return (
                   <div
                     key={`${item.route_id ?? item.prefecture_code}-${idx}`}
@@ -709,13 +795,6 @@ export default function JapanMap({
                       setHoveredPref(null);
                       setHoveredCardPhoto(null);
                     }}
-                    onClick={(e) => handleCardClick(e, item)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleCardClick(e as unknown as MouseEvent, item);
-                    }}
-                    title="クリックしてルート詳細を見る"
                   >
                     <div className="game-card-badge-top">CARD 0{idx + 1}</div>
                     <div className="dm-sea-card-photo-wrap game-card-photo-wrap">
@@ -741,7 +820,20 @@ export default function JapanMap({
                     <div className="game-card-info">
                       <p className="game-card-title">{item.title}</p>
                       <div className="game-card-footer">
-                        <span className="game-card-command">▶ ルート詳細を見る</span>
+                        <a
+                          href={mapsHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="game-card-action-link is-maps"
+                        >
+                          Googleマップを表示
+                        </a>
+                        <Link
+                          href={detailHref}
+                          className="game-card-action-link is-detail"
+                        >
+                          ルート詳細を見る
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -867,17 +959,9 @@ export default function JapanMap({
                     onMouseLeave={() => setHoveredPref(null)}
                     role="button"
                     tabIndex={0}
-                    aria-label={`${name} (${count}件)`}
+                    aria-label={name}
                   >
-                    {/* 1. マスの立体的な厚み（3Dシャドウ層） */}
-                    <polygon
-                      points={pointsStr}
-                      className="game-pref-shadow"
-                      transform="translate(0, 5)"
-                      fill="#0F172A"
-                    />
-
-                    {/* 2. マスの上面（ポップカラーのゲームコマ） */}
+                    {/* マスの上面（通常時は影なし、ホバー時のみ浮き上がり＆影表示） */}
                     <polygon
                       points={pointsStr}
                       className="game-pref-top"
@@ -887,7 +971,7 @@ export default function JapanMap({
                       strokeLinejoin="round"
                     />
 
-                    {/* 3. 都道府県名ラベル（「京都」「北海道」対応・マス内はみ出し防止自動サイズ＆中央配置） */}
+                    {/* 都道府県名ラベル（「京都」「北海道」対応・マス内はみ出し防止自動サイズ＆中央配置） */}
                     {center && (
                       <text
                         x={center.x}
@@ -902,31 +986,7 @@ export default function JapanMap({
                       </text>
                     )}
 
-                    {/* 4. 投稿件数バッジ（ボードゲームのピン：SVG座標固定・内側グループのみアニメーション） */}
-                    {center && count > 0 && (
-                      <g
-                        transform={`translate(${center.x + 9}, ${center.y - 10})`}
-                        className="game-pref-badge"
-                        pointerEvents="none"
-                      >
-                        <g className="game-pref-badge-inner">
-                          <circle cx="0" cy="0" r="8" fill="#EF4444" stroke="#0F172A" strokeWidth="1.8" />
-                          <text
-                            x="0"
-                            y="0.5"
-                            textAnchor="middle"
-                            dominantBaseline="central"
-                            fill="#FFFFFF"
-                            fontSize="8.5"
-                            fontWeight="900"
-                          >
-                            {count > 99 ? '99+' : count}
-                          </text>
-                        </g>
-                      </g>
-                    )}
-
-                    <title>{`${prefectureMap[code] || name}（${region.name}） / 投稿 ${count} 件`}</title>
+                    <title>{`${prefectureMap[code] || name}（${region.name}）`}</title>
                   </g>
                 );
               })}
@@ -967,22 +1027,19 @@ export default function JapanMap({
       {hasCards && (
         <div className="dm-mobile-cards-wrap game-mobile-cards-wrap">
           <div className="dm-mobile-cards-header">
-            <span className="dm-mobile-cards-title">🎴 おすすめイベントカード</span>
-            <span className="dm-mobile-cards-sub">タップして詳細を見る</span>
+            <span className="dm-mobile-cards-title">
+              🎴 {topCardsTitle !== '注目の人気ドライブコース' ? topCardsTitle : 'おすすめイベントカード'}
+            </span>
           </div>
           <div className="dm-mobile-cards-scroll">
             {displayCards.map((item, idx) => {
               const prefLabel = formatPrefectureShortName(item.prefecture_code, prefectureMap[item.prefecture_code] || '');
+              const detailHref = getCardDetailHref(item);
+              const mapsHref = getCardGoogleMapsUrl(item);
               return (
                 <div
                   key={`mobile-${item.route_id ?? item.prefecture_code}-${idx}`}
                   className="dm-mobile-card game-mobile-card"
-                  onClick={(e) => handleCardClick(e, item)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleCardClick(e as unknown as MouseEvent, item);
-                  }}
                 >
                   <div className="dm-mobile-card-thumb-wrap">
                     {item.image_url ? (
@@ -1004,6 +1061,22 @@ export default function JapanMap({
                   </div>
                   <div className="dm-mobile-card-body">
                     <p className="dm-mobile-card-title">{item.title}</p>
+                    <div className="game-card-footer dm-mobile-card-actions">
+                      <a
+                        href={mapsHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="game-card-action-link is-maps"
+                      >
+                        Googleマップを表示
+                      </a>
+                      <Link
+                        href={detailHref}
+                        className="game-card-action-link is-detail"
+                      >
+                        ルート詳細を見る
+                      </Link>
+                    </div>
                   </div>
                 </div>
               );

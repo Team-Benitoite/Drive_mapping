@@ -15,7 +15,7 @@ export type ProfileSummary = Pick<
 export type ProfileMap = Record<string, ProfileSummary>;
 
 export type RouteLikeRef = Pick<Tables<'route_likes'>, 'user_id'>;
-export type RouteFavoriteRef = Pick<Tables<'route_favorite'>, 'user_id'>;
+export type RouteFavoriteRef = Pick<Tables<'route_favorites'>, 'user_id'>;
 export type RoutePrefectureRef = Pick<
   Tables<'route_prefectures'>,
   'prefecture_code' | 'is_main'
@@ -45,7 +45,7 @@ export interface RouteLikesSource {
 
 /** お気に入り判定に必要な最小の形 */
 export interface RouteFavoritesSource {
-  route_favorite?: RouteFavoriteRef[] | null;
+  route_favorites?: RouteFavoriteRef[] | null;
 }
 
 /** 投稿者判定に必要な最小の形 */
@@ -69,7 +69,7 @@ export interface RouteLocationSource {
 export interface RouteListItem extends RouteRow {
   route_photos?: RouteListPhoto[] | null;
   route_likes?: RouteLikeRef[] | null;
-  route_favorite?: RouteFavoriteRef[] | null;
+  route_favorites?: RouteFavoriteRef[] | null;
   profile?: ProfileSummary | null;
 }
 
@@ -79,7 +79,7 @@ export interface RouteDetail extends RouteRow {
   route_points?: RoutePointSummary[] | null;
   route_photos?: RouteDetailPhoto[] | null;
   route_likes?: RouteLikeRef[] | null;
-  route_favorite?: RouteFavoriteRef[] | null;
+  route_favorites?: RouteFavoriteRef[] | null;
 }
 
 /** 投稿編集フォームで読み込む投稿 */
@@ -99,6 +99,7 @@ export interface TopPrefecture {
   like_count: number;
   image_url: string | null;
   route_id?: number;
+  google_maps_url?: string | null;
 }
 
 /** 投稿フォームの中間地点の入力値 */

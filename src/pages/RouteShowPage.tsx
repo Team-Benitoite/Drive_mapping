@@ -82,7 +82,7 @@ export default function RouteShowPage({ id }: { id: number }) {
 
     if (user && data) {
       const { data: favData, error: favError } = await supabase
-        .from('route_favorite')
+        .from('route_favorites')
         .select('id')
         .eq('route_id', id)
         .eq('user_id', user.id)
@@ -190,11 +190,11 @@ export default function RouteShowPage({ id }: { id: number }) {
     try {
       const { error: updateError } = favorited
         ? await supabase
-            .from('route_favorite')
+            .from('route_favorites')
             .delete()
             .eq('route_id', id)
             .eq('user_id', user.id)
-        : await supabase.from('route_favorite').insert({
+        : await supabase.from('route_favorites').insert({
             route_id: id,
             user_id: user.id,
           });
