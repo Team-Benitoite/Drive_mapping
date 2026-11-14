@@ -1,40 +1,45 @@
 /* ==========================================================================
-   Drive Mapping - 人生ゲーム・桃鉄風ポップ＆ボードゲームUIデザイン
+   Drive Mapping - ポップ＆ボードゲームUIデザイン（全ページ統一スタイル）
    ========================================================================== */
 
-/* --------------------------------------------------------------------------
-   0. ゲーム風カスタムマウスカーソル（角丸・スムーズ化）
-   -------------------------------------------------------------------------- */
 :root {
-  /* 角丸ゲーム矢印カーソル（通常時：先端・角を滑らかにしたアドベンチャーアロー） */
+  /* 角丸ゲーム矢印カーソル */
   --cursor-default: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M6 3 C4.8 3 4.1 4.2 4.6 5.3 L10.8 23.6 C11.3 24.8 12.8 25.1 13.7 24.1 L16.8 20.6 L22.8 24.5 C23.8 25.1 25.1 24.5 25.4 23.3 L25.9 21.2 C26.2 20 25.5 18.8 24.4 18.2 L18.4 15.1 L23.1 12.8 C24.2 12.2 24.3 10.6 23.3 9.9 L7.7 3.2 C7.2 3.1 6.6 3 6 3 Z' fill='%23FACC15' stroke='%230F172A' stroke-width='2.4' stroke-linejoin='round' stroke-linecap='round'/%3E%3Cpath d='M8 7 L18 12 L14 14 L19 21 L16 22 L11 16 L8 19 Z' fill='%23FFFFFF' opacity='0.7' stroke-linejoin='round'/%3E%3C/svg%3E") 6 3, default;
 
-  /* 角丸指差しグローブカーソル（ボタン・カード・都道府県マス：丸みを帯びたポップな手袋） */
+  /* 角丸指差しグローブカーソル */
   --cursor-pointer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cpath d='M13 3 C13 1.9 13.9 1 15 1 C16.1 1 17 1.9 17 3 L17 13 C17.3 12.4 18 12 18.8 12 C19.9 12 20.8 12.9 20.8 14 C21.1 13.4 21.8 13 22.5 13 C23.6 13 24.5 13.9 24.5 15 C24.8 14.4 25.5 14 26.2 14 C27.3 14 28.2 14.9 28.2 16 L28.2 24 C28.2 29.5 23.7 34 18.2 34 C13.5 34 10.5 30.5 9.5 26.5 L6.8 19.5 C6.4 18.5 6.9 17.3 8 16.9 C9.1 16.5 10.3 17 10.8 18.1 L13 22 Z' fill='%23FFFFFF' stroke='%230F172A' stroke-width='2.4' stroke-linejoin='round' stroke-linecap='round'/%3E%3Ccircle cx='15' cy='5' r='1.5' fill='%23FACC15'/%3E%3Cpath d='M13 20 C13.5 22 14.5 23 16 23' stroke='%23CBD5E1' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") 15 2, pointer;
 
-  /* つかむ手カーソル（ドラッグ待機） */
+  /* つかむ手カーソル */
   --cursor-grab: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cpath d='M10 13 L10 7 C10 5.9 10.9 5 12 5 C13.1 5 14 5.9 14 7 L14 12 M14 7 C14 5.9 14.9 5 16 5 C17.1 5 18 5.9 18 7 L18 12 M18 8 C18 6.9 18.9 6 20 6 C21.1 6 22 6.9 22 8 L22 14 M22 11 C22 9.9 22.9 9 24 9 C25.1 9 26 9.9 26 11 L26 21 C26 26.5 21.5 31 16 31 C10.5 31 7 26.5 7 21 L7 17 C7 15.9 7.9 15 9 15 C10.1 15 10 16 10 17 Z' fill='%23FFFFFF' stroke='%230F172A' stroke-width='2.4' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E") 16 16, grab;
 
-  /* つかんだカーソル（ドラッグ中） */
+  /* つかんだカーソル */
   --cursor-grabbing: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cpath d='M10 14 C10 12.5 11.5 11.5 13 11.5 C14.5 11.5 15.5 12.5 16.5 12.5 C17.5 12.5 18.5 11.5 20 11.5 C21.5 11.5 23 12.5 24 13.5 L24 21 C24 26.5 20.5 31 16 31 C11.5 31 8 26.5 8 21 L8 18 C8 16 9 14 10 14 Z' fill='%23FACC15' stroke='%230F172A' stroke-width='2.4' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E") 16 16, grabbing;
 
   /* ボードゲームカラーパレット */
-  --game-dark: #0f172a;        /* コミック太枠ダーク */
-  --game-yellow: #facc15;      /* 桃鉄ゴールドイエロー */
-  --game-orange: #fb923c;      /* ビビッドオレンジ */
-  --game-red: #ef4444;         /* ルビーレッド */
-  --game-pink: #f43f5e;        /* チェリーピンク */
-  --game-blue: #0284c7;        /* スカイブルー */
-  --game-marine: #0369a1;      /* ディープマリンブルー */
-  --game-cyan: #06b6d4;        /* マリンシアン */
-  --game-green: #22c55e;       /* エメラルドグリーン */
-  --game-purple: #a855f7;      /* ポップパープル */
-  --game-cream: #fefce8;       /* ボード盤アイボリー */
+  --game-dark: #0f172a;
+  --game-yellow: #facc15;
+  --game-orange: #fb923c;
+  --game-red: #ef4444;
+  --game-pink: #f43f5e;
+  --game-blue: #0284c7;
+  --game-marine: #0369a1;
+  --game-cyan: #06b6d4;
+  --game-green: #16a34a;
+  --game-purple: #a855f7;
+  --game-cream: #fefce8;
 
   /* サーフェス */
   --bg-game: #e0f2fe;
   --card-bg: #ffffff;
   --game-radius: 18px;
+  --font-main:
+    "M PLUS Rounded 1c",
+    "Hiragino Maru Gothic ProN",
+    "Hiragino Sans",
+    "Yu Gothic UI",
+    system-ui,
+    -apple-system,
+    sans-serif;
 
   /* 3Dブロック風シャドウ */
   --game-shadow-sm: 0 4px 0 #0f172a;
@@ -43,10 +48,57 @@
   --game-shadow-active: 0 1px 0 #0f172a;
 }
 
-/* サイト全体に角丸ゲームカーソルを適用 */
+* {
+  box-sizing: border-box;
+}
+
 html,
 body {
+  margin: 0;
+  padding: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  min-height: 100dvh;
   cursor: var(--cursor-default);
+}
+
+body {
+  background-color: #f0f9ff;
+  background-image:
+    radial-gradient(#bae6fd 1.5px, transparent 1.5px),
+    radial-gradient(#e0f2fe 1.5px, #f0f9ff 1.5px);
+  background-size: 32px 32px;
+  background-position: 0 0, 16px 16px;
+  color: var(--game-dark);
+  font-family: var(--font-main);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+dt,
+dd,
+li,
+a,
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+a {
+  color: var(--game-marine);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
 }
 
 a,
@@ -62,182 +114,112 @@ input[type="button"],
   cursor: var(--cursor-pointer);
 }
 
-body {
-  margin: 0;
-  background-color: #f0f9ff;
-  background-image:
-    radial-gradient(#bae6fd 1.5px, transparent 1.5px),
-    radial-gradient(#e0f2fe 1.5px, #f0f9ff 1.5px);
-  background-size: 32px 32px;
-  background-position: 0 0, 16px 16px;
-  color: var(--game-dark);
-  font-family:
-    "M PLUS Rounded 1c",
-    "Hiragino Maru Gothic ProN",
-    "Comic Sans MS",
-    system-ui,
-    -apple-system,
-    sans-serif;
-  min-height: 100vh;
+/* ==========================================================================
+   アプリ共通コンテナ・余白
+   ========================================================================== */
+
+.app-shell {
+  width: 100%;
+  min-height: 100dvh;
 }
 
-* {
-  box-sizing: border-box;
+.container {
+  width: 100%;
+  max-width: clamp(1040px, 88vw, 1340px);
+  margin: 0 auto;
+  padding: 16px 20px 48px;
+}
+
+.home-top-container {
+  width: 100%;
+  margin: 0 auto;
+}
+
+.page-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px 18px;
+  margin-bottom: 18px;
+}
+
+.page-heading h1 {
+  margin: 0;
+  font-size: clamp(22px, 3vw, 28px);
+  font-weight: 900;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.pre-line {
+  white-space: pre-line;
+  margin: 0;
+  line-height: 1.7;
+  font-weight: 600;
+}
+
+hr {
+  border: 0;
+  border-top: 2px dashed #cbd5e1;
+  margin: 22px 0;
 }
 
 /* ==========================================================================
-   右上ナビゲーションボタン群のデザイン統一（ゲームコマンドボタン風）
+   右上ナビゲーションボタン群のデザイン（サイト全体ボタン基準）
    ========================================================================== */
 
 .auth-header-bar {
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
   position: relative;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
-/* 右上操作ボタン群（投稿件数ON/OFF・投稿一覧・三本バーメニュー） */
-.game-header-btn,
-.auth-header-bar button,
-.auth-header-bar a {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  padding: 8px 18px !important;
-  border: 2.5px solid var(--game-dark) !important;
-  border-radius: 999px !important;
-  background: #ffffff !important;
-  color: var(--game-dark) !important;
-  font-weight: 900 !important;
-  font-size: 13.5px !important;
-  box-shadow: 0 4px 0 var(--game-dark) !important;
-  transition: all 0.12s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  cursor: var(--cursor-pointer) !important;
-  text-decoration: none !important;
-  user-select: none !important;
-}
-
-.game-header-btn:hover,
-.auth-header-bar button:hover,
-.auth-header-bar a:hover {
-  background: var(--game-yellow) !important;
-  color: var(--game-dark) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 0 var(--game-dark) !important;
-}
-
-.game-header-btn:active,
-.auth-header-bar button:active,
-.auth-header-bar a:active {
-  transform: translateY(2px) !important;
-  box-shadow: 0 1px 0 var(--game-dark) !important;
-}
-
-/* メニューボタン（三本バーのみでコンパクト表示） */
-.menu-toggle-btn {
-  padding: 8px 14px !important;
-  font-size: 17px !important;
-  line-height: 1 !important;
-}
-
-/* 投稿件数 ON のときのアクティブカラー */
-.game-header-btn.heat-toggle-btn.active,
-.auth-header-bar button[aria-pressed="true"] {
-  background: #38bdf8 !important;
-  color: var(--game-dark) !important;
-}
-
-.game-header-badge,
-.auth-header-bar button span:last-child {
-  padding: 2px 8px !important;
-  border: 1.5px solid var(--game-dark) !important;
-  border-radius: 999px !important;
-  background: var(--game-yellow) !important;
-  color: var(--game-dark) !important;
-  font-size: 11px !important;
-  font-weight: 900 !important;
-}
-
-/* ドロップダウンメニュー（コマンドウィンドウ風） */
-.auth-dropdown-menu {
-  background: #ffffff !important;
-  border: 3.5px solid var(--game-dark) !important;
-  border-radius: var(--game-radius) !important;
-  box-shadow: var(--game-shadow-lg) !important;
-  padding: 16px !important;
-  z-index: 100 !important;
-}
-
-.auth-dropdown-menu a {
-  border-radius: 10px !important;
-  border: 2px solid transparent !important;
-  padding: 8px 14px !important;
-  box-shadow: none !important;
-  display: block !important;
-  font-weight: 800 !important;
-}
-
-.auth-dropdown-menu a:hover {
-  background: var(--game-yellow) !important;
-  border-color: var(--game-dark) !important;
-  transform: translateX(4px) !important;
-  box-shadow: 2px 2px 0 var(--game-dark) !important;
-}
-
-/* ==========================================================================
-   共通ゲーム風カード＆パネル枠（立体ステータスウィンドウ）
-   ========================================================================== */
-
-.container {
-  max-width: clamp(1100px, 82vw, 1440px);
-  margin: 0 auto;
-  padding: 20px 20px 48px;
-}
-
-.card,
-.panel,
-.form-panel,
-.route-card,
-.detail-header {
-  background: var(--card-bg);
-  border: 3.5px solid var(--game-dark);
-  border-radius: var(--game-radius);
-  padding: 20px 24px;
-  box-shadow: var(--game-shadow-md);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-  position: relative;
-}
-
-/* ==========================================================================
-   ポップなゲームボタン（押すとカチッと沈む3Dボタン）
-   ========================================================================== */
-
+/* すべてのボタン・ナビゲーションリンクを統一ポップゲームボタンスタイルに */
 button,
-.button {
+.button,
+.game-header-btn,
+.topnav a,
+.topnav button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   padding: 10px 20px;
   border: 2.5px solid var(--game-dark);
-  border-radius: 14px;
+  border-radius: 999px;
   background: #ffffff;
   color: var(--game-dark);
-  font: inherit;
-  font-size: 14px;
+  font-family: inherit;
+  font-size: 13.5px;
   font-weight: 900;
+  line-height: 1.25;
   box-shadow: var(--game-shadow-sm);
-  transition: all 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    background-color 0.14s ease,
+    color 0.14s ease,
+    transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.12s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
   text-decoration: none;
   cursor: var(--cursor-pointer);
+  white-space: nowrap;
 }
 
 button:hover,
-.button:hover {
+.button:hover,
+.game-header-btn:hover,
+.topnav a:hover,
+.topnav button:hover {
   background: var(--game-yellow);
   color: var(--game-dark);
   transform: translateY(-2px);
@@ -246,7 +228,10 @@ button:hover,
 }
 
 button:active,
-.button:active {
+.button:active,
+.game-header-btn:active,
+.topnav a:active,
+.topnav button:active {
   transform: translateY(2px);
   box-shadow: var(--game-shadow-active);
 }
@@ -261,31 +246,247 @@ button:disabled,
   transform: none;
 }
 
+/* メニューボタン（三本バーのみでコンパクト表示） */
+.menu-toggle-btn {
+  padding: 10px 15px;
+  font-size: 17px;
+  line-height: 1;
+}
+
+/* 投稿件数 ON のときのアクティブカラー */
+.game-header-btn.heat-toggle-btn.active,
+.auth-header-bar button[aria-pressed="true"] {
+  background: #38bdf8;
+  color: var(--game-dark);
+}
+
+.game-header-badge {
+  padding: 2px 8px;
+  border: 1.5px solid var(--game-dark);
+  border-radius: 999px;
+  background: var(--game-yellow);
+  color: var(--game-dark);
+  font-size: 11px;
+  font-weight: 900;
+}
+
 /* 決定・送信プライマリボタン */
 button[type="submit"],
-.button-primary,
-.actions button:first-child:not([type="button"]) {
+.button-primary {
   background: linear-gradient(180deg, #ff6b4a 0%, #ef4444 100%);
   color: #ffffff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
 }
 
 button[type="submit"]:hover,
-.button-primary:hover,
-.actions button:first-child:not([type="button"]):hover {
+.button-primary:hover {
   background: linear-gradient(180deg, #ff8164 0%, #dc2626 100%);
   color: #ffffff;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 0 var(--game-dark);
 }
 
-/* 入力フォーム（コマンド入力ウィンドウ風） */
+/* 各種アクションボタンバリエーション */
+.back-button {
+  background: #f8fafc;
+}
+
+.favorite-star-btn {
+  background: #fffbeb;
+}
+
+.favorite-star-btn .favorite-star-icon {
+  font-size: 16px;
+  line-height: 1;
+  color: #d97706;
+}
+
+.favorite-star-btn.is-active {
+  background: var(--game-yellow);
+  color: var(--game-dark);
+}
+
+.favorite-star-btn.is-active .favorite-star-icon {
+  color: #b45309;
+}
+
+.like-heart-btn.is-active {
+  background: #f43f5e;
+  color: #ffffff;
+}
+
+.like-heart-btn.is-active:hover {
+  background: #e11d48;
+  color: #ffffff;
+}
+
+.danger-button {
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.danger-button:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.form-submit-row {
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* ドロップダウンメニュー */
+.auth-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 270px;
+  max-width: calc(100vw - 32px);
+  background: #ffffff;
+  border: 3.5px solid var(--game-dark);
+  border-radius: var(--game-radius);
+  box-shadow: var(--game-shadow-lg);
+  padding: 16px;
+  z-index: 100;
+}
+
+.auth-dropdown-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.auth-dropdown-user {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--game-dark);
+  padding: 0 4px;
+}
+
+.auth-dropdown-divider {
+  margin: 4px 0;
+}
+
+.auth-dropdown-menu a {
+  display: flex;
+  align-items: center;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  padding: 8px 14px;
+  box-shadow: none;
+  font-weight: 900;
+  color: var(--game-dark);
+  text-decoration: none;
+  transition: all 0.12s ease;
+}
+
+.auth-dropdown-menu a:hover {
+  background: var(--game-yellow);
+  border-color: var(--game-dark);
+  transform: translateX(4px);
+  box-shadow: 2px 2px 0 var(--game-dark);
+  text-decoration: none;
+}
+
+.auth-dropdown-guest {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.auth-dropdown-guest a {
+  flex: 1;
+  justify-content: center;
+  border: 2px solid var(--game-dark);
+  border-radius: 999px;
+  box-shadow: 0 3px 0 var(--game-dark);
+}
+
+.account-search {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.account-search input {
+  flex: 1;
+  min-width: 0;
+  margin-top: 0;
+  padding: 8px 12px;
+}
+
+.account-search button {
+  padding: 8px 14px;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   共通カード＆パネル枠
+   ========================================================================== */
+
+.card,
+.panel,
+.form-panel,
+.route-card,
+.detail-header {
+  background: var(--card-bg);
+  border: 3.5px solid var(--game-dark);
+  border-radius: var(--game-radius);
+  padding: 22px 24px;
+  box-shadow: var(--game-shadow-md);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  position: relative;
+  min-width: 0;
+}
+
+.panel h2,
+.form-panel h1,
+.form-panel h2 {
+  margin-top: 0;
+  margin-bottom: 14px;
+  font-weight: 900;
+}
+
+.form-panel {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.form-panel.wide {
+  max-width: 820px;
+}
+
+.form-panel > p {
+  margin-top: 16px;
+}
+
+.form-panel > form > button[type="submit"] {
+  margin-top: 22px;
+}
+
+/* 入力フォーム */
 label {
   display: block;
-  margin-top: 14px;
+  margin-top: 16px;
   font-size: 13.5px;
   font-weight: 900;
   color: var(--game-dark);
+}
+
+label small {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
 }
 
 input,
@@ -298,23 +499,35 @@ textarea {
   border-radius: 12px;
   background: #ffffff;
   color: var(--game-dark);
-  font: inherit;
+  font-family: inherit;
   font-size: 14px;
   font-weight: 700;
   box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.08);
   transition: all 0.16s ease;
 }
 
+textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+input[type="file"] {
+  padding: 8px 12px;
+  background: #f8fafc;
+}
+
 input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--game-blue);
-  box-shadow: 0 0 0 4px var(--game-yellow), inset 0 2px 4px rgba(15, 23, 42, 0.08);
+  box-shadow:
+    0 0 0 4px var(--game-yellow),
+    inset 0 2px 4px rgba(15, 23, 42, 0.08);
   outline: none;
 }
 
 /* ==========================================================================
-   上部ナビゲーションバー（一覧・詳細ページ）
+   上部ナビゲーションバー（一覧・詳細・作成・プロフィール）
    ========================================================================== */
 
 .topnav {
@@ -324,34 +537,11 @@ textarea:focus {
   gap: 12px;
   flex-wrap: wrap;
   margin-bottom: 20px;
-  padding: 12px 20px;
+  padding: 14px 18px;
   background: #ffffff;
   border: 3px solid var(--game-dark);
   border-radius: var(--game-radius);
   box-shadow: var(--game-shadow-sm);
-}
-
-.topnav a,
-.topnav button {
-  font-size: 14px;
-  font-weight: 900;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 999px;
-  border: 2px solid var(--game-dark);
-  box-shadow: 2px 2px 0 var(--game-dark);
-  background: #ffffff;
-  color: var(--game-dark);
-  transition: all 0.12s ease;
-}
-
-.topnav a:hover,
-.topnav button:hover {
-  background: var(--game-yellow);
-  transform: translateY(-2px);
-  box-shadow: 4px 4px 0 var(--game-dark);
 }
 
 .search {
@@ -369,9 +559,9 @@ textarea:focus {
 
 .search input,
 .search select {
-  padding: 9px 12px;
-  min-width: 200px;
-  width: auto;
+  padding: 10px 14px;
+  min-width: 210px;
+  flex: 1 1 220px;
   margin-top: 0;
 }
 
@@ -383,17 +573,12 @@ textarea:focus {
   width: 100%;
 }
 
-/* ボードゲーム盤面ビューポート
-   - 左上から右下（135deg）へ向かう水色メイン（約78%）の爽快なマリンブルー
-   - 右下20%に「水色と黄緑色の間の淡いペールグリーン」へのグラデーション
-   - 薄いマス表示（格子状の40pxゲーム盤面グリッドパターン）
-*/
 .game-board-viewport {
   position: relative;
   overflow: hidden;
   width: 100%;
-  height: clamp(620px, 82vh, 850px);
-  min-height: 580px;
+  height: clamp(540px, calc(100dvh - 118px), 820px);
+  min-height: 520px;
   border: 5px solid var(--game-dark);
   border-radius: 26px;
   box-shadow: var(--game-shadow-lg);
@@ -401,10 +586,8 @@ textarea:focus {
   user-select: none;
   background-color: #0284c7;
   background-image:
-    /* 薄いマス表示（格子状の40pxゲーム盤面グリッドパターン） */
     linear-gradient(rgba(255, 255, 255, 0.28) 1.5px, transparent 1.5px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.28) 1.5px, transparent 1.5px),
-    /* 135deg: 75〜80%はしっかりとした水色、右下端20%に淡いペールグリーン */
     linear-gradient(135deg, #00d2ff 0%, #00b4d8 35%, #0284c7 65%, #0ea5e9 78%, #38d9a9 89%, #a7f3d0 100%);
   background-size: 40px 40px, 40px 40px, 100% 100%;
   background-position: 0 0, 0 0, 0 0;
@@ -414,12 +597,7 @@ textarea:focus {
   cursor: var(--cursor-grabbing);
 }
 
-/* ==========================================================================
-   【変更】お気に入りカード hover 連動：盤面背景写真バックドロップ（写真の無加工表示）
-   - マウスオーバー時：透明度や加工なし（opacity: 1、filterなし）で写真そのままを表示
-   - マウス離脱時：元のグラデーション＋グリッド背景へスムーズにフェードアウト
-   ========================================================================== */
-
+/* お気に入りカード hover 連動：盤面背景写真バックドロップ */
 .game-board-photo-backdrop {
   position: absolute;
   inset: 0;
@@ -434,7 +612,7 @@ textarea:focus {
 }
 
 .game-board-photo-backdrop.is-active {
-  opacity: 1; /* 加工・透明度変更なしの綺麗な写真そのままを100%表示 */
+  opacity: 1;
 }
 
 /* タイトルバッジ */
@@ -468,15 +646,6 @@ textarea:focus {
   font-size: 14px;
   font-weight: 900;
   color: var(--game-dark);
-}
-
-.game-badge-sub {
-  font-size: 11px;
-  font-weight: 800;
-  color: #0284c7;
-  background: #e0f2fe;
-  padding: 2px 6px;
-  border-radius: 6px;
 }
 
 /* モバイル位置情報プロンプトチップ */
@@ -520,27 +689,19 @@ textarea:focus {
 }
 
 .geo-btn-accept {
-  padding: 3px 11px !important;
-  font-size: 11px !important;
-  font-weight: 900 !important;
-  background: var(--game-yellow) !important;
-  color: var(--game-dark) !important;
-  border: 1.8px solid var(--game-dark) !important;
-  border-radius: 999px !important;
-  box-shadow: 1px 1px 0 var(--game-dark) !important;
-  cursor: var(--cursor-pointer) !important;
+  padding: 4px 12px;
+  font-size: 11px;
+  background: var(--game-yellow);
+  color: var(--game-dark);
+  box-shadow: 0 2px 0 var(--game-dark);
 }
 
 .geo-btn-decline {
-  padding: 3px 9px !important;
-  font-size: 10.5px !important;
-  font-weight: 800 !important;
-  background: #f1f5f9 !important;
-  color: #64748b !important;
-  border: 1.8px solid var(--game-dark) !important;
-  border-radius: 999px !important;
-  box-shadow: 1px 1px 0 var(--game-dark) !important;
-  cursor: var(--cursor-pointer) !important;
+  padding: 4px 10px;
+  font-size: 10.5px;
+  background: #f1f5f9;
+  color: #64748b;
+  box-shadow: 0 2px 0 var(--game-dark);
 }
 
 /* ガイダンスオーバーレイ */
@@ -584,34 +745,15 @@ textarea:focus {
 .game-round-btn {
   width: 44px;
   height: 44px;
+  padding: 0;
   border-radius: 50%;
-  border: 2.5px solid var(--game-dark);
-  background: #ffffff;
-  color: var(--game-dark);
-  font-weight: 900;
   font-size: 20px;
-  box-shadow: var(--game-shadow-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.12s ease;
-}
-
-.game-round-btn:hover {
-  background: var(--game-yellow);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 0 var(--game-dark);
-}
-
-.game-round-btn:active {
-  transform: translateY(2px);
-  box-shadow: var(--game-shadow-active);
 }
 
 .game-round-btn.reset-btn {
   width: auto;
-  padding: 0 16px;
-  border-radius: 20px;
+  padding: 0 18px;
+  border-radius: 999px;
   font-size: 13px;
 }
 
@@ -638,6 +780,10 @@ textarea:focus {
   font-weight: 900;
 }
 
+.dm-map-viewport.has-cards .game-heat-legend {
+  left: 260px;
+}
+
 .legend-title {
   color: var(--game-dark);
 }
@@ -645,6 +791,7 @@ textarea:focus {
 .legend-chips {
   display: flex;
   gap: 4px;
+  flex-wrap: wrap;
 }
 
 .legend-chip {
@@ -656,7 +803,7 @@ textarea:focus {
 }
 
 /* ==========================================================================
-   イベントカードデッキ（上部はみ出し修正・星マーク削除・枠内収まり）
+   イベントカードデッキ
    ========================================================================== */
 
 .game-card-deck {
@@ -734,7 +881,6 @@ textarea:focus {
   flex-shrink: 0;
 }
 
-/* 一番上カードのはみ出し・ポイント重複防止：左上コーナーに配置 */
 .game-card-badge-top {
   position: absolute;
   top: 6px;
@@ -764,7 +910,7 @@ textarea:focus {
 
 .game-event-card:hover,
 .game-event-card.is-hovered {
-  transform: translateY(-4px) scale(1.03) !important;
+  transform: translateY(-4px) scale(1.03);
   background: #fffef0;
   box-shadow: 6px 6px 0 var(--game-dark);
   z-index: 30;
@@ -802,7 +948,6 @@ textarea:focus {
   font-weight: 900;
 }
 
-/* オーバーレイを写真の下部に配置（上部のCARDバッジと重複しない） */
 .dm-sea-card-overlay {
   position: absolute;
   bottom: 6px;
@@ -841,7 +986,6 @@ textarea:focus {
   border-radius: 999px;
 }
 
-/* 白抜き文字・はっきりしたコントラストのお気に入りハート */
 .likes-heart-icon {
   display: inline-block;
   color: #ffffff;
@@ -884,7 +1028,7 @@ textarea:focus {
 }
 
 /* ==========================================================================
-   都道府県ホバー時のNo.1ルート詳細ミニポップアップ（写真確実表示）
+   都道府県ホバー時のNo.1ルート詳細ミニポップアップ
    ========================================================================== */
 
 .pref-hover-popover {
@@ -1023,7 +1167,7 @@ textarea:focus {
 }
 
 /* ==========================================================================
-   地図本体レイアウト & SVGポリゴン（左側カードデッキと被らないよう右側へシフト）
+   地図本体レイアウト & SVGポリゴン
    ========================================================================== */
 
 .dm-map-wrap {
@@ -1037,12 +1181,15 @@ textarea:focus {
 }
 
 @media (min-width: 769px) {
-  .dm-map-wrap {
-    padding-left: 70px; /* 左側お気に入りカードデッキを避けて右側へシフト */
+  .dm-map-viewport.has-cards .dm-map-wrap {
+    padding-left: 70px;
+  }
+
+  .dm-map-viewport.no-cards .dm-map-wrap {
+    padding-left: 0;
   }
 }
 
-/* ステージサイズ（初期表示で大きく迫力のあるサイズ） */
 .game-map-stage {
   position: relative;
   width: min(920px, 100%);
@@ -1061,7 +1208,6 @@ textarea:focus {
   overflow: visible;
 }
 
-/* 都道府県グループ */
 .game-pref-group {
   cursor: var(--cursor-pointer);
   outline: none;
@@ -1073,10 +1219,9 @@ textarea:focus {
 }
 
 .game-pref-top {
-  transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), fill 0.15s ease, stroke-width 0.15s ease;
+  transition: fill 0.15s ease, stroke-width 0.15s ease;
 }
 
-/* 都道府県名ラベル（マス枠からはみ出さないくっきりフォント） */
 .game-pref-label {
   fill: #ffffff;
   stroke: #0f172a;
@@ -1084,11 +1229,13 @@ textarea:focus {
   paint-order: stroke fill;
   font-weight: 900;
   letter-spacing: -0.05em;
-  transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
   user-select: none;
 }
 
-.game-pref-badge {
+/* バッジ位置固定：親 .game-pref-badge の SVG transform は上書きせず、内側のみ拡大アニメ */
+.game-pref-badge-inner {
+  transform-box: fill-box;
+  transform-origin: center;
   transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -1100,9 +1247,9 @@ textarea:focus {
 
 .game-pref-group:hover .game-pref-top,
 .game-pref-group.is-hovered .game-pref-top {
-  stroke: #ffffff !important;
-  stroke-width: 3.5px !important;
-  filter: drop-shadow(0 0 10px var(--game-yellow)) !important;
+  stroke: #ffffff;
+  stroke-width: 3.5px;
+  filter: drop-shadow(0 0 10px var(--game-yellow));
 }
 
 .game-pref-group:hover .game-pref-label,
@@ -1111,9 +1258,9 @@ textarea:focus {
   stroke-width: 2.8px;
 }
 
-.game-pref-group:hover .game-pref-badge,
-.game-pref-group.is-hovered .game-pref-badge {
-  transform: translate(calc(var(--pin-x, 0)px), calc(var(--pin-y, 0)px - 6px)) scale(1.15);
+.game-pref-group:hover .game-pref-badge-inner,
+.game-pref-group.is-hovered .game-pref-badge-inner {
+  transform: scale(1.14);
 }
 
 /* モバイル現在地マーカー波紋アニメーション */
@@ -1133,7 +1280,7 @@ textarea:focus {
 }
 
 /* ==========================================================================
-   スマホ（768px以下）レスポンシブ
+   スマホ（768px以下）手札カード
    ========================================================================== */
 
 .game-mobile-cards-wrap {
@@ -1199,6 +1346,15 @@ textarea:focus {
   display: block;
 }
 
+.dm-mobile-card-placeholder {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  font-size: 12px;
+  font-weight: 900;
+  color: #0369a1;
+}
+
 .game-mobile-card-tag {
   position: absolute;
   top: 8px;
@@ -1247,7 +1403,7 @@ textarea:focus {
 }
 
 /* ==========================================================================
-   ルートカード・一覧・詳細
+   ルートカード・一覧・投稿詳細
    ========================================================================== */
 
 .list,
@@ -1259,7 +1415,7 @@ textarea:focus {
 
 .route-card {
   display: grid;
-  grid-template-columns: 165px 1fr;
+  grid-template-columns: 165px minmax(0, 1fr);
   gap: 18px;
   align-items: center;
 }
@@ -1268,6 +1424,41 @@ textarea:focus {
   transform: translateY(-3px);
   box-shadow: var(--game-shadow-lg);
   border-color: var(--game-blue);
+}
+
+.route-card-body {
+  min-width: 0;
+}
+
+.route-card-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.route-card-title-row h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.route-card-like-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #ffe4e6;
+  color: #be123c;
+  border: 2px solid var(--game-dark);
+  box-shadow: 2px 2px 0 var(--game-dark);
+  font-size: 12px;
+  font-weight: 900;
+  flex-shrink: 0;
 }
 
 .route-thumb-link {
@@ -1285,6 +1476,7 @@ textarea:focus {
   box-shadow: 2px 2px 0 var(--game-dark);
   background: #bae6fd;
   transition: transform 0.2s ease;
+  display: block;
 }
 
 .route-card:hover .route-thumb {
@@ -1307,6 +1499,7 @@ textarea:focus {
   color: var(--game-dark);
   font-size: 13.5px;
   font-weight: 800;
+  margin: 2px 0 6px;
 }
 
 .avatar-image,
@@ -1317,6 +1510,13 @@ textarea:focus {
   border-radius: 50%;
   flex: 0 0 auto;
   box-shadow: 2px 2px 0 var(--game-dark);
+}
+
+.profile-header .avatar-image,
+.profile-header .avatar-placeholder {
+  width: 72px;
+  height: 72px;
+  font-size: 24px;
 }
 
 .avatar-image {
@@ -1333,61 +1533,412 @@ textarea:focus {
   font-weight: 900;
 }
 
+/* 詳細ヘッダー */
 .detail-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: 18px;
   flex-wrap: wrap;
   margin-bottom: 22px;
   padding: 22px 26px;
 }
 
+.detail-title-block {
+  min-width: 0;
+  flex: 1 1 320px;
+}
+
+.detail-back-wrap {
+  margin-bottom: 14px;
+}
+
 .detail-header h1 {
-  margin: 6px 0 0;
-  font-size: 26px;
+  margin: 0;
+  font-size: clamp(22px, 3vw, 28px);
   font-weight: 900;
   line-height: 1.3;
 }
 
+.detail-actions {
+  align-self: flex-start;
+}
+
 .detail-grid {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: minmax(0, 1fr) 340px;
   gap: 20px;
   align-items: start;
 }
 
-.photo-strip,
-.existing-photos {
-  display: flex;
-  overflow-x: auto;
-  flex-wrap: nowrap;
-  gap: 14px;
-  padding-bottom: 8px;
+/* ==========================================================================
+   詳細画面：二重外枠なしの写真カルーセルスライダー
+   ========================================================================== */
+
+.photo-carousel {
+  width: 100%;
 }
 
-.photo-strip img,
+.photo-carousel-frame {
+  position: relative;
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #e2e8f0;
+}
+
+.photo-carousel-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.photo-carousel-track::-webkit-scrollbar {
+  display: none;
+}
+
+.photo-carousel-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  scroll-snap-align: start;
+}
+
+/* 二重外枠の原因だったボタンのボーダー・影・パディングを完全解除 */
+.photo-modal-trigger,
+.photo-modal-trigger:hover,
+.photo-modal-trigger:active,
+.photo-carousel-trigger,
+.photo-carousel-trigger:hover,
+.photo-carousel-trigger:active {
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+.photo-carousel-img {
+  display: block;
+  width: 100%;
+  height: clamp(240px, 46vh, 440px);
+  object-fit: cover;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  transition: transform 0.25s ease;
+}
+
+.photo-carousel-trigger:hover .photo-carousel-img {
+  transform: scale(1.02);
+}
+
+.carousel-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 6;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 24px;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--game-dark);
+  border: 2.5px solid var(--game-dark);
+  box-shadow: 0 3px 0 var(--game-dark);
+}
+
+.carousel-nav-btn:hover {
+  transform: translateY(-50%) scale(1.06);
+  background: var(--game-yellow);
+  box-shadow: 0 4px 0 var(--game-dark);
+}
+
+.carousel-nav-btn:active {
+  transform: translateY(calc(-50% + 1px));
+  box-shadow: 0 1px 0 var(--game-dark);
+}
+
+.carousel-prev {
+  left: 12px;
+}
+
+.carousel-next {
+  right: 12px;
+}
+
+.carousel-counter {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 6;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.82);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+  pointer-events: none;
+}
+
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.carousel-dot,
+.carousel-dot:hover,
+.carousel-dot:active {
+  width: 11px;
+  height: 11px;
+  min-width: 11px;
+  min-height: 11px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--game-dark);
+  background: #e2e8f0;
+  box-shadow: none;
+  transform: none;
+}
+
+.carousel-dot.is-active {
+  width: 26px;
+  border-radius: 999px;
+  background: var(--game-yellow);
+}
+
+/* 写真拡大モーダル & アカウント検索モーダル */
+.photo-modal,
+.account-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(15, 23, 42, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.photo-modal-content {
+  position: relative;
+  max-width: min(960px, 94vw);
+  max-height: 90dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.photo-modal-content img {
+  display: block;
+  max-width: 100%;
+  max-height: 86dvh;
+  border-radius: 16px;
+  border: 3px solid #ffffff;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+  object-fit: contain;
+}
+
+.photo-modal-close {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  z-index: 10;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 50%;
+  background: #ffffff;
+  color: var(--game-dark);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.account-modal-content {
+  width: min(560px, 100%);
+  max-height: 84dvh;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 3.5px solid var(--game-dark);
+  border-radius: var(--game-radius);
+  box-shadow: var(--game-shadow-lg);
+  padding: 22px 24px;
+}
+
+.account-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.account-modal-header h2 {
+  margin: 0;
+}
+
+.account-modal-close {
+  position: static;
+}
+
+.account-result-list {
+  display: grid;
+  gap: 12px;
+}
+
+.account-result {
+  border: 2.5px solid var(--game-dark);
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ==========================================================================
+   写真フォームプレビュー＆削除ボタン（作成・編集画面）
+   ========================================================================== */
+
+.existing-photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 10px 4px 6px;
+}
+
+.photo-delete-card {
+  position: relative;
+  width: 175px;
+  height: 130px;
+  flex: 0 0 auto;
+}
+
 .photo-delete-card img {
-  width: 210px;
-  height: 150px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   border-radius: 14px;
-  border: 3px solid var(--game-dark);
+  border: 2.5px solid var(--game-dark);
   box-shadow: 3px 3px 0 var(--game-dark);
+  display: block;
 }
+
+.photo-delete-button {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  z-index: 5;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 18px;
+  line-height: 1;
+  border: 2.5px solid var(--game-dark);
+  box-shadow: 0 3px 0 var(--game-dark);
+}
+
+.photo-delete-button:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   ルート地点・Google Maps・情報パネル
+   ========================================================================== */
 
 .point-box {
   border: 2.5px solid var(--game-dark);
   border-radius: 14px;
-  padding: 14px;
+  padding: 16px;
   margin-top: 14px;
   background: #f8fafc;
+}
+
+.point-box h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.point-box + button {
+  margin-top: 14px;
+}
+
+.point-box button {
+  margin-top: 12px;
+}
+
+.point-list {
+  margin: 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 12px;
+}
+
+.point-list li {
+  line-height: 1.5;
+  font-weight: 700;
+}
+
+.info-list {
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.info-list dt {
+  font-size: 12px;
+  font-weight: 900;
+  color: #64748b;
+  margin: 0;
+}
+
+.info-list dd {
+  margin: 2px 0 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--game-dark);
+  word-break: break-word;
+}
+
+.google-maps-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.google-maps-title {
+  margin: 0 0 6px;
+  font-family: var(--font-main);
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: 0.01em;
+  font-feature-settings: normal;
 }
 
 .google-maps-embed {
   width: 100%;
   aspect-ratio: 16 / 9;
-  min-height: 320px;
+  min-height: 300px;
   overflow: hidden;
   border: 3.5px solid var(--game-dark);
   border-radius: 18px;
@@ -1401,6 +1952,83 @@ textarea:focus {
   height: 100%;
   border: 0;
 }
+
+/* ==========================================================================
+   プロフィール画面（統一された投稿マップ＆レスポンシブグリッド）
+   ========================================================================== */
+
+.profile-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.profile-page .topnav {
+  margin-bottom: 0;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.profile-header h1 {
+  margin: 0 0 6px;
+  font-size: clamp(22px, 3vw, 28px);
+  font-weight: 900;
+}
+
+.profile-header button {
+  margin-top: 12px;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: stretch;
+}
+
+.profile-map-panel {
+  width: 100%;
+}
+
+.profile-count-scroll,
+.profile-route-scroll {
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.profile-count-scroll ul {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  display: grid;
+  gap: 6px;
+}
+
+.profile-list {
+  display: grid;
+  gap: 12px;
+}
+
+.profile-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+/* ==========================================================================
+   ステータス・通知
+   ========================================================================== */
 
 .notice,
 .empty {
@@ -1416,21 +2044,24 @@ textarea:focus {
 }
 
 .error {
-  color: #ef4444;
+  color: #dc2626;
   font-size: 13.5px;
   font-weight: 900;
+  margin: 8px 0;
 }
 
 .success {
-  color: #10b981;
+  color: #059669;
   font-size: 13.5px;
   font-weight: 900;
+  margin: 8px 0;
 }
 
 .meta {
   color: #64748b;
   font-size: 12.5px;
   font-weight: 700;
+  margin: 4px 0;
 }
 
 .summary {
@@ -1441,15 +2072,30 @@ textarea:focus {
   font-weight: 600;
 }
 
+/* ==========================================================================
+   ブレイクポイント（タブレット・スマホ完全レスポンシブ）
+   ========================================================================== */
+
 @media (max-width: 980px) {
-  .detail-grid {
+  .detail-grid,
+  .profile-grid {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
   .container {
-    padding: 14px 12px 36px;
+    padding: 12px 12px 36px;
+  }
+
+  .auth-header-bar {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .game-header-btn {
+    padding: 8px 14px;
+    font-size: 12.5px;
   }
 
   .game-card-deck {
@@ -1458,33 +2104,74 @@ textarea:focus {
 
   .game-mobile-cards-wrap {
     display: block;
-    margin-top: 22px;
+    margin-top: 18px;
   }
 
   .game-board-viewport {
-    height: 540px;
+    height: min(500px, 68dvh);
+    min-height: 430px;
     border-radius: 20px;
     border-width: 4px;
   }
 
+  .dm-map-viewport.has-cards .game-heat-legend,
+  .game-heat-legend {
+    left: 12px;
+    bottom: 14px;
+    max-width: calc(100% - 170px);
+    flex-wrap: wrap;
+    padding: 5px 8px;
+  }
+
+  .game-controls {
+    bottom: 14px;
+    right: 12px;
+    gap: 6px;
+  }
+
+  .game-round-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 17px;
+  }
+
+  .game-round-btn.reset-btn {
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .card,
+  .panel,
+  .form-panel,
+  .route-card,
+  .detail-header {
+    padding: 16px 16px;
+  }
+
   .route-card {
-    grid-template-columns: 120px 1fr;
+    grid-template-columns: 112px minmax(0, 1fr);
     gap: 12px;
   }
 
   .route-thumb,
   .route-thumb-link {
-    width: 120px;
-    height: 95px;
+    width: 112px;
+    height: 88px;
   }
 
   .search input,
   .search select,
   .search button {
     width: 100%;
+    min-width: 0;
   }
 
   .pref-hover-popover {
     display: none !important;
+  }
+
+  .photo-delete-card {
+    width: 140px;
+    height: 105px;
   }
 }

@@ -120,6 +120,31 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
     [deletePhotoIds.length, existingPhotos.length, files.length],
   );
 
+  const visibleExistingPhotos = useMemo(
+    () => existingPhotos.filter((photo) => !deletePhotoIds.includes(photo.id)),
+    [existingPhotos, deletePhotoIds],
+  );
+
+  const filePreviews = useMemo(
+    () =>
+      files.map((file, index) => ({
+        key: `${file.name}-${file.size}-${file.lastModified}-${index}`,
+        name: file.name,
+        url: URL.createObjectURL(file),
+      })),
+    [files],
+  );
+
+  useEffect(() => {
+    return () => {
+      filePreviews.forEach((preview) => URL.revokeObjectURL(preview.url));
+    };
+  }, [filePreviews]);
+
+  function handleRemoveNewFile(targetIndex: number) {
+    setFiles((current) => current.filter((_, index) => index !== targetIndex));
+  }
+
   function updateField<Field extends keyof RouteFormValues>(
     field: Field,
     value: RouteFormValues[Field],
@@ -447,8 +472,12 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
     <AuthGuard>
       <section className="form-panel wide">
         <div className="topnav">
-          <Link href="/">← トップ（日本地図）へ戻る</Link>
-          <Link href="/routes">投稿一覧</Link>
+          <Link href="/" className="button back-button">
+            ← トップ（日本地図）へ戻る
+          </Link>
+          <Link href="/routes" className="button">
+            🚩 投稿一覧
+          </Link>
         </div>
         <h1>{pageTitle}</h1>
         {error && <p className="error">{error}</p>}
@@ -624,48 +653,68 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
           <hr />
 
           <h2>写真</h2>
-          {existingPhotos.length > 0 && (
+          {(visibleExistingPhotos.length > 0 || filePreviews.length > 0) && (
             <div className="existing-photos">
-              {existingPhotos
-                .filter((photo) => !deletePhotoIds.includes(photo.id))
-                .map((photo) => (
-                  <div key={photo.id} className="photo-delete-card">
-                    <button
-                      type="button"
-                      className="photo-delete-button"
-                      onClick={() =>
-                        setDeletePhotoIds([...deletePhotoIds, photo.id])
-                      }
-                      aria-label="写真を削除"
-                    >
-                      ×
-                    </button>
-                    <img
-                      src={getPublicPhotoUrl(
-                        photo.thumb_path || photo.storage_path,
-                      )}
-                      alt=""
-                      loading="lazy"
-                    />
-                  </div>
-                ))}
+              {visibleExistingPhotos.map((photo) => (
+                <div key={photo.id} className="photo-delete-card">
+                  <button
+                    type="button"
+                    className="photo-delete-button"
+                    onClick={() =>
+                      setDeletePhotoIds([...deletePhotoIds, photo.id])
+                    }
+                    aria-label="登録済み写真を削除"
+                  >
+                    ×
+                  </button>
+                  <img
+                    src={getPublicPhotoUrl(
+                      photo.thumb_path || photo.storage_path,
+                    )}
+                    alt=""
+                    loading="lazy"
+                  />
+                </div>
+              ))}
+
+              {filePreviews.map((preview, index) => (
+                <div key={preview.key} className="photo-delete-card is-new">
+                  <button
+                    type="button"
+                    className="photo-delete-button"
+                    onClick={() => handleRemoveNewFile(index)}
+                    aria-label={`${preview.name} を削除`}
+                  >
+                    ×
+                  </button>
+                  <img src={preview.url} alt={preview.name} />
+                </div>
+              ))}
             </div>
           )}
 
           <label>
-            写真（最大10枚）
+            写真を追加（最大10枚）
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp"
               multiple
-              onChange={(event) => setFiles(Array.from(event.target.files || []))}
+              onChange={(event) => {
+                const picked = Array.from(event.target.files || []);
+                if (picked.length > 0) {
+                  setFiles((current) => [...current, ...picked]);
+                }
+                event.target.value = '';
+              }}
             />
             <small>現在の保存予定: {remainingPhotoCount} / 10枚</small>
           </label>
 
-          <button type="submit" disabled={submitting}>
-            {submitting ? '保存中...' : isEditMode ? '更新する' : '投稿する'}
-          </button>
+          <div className="form-submit-row">
+            <button type="submit" disabled={submitting}>
+              {submitting ? '保存中...' : isEditMode ? '更新する' : '投稿する'}
+            </button>
+          </div>
         </form>
       </section>
     </AuthGuard>

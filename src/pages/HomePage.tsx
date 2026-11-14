@@ -76,7 +76,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="home-top-container" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '10px' }}>
+    <div className="home-top-container">
       {error && <p className="error" role="alert">{error}</p>}
       <JapanMap counts={counts} topPrefectures={topPrefectures} popularRoutes={popularRoutes} />
     </div>

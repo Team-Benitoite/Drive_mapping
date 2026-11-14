@@ -212,15 +212,17 @@ export interface JapanMapProps {
   topPrefectures?: TopPrefecture[];
   popularRoutes?: Record<number, TopPrefecture>;
   hrefForCode?: (code: number) => string;
+  showTopCards?: boolean;
+  strictTopCards?: boolean;
 }
 
 // 初期スケール & 表示位置（デスクトップでは左側カード群と重ならないよう右側へオフセット）
 const INITIAL_ZOOM = 1.15;
-export const getInitialPan = () => {
+export const getInitialPan = (hasCards = true) => {
   if (typeof window !== 'undefined' && window.innerWidth <= 768) {
     return { x: 0, y: 10 };
   }
-  return { x: 75, y: 10 };
+  return { x: hasCards ? 75 : 0, y: 10 };
 };
 
 export default function JapanMap({
@@ -228,6 +230,8 @@ export default function JapanMap({
   topPrefectures = [],
   popularRoutes = {},
   hrefForCode,
+  showTopCards = true,
+  strictTopCards = false,
 }: JapanMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -235,8 +239,25 @@ export default function JapanMap({
   const [hoveredPref, setHoveredPref] = useState<number | null>(null);
   const [hoveredCardPhoto, setHoveredCardPhoto] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const displayCards = useMemo(() => {
+    if (!showTopCards) return [];
+    if (strictTopCards) {
+      return topPrefectures.slice(0, 3);
+    }
+    const combined: TopPrefecture[] = [...topPrefectures];
+    for (const fallback of DEFAULT_TOP_PREFECTURES) {
+      if (combined.length >= 3) break;
+      if (!combined.some((item) => item.prefecture_code === fallback.prefecture_code)) {
+        combined.push(fallback);
+      }
+    }
+    return combined.slice(0, 3);
+  }, [showTopCards, strictTopCards, topPrefectures]);
+
+  const hasCards = displayCards.length > 0;
+
   const [zoom, setZoom] = useState(INITIAL_ZOOM);
-  const [pan, setPan] = useState(getInitialPan);
+  const [pan, setPan] = useState(() => getInitialPan(hasCards));
   const [showGuide, setShowGuide] = useState(true);
 
   // モバイル位置情報関連の状態
@@ -255,17 +276,6 @@ export default function JapanMap({
       return false;
     }
   });
-
-  const displayCards = useMemo(() => {
-    const combined: TopPrefecture[] = [...topPrefectures];
-    for (const fallback of DEFAULT_TOP_PREFECTURES) {
-      if (combined.length >= 3) break;
-      if (!combined.some((item) => item.prefecture_code === fallback.prefecture_code)) {
-        combined.push(fallback);
-      }
-    }
-    return combined.slice(0, 3);
-  }, [topPrefectures]);
 
   useEffect(() => {
     const timer = setTimeout(() => setShowGuide(false), 4500);
@@ -463,7 +473,7 @@ export default function JapanMap({
 
   function resetView() {
     setZoom(INITIAL_ZOOM);
-    setPan(getInitialPan());
+    setPan(getInitialPan(hasCards));
   }
 
   function handlePrefClick(code: number) {
@@ -490,7 +500,7 @@ export default function JapanMap({
   function heatColor(count: number) {
     if (count <= 0) return '#E2E8F0'; // 0件: 未投稿（クールグレー）
     if (count <= 2) return '#6EE7B7'; // 1〜2件: ライトミントグリーン
-    if (count <= 5) return '#34D399'; // 3〜5件: エメラルドグリーン
+    if (count <= 5) return '#16A34A'; // 3〜5件: ディープグリーン（視認性向上）
     if (count <= 10) return '#FACC15'; // 6〜10件: レモンイエロー
     if (count <= 20) return '#FB923C'; // 11〜20件: ビビッドオレンジ
     return '#EF4444';                  // 21件以上: ホットレッド
@@ -527,7 +537,21 @@ export default function JapanMap({
       };
     }
 
-    // 2. フォールバック名所ルートがある場合
+    // 2. strictTopCards（プロフィール画面など）の場合はユーザー固有の件数・状態のみ表示
+    if (strictTopCards) {
+      return {
+        prefecture_code: hoveredPref,
+        prefecture_name: prefName,
+        region_name: region.name,
+        route_id: undefined,
+        title: `${prefName}の投稿ルート一覧を見る`,
+        like_count: 0,
+        image_url: '',
+        count,
+      };
+    }
+
+    // 3. フォールバック名所ルートがある場合
     const fallback = FALLBACK_PREF_ROUTES[hoveredPref];
     if (fallback) {
       return {
@@ -542,7 +566,7 @@ export default function JapanMap({
       };
     }
 
-    // 3. 一般的なご案内（写真付き）
+    // 4. 一般的なご案内（写真付き）
     return {
       prefecture_code: hoveredPref,
       prefecture_name: prefName,
@@ -553,13 +577,13 @@ export default function JapanMap({
       image_url: '/src/assets/images/drive_fuji_panorama_1794028779954.jpg',
       count,
     };
-  }, [hoveredPref, popularRoutes, counts]);
+  }, [hoveredPref, popularRoutes, counts, strictTopCards]);
 
   return (
     <div className="japan-map-component-root">
       {/* ゲーム盤面ビューポート（深みと透明感のあるマリンブルーグラデーション ＋ 薄いグリッドマス目） */}
       <div
-        className="dm-map-viewport game-board-viewport"
+        className={`dm-map-viewport game-board-viewport ${hasCards ? 'has-cards' : 'no-cards'}`}
         ref={containerRef}
         onMouseDown={handleMouseDown}
         onMouseMove={handleContainerMouseMove}
@@ -660,70 +684,72 @@ export default function JapanMap({
           )}
         </div>
 
-        {/* 左上海エリア：枠内にきれいに収まる注目ルートカードデッキ（重なり解消・ハート白抜き改善） */}
-        <div className="dm-sea-deck game-card-deck" aria-label="人気ドライブコース">
-          <div className="game-deck-header-ribbon">
-            <span className="game-ribbon-tag">POPULAR ROUTES</span>
-            <span className="game-ribbon-title">注目の人気ドライブコース</span>
-          </div>
-          <div className="dm-sea-deck-cards">
-            {displayCards.map((item, idx) => {
-              const isCardHovered = hoveredPref === item.prefecture_code;
-              const prefLabel = formatPrefectureShortName(item.prefecture_code, prefectureMap[item.prefecture_code] || '');
-              return (
-                <div
-                  key={`${item.prefecture_code}-${idx}`}
-                  className={`dm-sea-card game-event-card card-index-${idx} ${isCardHovered ? 'is-hovered' : ''}`}
-                  onMouseEnter={() => {
-                    setHoveredPref(item.prefecture_code);
-                    if (item.image_url) {
-                      setHoveredCardPhoto(item.image_url);
-                    }
-                  }}
-                  onMouseLeave={() => {
-                    setHoveredPref(null);
-                    setHoveredCardPhoto(null);
-                  }}
-                  onClick={(e) => handleCardClick(e, item)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleCardClick(e as unknown as MouseEvent, item);
-                  }}
-                  title="クリックしてルート詳細を見る"
-                >
-                  <div className="game-card-badge-top">CARD 0{idx + 1}</div>
-                  <div className="dm-sea-card-photo-wrap game-card-photo-wrap">
-                    {item.image_url ? (
-                      <img
-                        src={item.image_url}
-                        alt={item.title}
-                        className="dm-sea-card-img"
-                        draggable="false"
-                      />
-                    ) : (
-                      <div className="dm-sea-card-placeholder">DRIVE PHOTO</div>
-                    )}
-                    <div className="dm-sea-card-overlay">
-                      <span className="game-card-tag-pill">
-                        📍 {prefLabel || 'おすすめ'}
-                      </span>
-                      <span className="game-card-likes-badge">
-                        <span className="likes-heart-icon">♥</span> {item.like_count} pt
-                      </span>
+        {/* 左上海エリア：枠内にきれいに収まる注目ルートカードデッキ（カードがある場合のみ描画） */}
+        {hasCards && (
+          <div className="dm-sea-deck game-card-deck" aria-label="人気ドライブコース">
+            <div className="game-deck-header-ribbon">
+              <span className="game-ribbon-tag">POPULAR ROUTES</span>
+              <span className="game-ribbon-title">注目の人気ドライブコース</span>
+            </div>
+            <div className="dm-sea-deck-cards">
+              {displayCards.map((item, idx) => {
+                const isCardHovered = hoveredPref === item.prefecture_code;
+                const prefLabel = formatPrefectureShortName(item.prefecture_code, prefectureMap[item.prefecture_code] || '');
+                return (
+                  <div
+                    key={`${item.route_id ?? item.prefecture_code}-${idx}`}
+                    className={`dm-sea-card game-event-card card-index-${idx} ${isCardHovered ? 'is-hovered' : ''}`}
+                    onMouseEnter={() => {
+                      setHoveredPref(item.prefecture_code);
+                      if (item.image_url) {
+                        setHoveredCardPhoto(item.image_url);
+                      }
+                    }}
+                    onMouseLeave={() => {
+                      setHoveredPref(null);
+                      setHoveredCardPhoto(null);
+                    }}
+                    onClick={(e) => handleCardClick(e, item)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleCardClick(e as unknown as MouseEvent, item);
+                    }}
+                    title="クリックしてルート詳細を見る"
+                  >
+                    <div className="game-card-badge-top">CARD 0{idx + 1}</div>
+                    <div className="dm-sea-card-photo-wrap game-card-photo-wrap">
+                      {item.image_url ? (
+                        <img
+                          src={item.image_url}
+                          alt={item.title}
+                          className="dm-sea-card-img"
+                          draggable="false"
+                        />
+                      ) : (
+                        <div className="dm-sea-card-placeholder">DRIVE PHOTO</div>
+                      )}
+                      <div className="dm-sea-card-overlay">
+                        <span className="game-card-tag-pill">
+                          📍 {prefLabel || 'おすすめ'}
+                        </span>
+                        <span className="game-card-likes-badge">
+                          <span className="likes-heart-icon">♥</span> {item.like_count} pt
+                        </span>
+                      </div>
+                    </div>
+                    <div className="game-card-info">
+                      <p className="game-card-title">{item.title}</p>
+                      <div className="game-card-footer">
+                        <span className="game-card-command">▶ ルート詳細を見る</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="game-card-info">
-                    <p className="game-card-title">{item.title}</p>
-                    <div className="game-card-footer">
-                      <span className="game-card-command">▶ ルート詳細を見る</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* 投稿件数ヒートマップ凡例（投稿件数ON時に表示） */}
         {heatOn && (
@@ -732,7 +758,7 @@ export default function JapanMap({
             <div className="legend-chips">
               <span className="legend-chip" style={{ backgroundColor: '#E2E8F0', color: '#0F172A' }}>0件</span>
               <span className="legend-chip" style={{ backgroundColor: '#6EE7B7', color: '#0F172A' }}>1-2</span>
-              <span className="legend-chip" style={{ backgroundColor: '#34D399', color: '#0F172A' }}>3-5</span>
+              <span className="legend-chip" style={{ backgroundColor: '#16A34A', color: '#FFFFFF' }}>3-5</span>
               <span className="legend-chip" style={{ backgroundColor: '#FACC15', color: '#0F172A' }}>6-10</span>
               <span className="legend-chip" style={{ backgroundColor: '#FB923C', color: '#FFFFFF' }}>11-20</span>
               <span className="legend-chip" style={{ backgroundColor: '#EF4444', color: '#FFFFFF' }}>21+</span>
@@ -740,7 +766,7 @@ export default function JapanMap({
           </div>
         )}
 
-        {/* 都道府県ホバー時の「No.1ルート詳細ミニポップアップ」（写真確実表示） */}
+        {/* 都道府県ホバー時の「No.1ルート詳細ミニポップアップ」 */}
         {activeHoverRoute && (
           <div
             className="pref-hover-popover"
@@ -755,18 +781,20 @@ export default function JapanMap({
             <div className="pref-hover-header">
               <span className="pref-hover-crown">👑</span>
               <span className="pref-hover-badge-title">
-                {activeHoverRoute.prefecture_name} No.1 ルート
+                {activeHoverRoute.prefecture_name} {activeHoverRoute.route_id || !strictTopCards ? 'No.1 ルート' : 'マップ'}
               </span>
               <span className="pref-hover-region">{activeHoverRoute.region_name}</span>
             </div>
             <div className="pref-hover-body">
-              <div className="pref-hover-photo-wrap">
-                <img
-                  src={activeHoverRoute.image_url}
-                  alt={activeHoverRoute.title}
-                  className="pref-hover-img"
-                />
-              </div>
+              {activeHoverRoute.image_url && (
+                <div className="pref-hover-photo-wrap">
+                  <img
+                    src={activeHoverRoute.image_url}
+                    alt={activeHoverRoute.title}
+                    className="pref-hover-img"
+                  />
+                </div>
+              )}
               <div className="pref-hover-text-wrap">
                 <p className="pref-hover-route-title">{activeHoverRoute.title}</p>
                 <div className="pref-hover-meta">
@@ -874,25 +902,27 @@ export default function JapanMap({
                       </text>
                     )}
 
-                    {/* 4. 投稿件数バッジ（ボードゲームのピン） */}
+                    {/* 4. 投稿件数バッジ（ボードゲームのピン：SVG座標固定・内側グループのみアニメーション） */}
                     {center && count > 0 && (
                       <g
                         transform={`translate(${center.x + 9}, ${center.y - 10})`}
                         className="game-pref-badge"
                         pointerEvents="none"
                       >
-                        <circle cx="0" cy="0" r="8" fill="#EF4444" stroke="#0F172A" strokeWidth="1.8" />
-                        <text
-                          x="0"
-                          y="0.5"
-                          textAnchor="middle"
-                          dominantBaseline="central"
-                          fill="#FFFFFF"
-                          fontSize="8.5"
-                          fontWeight="900"
-                        >
-                          {count > 99 ? '99+' : count}
-                        </text>
+                        <g className="game-pref-badge-inner">
+                          <circle cx="0" cy="0" r="8" fill="#EF4444" stroke="#0F172A" strokeWidth="1.8" />
+                          <text
+                            x="0"
+                            y="0.5"
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            fill="#FFFFFF"
+                            fontSize="8.5"
+                            fontWeight="900"
+                          >
+                            {count > 99 ? '99+' : count}
+                          </text>
+                        </g>
                       </g>
                     )}
 
@@ -933,52 +963,54 @@ export default function JapanMap({
         </div>
       </div>
 
-      {/* スマートフォン専用：手札カードスワイプ風一覧 */}
-      <div className="dm-mobile-cards-wrap game-mobile-cards-wrap">
-        <div className="dm-mobile-cards-header">
-          <span className="dm-mobile-cards-title">🎴 おすすめイベントカード</span>
-          <span className="dm-mobile-cards-sub">タップして詳細を見る</span>
-        </div>
-        <div className="dm-mobile-cards-scroll">
-          {displayCards.map((item, idx) => {
-            const prefLabel = formatPrefectureShortName(item.prefecture_code, prefectureMap[item.prefecture_code] || '');
-            return (
-              <div
-                key={`mobile-${item.prefecture_code}-${idx}`}
-                className="dm-mobile-card game-mobile-card"
-                onClick={(e) => handleCardClick(e, item)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleCardClick(e as unknown as MouseEvent, item);
-                }}
-              >
-                <div className="dm-mobile-card-thumb-wrap">
-                  {item.image_url ? (
-                    <img
-                      src={item.image_url}
-                      alt={item.title}
-                      className="dm-mobile-card-img"
-                      draggable="false"
-                    />
-                  ) : (
-                    <div className="dm-mobile-card-placeholder">NO IMAGE</div>
-                  )}
-                  <span className="game-mobile-card-tag">
-                    📍 {prefLabel || 'スポット'}
-                  </span>
-                  <span className="game-mobile-card-likes">
-                    <span className="likes-heart-icon">♥</span> {item.like_count} pt
-                  </span>
+      {/* スマートフォン専用：手札カードスワイプ風一覧（カードがある場合のみ描画） */}
+      {hasCards && (
+        <div className="dm-mobile-cards-wrap game-mobile-cards-wrap">
+          <div className="dm-mobile-cards-header">
+            <span className="dm-mobile-cards-title">🎴 おすすめイベントカード</span>
+            <span className="dm-mobile-cards-sub">タップして詳細を見る</span>
+          </div>
+          <div className="dm-mobile-cards-scroll">
+            {displayCards.map((item, idx) => {
+              const prefLabel = formatPrefectureShortName(item.prefecture_code, prefectureMap[item.prefecture_code] || '');
+              return (
+                <div
+                  key={`mobile-${item.route_id ?? item.prefecture_code}-${idx}`}
+                  className="dm-mobile-card game-mobile-card"
+                  onClick={(e) => handleCardClick(e, item)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleCardClick(e as unknown as MouseEvent, item);
+                  }}
+                >
+                  <div className="dm-mobile-card-thumb-wrap">
+                    {item.image_url ? (
+                      <img
+                        src={item.image_url}
+                        alt={item.title}
+                        className="dm-mobile-card-img"
+                        draggable="false"
+                      />
+                    ) : (
+                      <div className="dm-mobile-card-placeholder">NO IMAGE</div>
+                    )}
+                    <span className="game-mobile-card-tag">
+                      📍 {prefLabel || 'スポット'}
+                    </span>
+                    <span className="game-mobile-card-likes">
+                      <span className="likes-heart-icon">♥</span> {item.like_count} pt
+                    </span>
+                  </div>
+                  <div className="dm-mobile-card-body">
+                    <p className="dm-mobile-card-title">{item.title}</p>
+                  </div>
                 </div>
-                <div className="dm-mobile-card-body">
-                  <p className="dm-mobile-card-title">{item.title}</p>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

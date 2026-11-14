@@ -116,8 +116,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       ) : (
         <main className="container">
           {/* ヘッダー操作バー */}
-          <div className="auth-header-bar" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px', position: 'relative', marginBottom: '16px' }}>
-
+          <div className="auth-header-bar">
             {/* 1. 投稿件数トグルボタン */}
             <button
               type="button"
@@ -145,6 +144,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               className="game-header-btn menu-toggle-btn"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="メニューを開く"
+              aria-expanded={menuOpen}
               title="メニュー"
             >
               ☰
@@ -152,32 +152,27 @@ export default function Layout({ children }: { children: ReactNode }) {
 
             {/* ドロップダウンメニュー */}
             {menuOpen && (
-              <div
-                className="auth-dropdown-menu"
-                style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #ccc',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-                  zIndex: 100,
-                  minWidth: '260px',
-                  marginTop: '6px'
-                }}
-              >
+              <div className="auth-dropdown-menu">
                 {user ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div>ログイン中：<strong>{userName}</strong> さん</div>
-                    <hr style={{ margin: '4px 0' }} />
-                    <Link href="/profile" onClick={() => setMenuOpen(false)}>プロフィール</Link>
-                    <Link href="/routes/new" onClick={() => setMenuOpen(false)}>投稿する</Link>
-                    <Link href="/favorites" onClick={() => setMenuOpen(false)}>お気に入り</Link>
-                    <Link href="/logout" onClick={() => setMenuOpen(false)}>ログアウト</Link>
+                  <div className="auth-dropdown-stack">
+                    <div className="auth-dropdown-user">
+                      ログイン中：<strong>{userName}</strong> さん
+                    </div>
+                    <hr className="auth-dropdown-divider" />
+                    <Link href="/profile" onClick={() => setMenuOpen(false)}>
+                      プロフィール
+                    </Link>
+                    <Link href="/routes/new" onClick={() => setMenuOpen(false)}>
+                      投稿する
+                    </Link>
+                    <Link href="/favorites" onClick={() => setMenuOpen(false)}>
+                      お気に入り
+                    </Link>
+                    <Link href="/logout" onClick={() => setMenuOpen(false)}>
+                      ログアウト
+                    </Link>
 
-                    <form className="account-search" onSubmit={handleAccountSearch} style={{ marginTop: '8px' }}>
+                    <form className="account-search" onSubmit={handleAccountSearch}>
                       <input
                         type="search"
                         value={accountQuery}
@@ -191,9 +186,13 @@ export default function Layout({ children }: { children: ReactNode }) {
                     </form>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <Link href={getAuthHref('/login')} onClick={() => setMenuOpen(false)}>ログイン</Link> /{' '}
-                    <Link href={getAuthHref('/signup')} onClick={() => setMenuOpen(false)}>新規登録</Link>
+                  <div className="auth-dropdown-guest">
+                    <Link href={getAuthHref('/login')} onClick={() => setMenuOpen(false)}>
+                      ログイン
+                    </Link>
+                    <Link href={getAuthHref('/signup')} onClick={() => setMenuOpen(false)}>
+                      新規登録
+                    </Link>
                   </div>
                 )}
               </div>
@@ -209,11 +208,18 @@ export default function Layout({ children }: { children: ReactNode }) {
           {children}
 
           {searchOpen && (
-            <div className="account-modal" role="dialog" onClick={() => setSearchOpen(false)}>
+            <div className="account-modal" role="dialog" aria-modal="true" onClick={() => setSearchOpen(false)}>
               <div className="account-modal-content" onClick={(e) => e.stopPropagation()}>
                 <div className="account-modal-header">
                   <h2>アカウント検索</h2>
-                  <button type="button" onClick={() => setSearchOpen(false)}>×</button>
+                  <button
+                    type="button"
+                    className="photo-modal-close account-modal-close"
+                    onClick={() => setSearchOpen(false)}
+                    aria-label="閉じる"
+                  >
+                    ×
+                  </button>
                 </div>
                 {searchError && <p className="error">{searchError}</p>}
                 {!searchError && accountResults.length === 0 && (

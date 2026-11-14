@@ -228,6 +228,42 @@ export interface Database {
           },
         ];
       };
+      route_favorite: {
+        Row: {
+          id: number;
+          route_id: number;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          route_id: number;
+          user_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: number;
+          route_id?: number;
+          user_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'route_favorite_route_id_fkey';
+            columns: ['route_id'];
+            isOneToOne: false;
+            referencedRelation: 'routes';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'route_favorite_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       profile_follows: {
         Row: {
           id: number;

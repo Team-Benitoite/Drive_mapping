@@ -6,6 +6,7 @@ import RouteCard from '../components/RouteCard';
 import { useAuth } from '../contexts/AuthContext';
 import { profileIconBucket, supabase } from '../lib/supabase';
 import { getPrefectureName } from '../utils/prefectures';
+import { getPublicPhotoUrl } from '../utils/routeData';
 import { loadProfilesByIds } from '../utils/profileData';
 import { getAuthHref, Link, navigate } from '../utils/navigation';
 import { getErrorMessage } from '../utils/errors';
@@ -13,6 +14,7 @@ import type {
   PrefectureCounts,
   ProfileSummary,
   RouteListItem,
+  TopPrefecture,
 } from '../types/models';
 
 function safeStorageName(file: File): string {
@@ -106,6 +108,53 @@ export default function ProfilePage({ id }: { id?: string }) {
     () => Object.values(counts).reduce((sum, count) => sum + count, 0),
     [counts],
   );
+
+  const userTopPrefectures = useMemo<TopPrefecture[]>(() => {
+    if (routes.length === 0) return [];
+    return [...routes]
+      .sort(
+        (left, right) =>
+          (right.route_likes?.length || 0) - (left.route_likes?.length || 0) ||
+          new Date(right.created_at).getTime() - new Date(left.created_at).getTime(),
+      )
+      .slice(0, 3)
+      .map((route) => {
+        const firstPhoto = route.route_photos?.[0];
+        return {
+          route_id: route.id,
+          prefecture_code: route.prefecture_code,
+          title: route.title,
+          like_count: route.route_likes?.length || 0,
+          image_url:
+            getPublicPhotoUrl(firstPhoto?.thumb_path || firstPhoto?.storage_path) ||
+            null,
+        };
+      });
+  }, [routes]);
+
+  const userPopularRoutes = useMemo<Record<number, TopPrefecture>>(() => {
+    const map: Record<number, TopPrefecture> = {};
+    const sorted = [...routes].sort(
+      (left, right) =>
+        (right.route_likes?.length || 0) - (left.route_likes?.length || 0) ||
+        new Date(right.created_at).getTime() - new Date(left.created_at).getTime(),
+    );
+    for (const route of sorted) {
+      if (!map[route.prefecture_code]) {
+        const firstPhoto = route.route_photos?.[0];
+        map[route.prefecture_code] = {
+          route_id: route.id,
+          prefecture_code: route.prefecture_code,
+          title: route.title,
+          like_count: route.route_likes?.length || 0,
+          image_url:
+            getPublicPhotoUrl(firstPhoto?.thumb_path || firstPhoto?.storage_path) ||
+            null,
+        };
+      }
+    }
+    return map;
+  }, [routes]);
 
   async function loadProfile() {
     setLoading(true);
@@ -343,9 +392,11 @@ export default function ProfilePage({ id }: { id?: string }) {
   if (error && !profile) return <p className="error">{error}</p>;
 
   return (
-    <section>
+    <section className="profile-page">
       <div className="topnav">
-        <Link href="/">← トップ（日本地図）へ戻る</Link>
+        <Link href="/" className="button back-button">
+          ← トップ（日本地図）へ戻る
+        </Link>
       </div>
 
       <div className="profile-header panel">
@@ -428,19 +479,21 @@ export default function ProfilePage({ id }: { id?: string }) {
         </div>
       )}
 
-      <div className="profile-grid">
-        <section className="panel">
-          <h2>投稿マップ</h2>
-          <div className="map-wrap profile-map">
-            <JapanMap
-              counts={counts}
-              hrefForCode={(code) =>
-                `/routes?prefecture_code=${code}&user_id=${targetId}`
-              }
-            />
-          </div>
-        </section>
+      <section className="panel profile-map-panel">
+        <h2>投稿マップ</h2>
+        <JapanMap
+          counts={counts}
+          topPrefectures={userTopPrefectures}
+          popularRoutes={userPopularRoutes}
+          showTopCards={routes.length > 0}
+          strictTopCards={true}
+          hrefForCode={(code) =>
+            `/routes?prefecture_code=${code}&user_id=${targetId}`
+          }
+        />
+      </section>
 
+      <div className="profile-grid">
         <section className="panel">
           <h2>投稿数一覧</h2>
           <div className="profile-count-scroll">
@@ -462,6 +515,26 @@ export default function ProfilePage({ id }: { id?: string }) {
             )}
             <p className="meta">合計：{totalRoutes} 件</p>
           </div>
+        </section>
+
+        <section className="panel">
+          <h2>投稿サマリー</h2>
+          <dl className="info-list">
+            <dt>総投稿数</dt>
+            <dd>{totalRoutes} 件</dd>
+            <dt>獲得いいね合計</dt>
+            <dd>
+              {routes.reduce(
+                (sum, route) => sum + (route.route_likes?.length || 0),
+                0,
+              )}{' '}
+              pt
+            </dd>
+            <dt>フォロー中</dt>
+            <dd>{followingProfiles.length} 人</dd>
+            <dt>フォロワー</dt>
+            <dd>{followerProfiles.length} 人</dd>
+          </dl>
         </section>
       </div>
 

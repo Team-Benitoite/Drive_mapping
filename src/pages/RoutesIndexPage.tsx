@@ -124,8 +124,12 @@ export default function RoutesIndexPage() {
   return (
     <section>
       <div className="topnav">
-        <Link href="/">← トップ（日本地図）へ戻る</Link>
-        <Link href="/routes/new">＋ 投稿する</Link>
+        <Link href="/" className="button back-button">
+          ← トップ（日本地図）へ戻る
+        </Link>
+        <Link href="/routes/new" className="button button-primary">
+          ＋ 投稿する
+        </Link>
       </div>
 
       <div className="page-heading">

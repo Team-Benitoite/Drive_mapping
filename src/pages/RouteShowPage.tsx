@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { googleMapsApiKey, supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -22,11 +22,14 @@ const pointLabel: Record<PointType, string> = {
 export default function RouteShowPage({ id }: { id: number }) {
   const { user } = useAuth();
   const [route, setRoute] = useState<RouteDetail | null>(null);
+  const [favorited, setFavorited] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [favoriteError, setFavoriteError] = useState('');
+  const [actionError, setActionError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   const owner = useMemo(() => isOwner(route, user), [route, user]);
   const liked = useMemo(
@@ -34,10 +37,12 @@ export default function RouteShowPage({ id }: { id: number }) {
     [route, user],
   );
 
-  async function loadRoute() {
+  const photos = useMemo(() => route?.route_photos || [], [route]);
+
+  const loadRoute = useCallback(async () => {
     setLoading(true);
     setError('');
-    setFavoriteError('');
+    setActionError('');
 
     if (!supabase) {
       setLoading(false);
@@ -68,30 +73,77 @@ export default function RouteShowPage({ id }: { id: number }) {
 
     if (fetchError) {
       setError(fetchError.message);
+      setLoading(false);
+      return;
+    }
+
+    setRoute(data);
+    setActiveSlide(0);
+
+    if (user && data) {
+      const { data: favData, error: favError } = await supabase
+        .from('route_favorite')
+        .select('id')
+        .eq('route_id', id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!favError) {
+        setFavorited(Boolean(favData));
+      } else {
+        setFavorited(false);
+      }
     } else {
-      setRoute(data);
+      setFavorited(false);
     }
 
     setLoading(false);
-  }
+  }, [id, user]);
 
   useEffect(() => {
-    loadRoute();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+    void loadRoute();
+  }, [loadRoute]);
 
   useEffect(() => {
-    if (!selectedPhoto) return undefined;
+    if (selectedPhotoIndex === null) return undefined;
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
-        setSelectedPhoto(null);
+        setSelectedPhotoIndex(null);
+      } else if (event.key === 'ArrowRight' && photos.length > 1) {
+        setSelectedPhotoIndex((current) =>
+          current === null ? null : (current + 1) % photos.length,
+        );
+      } else if (event.key === 'ArrowLeft' && photos.length > 1) {
+        setSelectedPhotoIndex((current) =>
+          current === null ? null : (current - 1 + photos.length) % photos.length,
+        );
       }
     }
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedPhoto]);
+  }, [selectedPhotoIndex, photos.length]);
+
+  function scrollToSlide(index: number) {
+    const clamped = Math.max(0, Math.min(index, photos.length - 1));
+    setActiveSlide(clamped);
+    if (carouselRef.current) {
+      carouselRef.current.scrollTo({
+        left: clamped * carouselRef.current.clientWidth,
+        behavior: 'smooth',
+      });
+    }
+  }
+
+  function handleCarouselScroll() {
+    const track = carouselRef.current;
+    if (!track || track.clientWidth <= 0) return;
+    const nextIndex = Math.round(track.scrollLeft / track.clientWidth);
+    if (nextIndex !== activeSlide && nextIndex >= 0 && nextIndex < photos.length) {
+      setActiveSlide(nextIndex);
+    }
+  }
 
   async function toggleLike() {
     if (!user) {
@@ -102,7 +154,7 @@ export default function RouteShowPage({ id }: { id: number }) {
     if (!supabase) return;
 
     setBusy(true);
-    setFavoriteError('');
+    setActionError('');
 
     try {
       const { error: updateError } = liked
@@ -118,7 +170,40 @@ export default function RouteShowPage({ id }: { id: number }) {
       if (updateError) throw updateError;
       await loadRoute();
     } catch (updateError) {
-      setFavoriteError(getErrorMessage(updateError, 'お気に入りの更新に失敗しました。'));
+      setActionError(getErrorMessage(updateError, 'いいねの更新に失敗しました。'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function toggleFavorite() {
+    if (!user) {
+      navigate(getAuthHref('/login'));
+      return;
+    }
+
+    if (!supabase) return;
+
+    setBusy(true);
+    setActionError('');
+
+    try {
+      const { error: updateError } = favorited
+        ? await supabase
+            .from('route_favorite')
+            .delete()
+            .eq('route_id', id)
+            .eq('user_id', user.id)
+        : await supabase.from('route_favorite').insert({
+            route_id: id,
+            user_id: user.id,
+          });
+      if (updateError) throw updateError;
+      setFavorited(!favorited);
+    } catch (updateError) {
+      setActionError(
+        getErrorMessage(updateError, 'お気に入りの更新に失敗しました。'),
+      );
     } finally {
       setBusy(false);
     }
@@ -158,27 +243,61 @@ export default function RouteShowPage({ id }: { id: number }) {
     route,
     googleMapsApiKey,
   );
+  const selectedPhotoUrl =
+    selectedPhotoIndex !== null && photos[selectedPhotoIndex]
+      ? getPublicPhotoUrl(photos[selectedPhotoIndex].storage_path)
+      : null;
 
   return (
-    <article>
+    <article className="route-detail-page">
       <div className="detail-header">
-        <div>
-          <Link href="/routes">投稿一覧へ戻る</Link>
+        <div className="detail-title-block">
+          <div className="detail-back-wrap">
+            <Link href="/routes" className="button back-button">
+              ← 投稿一覧へ戻る
+            </Link>
+          </div>
           <h1>{route.title}</h1>
           <p className="meta">
             投稿日：{new Date(route.created_at).toLocaleString('ja-JP')}
           </p>
         </div>
-        <div className="actions">
-          <button type="button" onClick={toggleLike} disabled={busy}>
-            {liked ? 'お気に入り解除' : 'お気に入り'} ({likeCount(route)})
+        <div className="actions detail-actions">
+          <button
+            type="button"
+            onClick={toggleFavorite}
+            disabled={busy}
+            className={`favorite-star-btn ${favorited ? 'is-active' : ''}`}
+            aria-pressed={favorited}
+          >
+            <span className="favorite-star-icon" aria-hidden="true">
+              {favorited ? '★' : '☆'}
+            </span>
+            <span>{favorited ? 'お気に入り済み' : 'お気に入り'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={toggleLike}
+            disabled={busy}
+            className={`like-heart-btn ${liked ? 'is-active' : ''}`}
+            aria-pressed={liked}
+          >
+            <span aria-hidden="true">{liked ? '♥' : '♡'}</span>
+            <span>
+              {liked ? 'いいね済み' : 'いいね'} ({likeCount(route)})
+            </span>
           </button>
           {owner && (
             <>
               <Link href={`/routes/${id}/edit`} className="button secondary">
                 編集
               </Link>
-              <button type="button" onClick={deleteRoute} disabled={busy}>
+              <button
+                type="button"
+                onClick={deleteRoute}
+                disabled={busy}
+                className="danger-button"
+              >
                 削除
               </button>
             </>
@@ -186,32 +305,89 @@ export default function RouteShowPage({ id }: { id: number }) {
         </div>
       </div>
 
-      {favoriteError && <p className="error" role="alert">{favoriteError}</p>}
+      {actionError && (
+        <p className="error" role="alert">
+          {actionError}
+        </p>
+      )}
+
       <div className="detail-grid">
         <div className="stack">
           <section className="panel">
             <h2>写真</h2>
-            {route.route_photos?.length ? (
-              <div className="photo-strip">
-                {route.route_photos.map((photo) => (
-                  <button
-                    key={photo.id}
-                    type="button"
-                    className="photo-modal-trigger"
-                    onClick={() =>
-                      setSelectedPhoto(getPublicPhotoUrl(photo.storage_path))
-                    }
-                    aria-label="写真を拡大表示"
+            {photos.length ? (
+              <div className="photo-carousel">
+                <div className="photo-carousel-frame">
+                  <div
+                    ref={carouselRef}
+                    className="photo-carousel-track"
+                    onScroll={handleCarouselScroll}
                   >
-                    <img
-                      src={getPublicPhotoUrl(
-                        photo.thumb_path || photo.storage_path,
-                      )}
-                      alt=""
-                      loading="lazy"
-                    />
-                  </button>
-                ))}
+                    {photos.map((photo, index) => (
+                      <div key={photo.id} className="photo-carousel-slide">
+                        <button
+                          type="button"
+                          className="photo-modal-trigger photo-carousel-trigger"
+                          onClick={() => setSelectedPhotoIndex(index)}
+                          aria-label={`写真 ${index + 1} を拡大表示`}
+                        >
+                          <img
+                            src={getPublicPhotoUrl(photo.storage_path)}
+                            alt={`${route.title}の写真 ${index + 1}`}
+                            loading="lazy"
+                            className="photo-carousel-img"
+                          />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {photos.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        className="carousel-nav-btn carousel-prev"
+                        onClick={() =>
+                          scrollToSlide(
+                            (activeSlide - 1 + photos.length) % photos.length,
+                          )
+                        }
+                        aria-label="前の写真へ"
+                      >
+                        ‹
+                      </button>
+                      <button
+                        type="button"
+                        className="carousel-nav-btn carousel-next"
+                        onClick={() =>
+                          scrollToSlide((activeSlide + 1) % photos.length)
+                        }
+                        aria-label="次の写真へ"
+                      >
+                        ›
+                      </button>
+                      <div className="carousel-counter" aria-live="polite">
+                        {activeSlide + 1} / {photos.length}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {photos.length > 1 && (
+                  <div className="carousel-dots" role="tablist" aria-label="写真の選択">
+                    {photos.map((photo, index) => (
+                      <button
+                        key={photo.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={index === activeSlide}
+                        aria-label={`写真 ${index + 1}`}
+                        className={`carousel-dot ${index === activeSlide ? 'is-active' : ''}`}
+                        onClick={() => scrollToSlide(index)}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             ) : (
               <p className="meta">写真は登録されていません。</p>
@@ -248,7 +424,7 @@ export default function RouteShowPage({ id }: { id: number }) {
             <section className="panel google-maps-panel">
               <div className="google-maps-heading">
                 <div>
-                  <h2>Google Maps経路</h2>
+                  <h2 className="google-maps-title">Google Maps経路</h2>
                   <p className="meta">
                     登録地点または保存された共有URLから経路を確認できます。
                   </p>
@@ -317,13 +493,13 @@ export default function RouteShowPage({ id }: { id: number }) {
         </aside>
       </div>
 
-      {selectedPhoto && (
+      {selectedPhotoUrl && (
         <div
           className="photo-modal"
           role="dialog"
           aria-modal="true"
           aria-label="写真の拡大表示"
-          onClick={() => setSelectedPhoto(null)}
+          onClick={() => setSelectedPhotoIndex(null)}
         >
           <div
             className="photo-modal-content"
@@ -332,15 +508,42 @@ export default function RouteShowPage({ id }: { id: number }) {
             <button
               type="button"
               className="photo-modal-close"
-              onClick={() => setSelectedPhoto(null)}
+              onClick={() => setSelectedPhotoIndex(null)}
               aria-label="閉じる"
             >
               ×
             </button>
-            <img src={selectedPhoto} alt="" />
+            {photos.length > 1 && selectedPhotoIndex !== null && (
+              <>
+                <button
+                  type="button"
+                  className="carousel-nav-btn carousel-prev modal-nav"
+                  onClick={() =>
+                    setSelectedPhotoIndex(
+                      (selectedPhotoIndex - 1 + photos.length) % photos.length,
+                    )
+                  }
+                  aria-label="前の写真へ"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  className="carousel-nav-btn carousel-next modal-nav"
+                  onClick={() =>
+                    setSelectedPhotoIndex((selectedPhotoIndex + 1) % photos.length)
+                  }
+                  aria-label="次の写真へ"
+                >
+                  ›
+                </button>
+              </>
+            )}
+            <img src={selectedPhotoUrl} alt="" />
           </div>
         </div>
       )}
     </article>
   );
 }
+

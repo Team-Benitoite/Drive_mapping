@@ -1,5 +1,5 @@
 import ProfileAvatar from './ProfileAvatar';
-import { routeThumbnail } from '../utils/routeData';
+import { likeCount, routeThumbnail } from '../utils/routeData';
 import { Link } from '../utils/navigation';
 import type { RouteListItem } from '../types/models';
 
@@ -16,10 +16,15 @@ export default function RouteCard({ route }: { route: RouteListItem }) {
         )}
       </Link>
 
-      <div>
-        <h3>
-          <Link href={`/routes/${route.id}`}>{route.title}</Link>
-        </h3>
+      <div className="route-card-body">
+        <div className="route-card-title-row">
+          <h3>
+            <Link href={`/routes/${route.id}`}>{route.title}</Link>
+          </h3>
+          <span className="route-card-like-pill" aria-label={`いいね ${likeCount(route)}件`}>
+            <span aria-hidden="true">♥</span> {likeCount(route)} pt
+          </span>
+        </div>
         <ProfileAvatar profile={route.profile} userId={route.user_id} />
         <p className="meta">
           {route.created_at

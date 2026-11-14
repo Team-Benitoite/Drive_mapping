@@ -21,7 +21,7 @@ export default function FavoritesPage() {
       }
 
       const { data, error: fetchError } = await supabase
-        .from('route_likes')
+        .from('route_favorite')
         .select(
           `
             route_id,
@@ -39,7 +39,9 @@ export default function FavoritesPage() {
       if (fetchError) {
         setError(fetchError.message);
       } else {
-        const favoriteRoutes = (data || []).map((row) => row.routes).filter(Boolean);
+        const favoriteRoutes = (data || [])
+          .map((row) => row.routes)
+          .filter((route): route is NonNullable<typeof route> => Boolean(route));
         const profiles = await loadProfilesByIds(
           favoriteRoutes.map((route) => route.user_id),
         );
@@ -61,10 +63,16 @@ export default function FavoritesPage() {
     <AuthGuard>
       <section>
         <div className="topnav">
-          <Link href="/">← トップ（日本地図）へ戻る</Link>
+          <Link href="/" className="button back-button">
+            ← トップ（日本地図）へ戻る
+          </Link>
         </div>
-        <h1>お気に入り</h1>
-        <div className="meta">ログイン中：{user?.email} さん / {routes.length} 件</div>
+        <div className="page-heading">
+          <h1>お気に入り</h1>
+          <div className="meta">
+            ログイン中：{user?.email} さん / {routes.length} 件
+          </div>
+        </div>
         {loading && <div className="panel">お気に入りを読み込んでいます...</div>}
         {error && <p className="error">{error}</p>}
         {!loading && !error && routes.length === 0 && (
