@@ -123,64 +123,31 @@ export default function Layout({ children }: { children: ReactNode }) {
               type="button"
               onClick={toggleHeat}
               aria-pressed={heatOn}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '6px 14px',
-                borderRadius: '20px',
-                border: '1px solid #cbd5e1',
-                background: heatOn ? '#3b82f6' : '#ffffff',
-                color: heatOn ? '#ffffff' : '#334155',
-                fontWeight: 'bold',
-                fontSize: '13px',
-                cursor: 'pointer',
-                boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
-                transition: 'all 0.2s ease'
-              }}
+              className={`game-header-btn heat-toggle-btn ${heatOn ? 'active' : ''}`}
             >
-              <span>投稿件数</span>
-              <span style={{
-                background: heatOn ? '#ffffff' : '#e2e8f0',
-                color: heatOn ? '#3b82f6' : '#64748b',
-                padding: '2px 8px',
-                borderRadius: '10px',
-                fontSize: '11px'
-              }}>
+              <span>📊 投稿件数</span>
+              <span className="game-header-badge">
                 {heatOn ? 'ON' : 'OFF'}
               </span>
             </button>
 
-            {/* ★ 2. 追加：投稿一覧ボタン */}
+            {/* 2. 投稿一覧ボタン */}
             <Link
               href="/routes"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '6px 14px',
-                borderRadius: '20px',
-                border: '1px solid #cbd5e1',
-                background: '#ffffff',
-                color: '#334155',
-                fontWeight: 'bold',
-                fontSize: '13px',
-                textDecoration: 'none',
-                boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
-                transition: 'all 0.2s ease'
-              }}
+              className="game-header-btn routes-list-btn"
             >
-              投稿一覧
+              🚩 投稿一覧
             </Link>
 
             {/* 3. 三本バーメニューボタン */}
             <button
               type="button"
-              className="menu-toggle-btn"
+              className="game-header-btn menu-toggle-btn"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="メニューを開く"
-              style={{ fontSize: '18px', padding: '6px 14px', cursor: 'pointer', borderRadius: '20px' }}
+              title="メニュー"
             >
-              ☰ メニュー
+              ☰
             </button>
 
             {/* ドロップダウンメニュー */}

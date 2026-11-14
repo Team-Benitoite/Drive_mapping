@@ -90,6 +90,7 @@ export interface TopPrefecture {
   title: string;
   like_count: number;
   image_url: string | null;
+  route_id?: number;
 }
 
 /** 投稿フォームの中間地点の入力値 */

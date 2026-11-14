@@ -155,24 +155,40 @@ test('地図は全都道府県と既存スキーマからの人気順表示を�
     if (message.type() === 'error') consoleErrors.push(message.text());
   });
   await page.goto('/');
-  await expect(page.locator('.map-top-popup')).toHaveCount(2);
-  await expect(page.locator('.popup-title').first()).toHaveText('人気ルート');
+  await expect(page.locator('.dm-sea-card')).toHaveCount(2);
+  await expect(page.locator('.game-card-title').first()).toHaveText('人気ルート');
   expect(state.queries.some((url) => url.searchParams.get('offset') === '1000')).toBe(true);
   expect(state.queries.every((url) => {
     const select = url.searchParams.get('select') || '';
     return select.includes('route_likes(user_id)') && !select.includes('photo_path') && !select.includes('like_count');
   })).toBe(true);
-  const codes = await page.locator('polygon').evaluateAll((polygons) => polygons.map((polygon) => polygon.getAttribute('data-pref')));
+  const codes = await page.locator('.game-pref-group').evaluateAll((groups) => groups.map((group) => group.getAttribute('aria-label')?.replace(/（[^）]+）/, '').replace(/ \(.*$/, '')));
   expect(new Set(codes).size).toBe(47);
   await page.getByRole('button', { name: '投稿件数 OFF' }).click();
   await expect(page.getByRole('button', { name: '投稿件数 ON' })).toHaveAttribute('aria-pressed', 'true');
   const stage = page.locator('.dm-map-stage');
   await page.locator('.dm-map-viewport').dispatchEvent('wheel', { deltaY: -100 });
-  await expect(stage).toHaveAttribute('style', /scale\(1\.12\)/);
+  await expect(stage).toHaveAttribute('style', /scale\(1\.288\)/);
   expect(consoleErrors).toEqual([]);
   await page.getByRole('button', { name: 'リセット' }).click();
-  await expect(stage).toHaveAttribute('style', /scale\(1\)/);
-  await page.locator('polygon[data-pref="14"]').focus();
+  await expect(stage).toHaveAttribute('style', /scale\(1\.15\)/);
+  await page.getByRole('button', { name: '神奈川県 (1件)', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/routes\/1001$/);
+});
+
+
+test('投稿がない地図には架空の人気投稿や件数を表示しない', async ({ page }) => {
+  const state = await mockApi(page);
+  state.routes = [];
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: '神奈川県 (0件)', exact: true })).toBeVisible();
+  await expect.poll(() => state.queries.length).toBeGreaterThan(0);
+  await expect(page.locator('.dm-sea-card')).toHaveCount(0);
+  await page.getByRole('button', { name: '神奈川県 (0件)', exact: true }).hover();
+  await expect(page.locator('.pref-hover-route-title')).toHaveText('神奈川の投稿はまだありません');
+  await expect(page.locator('.pref-hover-likes')).toContainText('0 pt');
+  await page.getByRole('button', { name: '神奈川県 (0件)', exact: true }).focus();
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/prefecture_code=14/);
 });

@@ -8,6 +8,7 @@ import type { PrefectureCounts, TopPrefecture } from '../types/models';
 export default function HomePage() {
   const [counts, setCounts] = useState<PrefectureCounts>({});
   const [topPrefectures, setTopPrefectures] = useState<TopPrefecture[]>([]);
+  const [popularRoutes, setPopularRoutes] = useState<Record<number, TopPrefecture>>({});
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -43,6 +44,7 @@ export default function HomePage() {
             if (!previous || likeCount > previous.like_count) {
               const photo = route.route_photos[0];
               popularByPrefecture.set(code, {
+                route_id: route.id,
                 prefecture_code: code,
                 title: route.title,
                 like_count: likeCount,
@@ -54,6 +56,11 @@ export default function HomePage() {
         }
         if (cancelled) return;
         setCounts(nextCounts);
+        const routesMap: Record<number, TopPrefecture> = {};
+        popularByPrefecture.forEach((v, k) => {
+          routesMap[k] = v;
+        });
+        setPopularRoutes(routesMap);
         setTopPrefectures(
           [...popularByPrefecture.values()]
             .sort((left, right) => right.like_count - left.like_count || left.prefecture_code - right.prefecture_code)
@@ -71,7 +78,7 @@ export default function HomePage() {
   return (
     <div className="home-top-container" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '10px' }}>
       {error && <p className="error" role="alert">{error}</p>}
-      <JapanMap counts={counts} topPrefectures={topPrefectures} />
+      <JapanMap counts={counts} topPrefectures={topPrefectures} popularRoutes={popularRoutes} />
     </div>
   );
 }
