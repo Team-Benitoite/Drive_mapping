@@ -152,8 +152,8 @@ textarea {
 
 .bg-stamp {
   position: absolute;
-  width: 120px;
-  height: 120px;
+  width: clamp(104px, min(15vw, 22dvh), 204px);
+  height: clamp(104px, min(15vw, 22dvh), 204px);
   pointer-events: none;
   opacity: 0.12;
 }
@@ -165,43 +165,43 @@ textarea {
 }
 
 .bg-stamp-car {
-  top: 5%;
-  left: 2%;
+  top: 2.5%;
+  left: 1.2%;
   transform: rotate(-14deg);
   opacity: 0.12;
 }
 
 .bg-stamp-fuji {
-  top: 7%;
-  right: 2.5%;
+  top: 3%;
+  right: 1.2%;
   transform: rotate(10deg);
   opacity: 0.12;
 }
 
 .bg-stamp-bike {
-  top: 44%;
-  left: 1.5%;
-  transform: rotate(12deg);
+  top: 50%;
+  left: 0.6%;
+  transform: translateY(-50%) rotate(12deg);
   opacity: 0.11;
 }
 
 .bg-stamp-torii {
-  top: 42%;
-  right: 1.8%;
-  transform: rotate(-10deg);
+  top: 50%;
+  right: 0.6%;
+  transform: translateY(-50%) rotate(-10deg);
   opacity: 0.11;
 }
 
 .bg-stamp-flag {
-  bottom: 8%;
-  left: 3%;
+  bottom: 2.5%;
+  left: 1.5%;
   transform: rotate(-15deg);
-  opacity: 0.13;
+  opacity: 0.12;
 }
 
 .bg-stamp-goal {
-  bottom: 9%;
-  right: 3%;
+  bottom: 3%;
+  right: 1.5%;
   transform: rotate(12deg);
   opacity: 0.12;
 }
@@ -2082,6 +2082,35 @@ textarea:focus {
   background: #f8fafc;
 }
 
+.sub-pref-picker.is-disabled {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.sub-pref-picker.is-disabled .sub-pref-label,
+.sub-pref-picker.is-disabled .sub-pref-count {
+  opacity: 0.72;
+}
+
+.sub-pref-locked-notice {
+  margin: 0 0 12px;
+  padding: 9px 13px;
+  border: 2px solid var(--game-dark);
+  border-left: 6px solid var(--game-yellow);
+  border-radius: 12px;
+  background: #fffbeb;
+  color: var(--game-dark);
+  font-size: 12.5px;
+  font-weight: 900;
+}
+
+.sub-pref-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
 .sub-pref-header {
   display: flex;
   flex-wrap: wrap;
@@ -2135,6 +2164,13 @@ textarea:focus {
   padding: 4px 2px;
 }
 
+.sub-pref-grid.is-disabled {
+  opacity: 0.48;
+  pointer-events: none;
+  cursor: not-allowed;
+  filter: grayscale(0.25);
+}
+
 .sub-pref-option {
   margin-top: 0;
   display: flex;
@@ -2152,7 +2188,7 @@ textarea:focus {
   user-select: none;
 }
 
-.sub-pref-option:hover:not(.is-main) {
+.sub-pref-option:hover:not(.is-main):not(.is-locked) {
   background: #fef9c3;
   transform: translateY(-1px);
 }
@@ -2162,10 +2198,20 @@ textarea:focus {
   color: var(--game-dark);
 }
 
+.sub-pref-option.is-main,
+.sub-pref-option.is-locked {
+  cursor: not-allowed;
+}
+
 .sub-pref-option.is-main {
   background: #fef08a;
   opacity: 0.8;
-  cursor: not-allowed;
+}
+
+.sub-pref-option.is-locked {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  box-shadow: none;
 }
 
 .sub-pref-option input[type="checkbox"] {
@@ -2666,6 +2712,44 @@ textarea:focus {
   background: var(--game-yellow);
 }
 
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 2px dashed #cbd5e1;
+}
+
+.pagination-pages {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pagination-btn {
+  min-width: 40px;
+  padding: 7px 13px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.pagination-btn.is-active {
+  background: var(--game-yellow);
+  color: var(--game-dark);
+}
+
+.pagination-ellipsis {
+  padding: 0 4px;
+  font-size: 14px;
+  font-weight: 900;
+  color: #64748b;
+  user-select: none;
+}
+
 /* ==========================================================================
    ステータス・通知
    ========================================================================== */
@@ -2765,8 +2849,8 @@ textarea:focus {
   }
 
   .bg-stamp {
-    width: 76px;
-    height: 76px;
+    width: clamp(76px, min(20vw, 19dvh), 132px);
+    height: clamp(76px, min(20vw, 19dvh), 132px);
     opacity: 0.09;
   }
 

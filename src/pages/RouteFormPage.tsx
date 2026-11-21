@@ -181,18 +181,20 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
+  const hasMainPrefecture = Boolean(form.prefectureCode);
+
   function handleMainPrefectureChange(nextCode: string) {
     setForm((current) => ({
       ...current,
       prefectureCode: nextCode,
-      subPrefectureCodes: current.subPrefectureCodes.filter(
-        (code) => code !== nextCode,
-      ),
+      subPrefectureCodes: nextCode
+        ? current.subPrefectureCodes.filter((code) => code !== nextCode)
+        : [],
     }));
   }
 
   function toggleSubPrefecture(code: string) {
-    if (code === form.prefectureCode) return;
+    if (!form.prefectureCode || code === form.prefectureCode) return;
     setForm((current) => {
       const exists = current.subPrefectureCodes.includes(code);
       return {
@@ -854,7 +856,10 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
             <small>ドライブコースの中心となる都道府県を1つ選択してください。</small>
           </label>
 
-          <div className="sub-pref-picker">
+          <div
+            className={`sub-pref-picker ${!hasMainPrefecture ? 'is-disabled' : ''}`}
+            aria-disabled={!hasMainPrefecture}
+          >
             <div className="sub-pref-header">
               <span className="sub-pref-label">
                 サブ都道府県（任意・複数選択可）
@@ -863,7 +868,7 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
                 <span className="sub-pref-count">
                   選択中: {form.subPrefectureCodes.length}件
                 </span>
-                {form.subPrefectureCodes.length > 0 && (
+                {hasMainPrefecture && form.subPrefectureCodes.length > 0 && (
                   <button
                     type="button"
                     className="sub-pref-clear-btn"
@@ -877,31 +882,46 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
             <p className="sub-pref-help">
               県境をまたぐルートの場合、メイン以外に経由・関連する都道府県を複数選択できます（選択した都道府県の一覧検索にも表示されます）。
             </p>
-            <div className="sub-pref-grid" role="group" aria-label="サブ都道府県（複数選択）">
-              {prefectures.map((prefecture) => {
-                const codeStr = String(prefecture.code);
-                const isMain = form.prefectureCode === codeStr;
-                const isSelected = form.subPrefectureCodes.includes(codeStr);
-                return (
-                  <label
-                    key={prefecture.code}
-                    className={`sub-pref-option ${isSelected ? 'is-selected' : ''} ${
-                      isMain ? 'is-main' : ''
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      disabled={isMain}
-                      onChange={() => toggleSubPrefecture(codeStr)}
-                    />
-                    <span>{prefecture.name}</span>
-                    {isMain && <em className="sub-pref-main-tag">メイン</em>}
-                  </label>
-                );
-              })}
-            </div>
-            {form.subPrefectureCodes.length > 0 && (
+            {!hasMainPrefecture && (
+              <p className="sub-pref-locked-notice" role="status">
+                ※先にメイン都道府県を選択してください
+              </p>
+            )}
+            <fieldset
+              className="sub-pref-fieldset"
+              disabled={!hasMainPrefecture}
+            >
+              <div
+                className={`sub-pref-grid ${!hasMainPrefecture ? 'is-disabled' : ''}`}
+                role="group"
+                aria-label="サブ都道府県（複数選択）"
+              >
+                {prefectures.map((prefecture) => {
+                  const codeStr = String(prefecture.code);
+                  const isMain = form.prefectureCode === codeStr;
+                  const isSelected = form.subPrefectureCodes.includes(codeStr);
+                  const isOptionDisabled = !hasMainPrefecture || isMain;
+                  return (
+                    <label
+                      key={prefecture.code}
+                      className={`sub-pref-option ${isSelected ? 'is-selected' : ''} ${
+                        isMain ? 'is-main' : ''
+                      } ${!hasMainPrefecture ? 'is-locked' : ''}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        disabled={isOptionDisabled}
+                        onChange={() => toggleSubPrefecture(codeStr)}
+                      />
+                      <span>{prefecture.name}</span>
+                      {isMain && <em className="sub-pref-main-tag">メイン</em>}
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
+            {hasMainPrefecture && form.subPrefectureCodes.length > 0 && (
               <p className="sub-pref-selected-names">
                 選択済み：
                 {form.subPrefectureCodes

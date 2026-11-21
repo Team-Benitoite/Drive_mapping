@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AuthGuard from '../components/AuthGuard';
 import JapanMap from '../components/JapanMap';
 import ProfileAvatar from '../components/ProfileAvatar';
@@ -18,6 +18,25 @@ import type {
   TopPrefecture,
 } from '../types/models';
 
+const ROUTES_PER_PAGE = 20;
+
+function getPageNumbers(currentPage: number, totalPages: number): (number | 'ellipsis')[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+  const pages: (number | 'ellipsis')[] = [1];
+  const start = Math.max(2, currentPage - 1);
+  const end = Math.min(totalPages - 1, currentPage + 1);
+
+  if (start > 2) pages.push('ellipsis');
+  for (let page = start; page <= end; page += 1) {
+    pages.push(page);
+  }
+  if (end < totalPages - 1) pages.push('ellipsis');
+  pages.push(totalPages);
+  return pages;
+}
+
 export default function MyPage({ id }: { id?: string }) {
   const { profile: currentProfile, user } = useAuth();
   const targetId = id || user?.id;
@@ -34,8 +53,21 @@ export default function MyPage({ id }: { id?: string }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const routesSectionRef = useRef<HTMLElement | null>(null);
+  const routeListScrollRef = useRef<HTMLDivElement | null>(null);
 
   const totalRoutes = routes.length;
+  const totalPages = Math.max(1, Math.ceil(totalRoutes / ROUTES_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedRoutes = useMemo(() => {
+    const startIndex = (safePage - 1) * ROUTES_PER_PAGE;
+    return routes.slice(startIndex, startIndex + ROUTES_PER_PAGE);
+  }, [routes, safePage]);
+  const pageNumbers = useMemo(
+    () => getPageNumbers(safePage, totalPages),
+    [safePage, totalPages],
+  );
   const totalLikes = useMemo(
     () =>
       routes.reduce(
@@ -216,6 +248,7 @@ export default function MyPage({ id }: { id?: string }) {
   }, [isOwnProfile, targetId, user]);
 
   useEffect(() => {
+    setCurrentPage(1);
     void loadMyPage();
   }, [loadMyPage]);
 
@@ -226,6 +259,15 @@ export default function MyPage({ id }: { id?: string }) {
     window.addEventListener('dm_follow_updated', handleFollowUpdated);
     return () => window.removeEventListener('dm_follow_updated', handleFollowUpdated);
   }, [loadMyPage]);
+
+  function handlePageChange(nextPage: number) {
+    const clamped = Math.max(1, Math.min(nextPage, totalPages));
+    setCurrentPage(clamped);
+    if (routeListScrollRef.current) {
+      routeListScrollRef.current.scrollTop = 0;
+    }
+    routesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   async function toggleFollow() {
     if (!user) {
@@ -387,16 +429,74 @@ export default function MyPage({ id }: { id?: string }) {
         </section>
       </div>
 
-      <section className="panel">
-        <h2>{isOwnProfile ? '自分の投稿一覧' : '投稿一覧'}</h2>
+      <section className="panel" ref={routesSectionRef}>
+        <div className="profile-section-header">
+          <h2>{isOwnProfile ? '自分の投稿一覧' : '投稿一覧'}</h2>
+          {totalRoutes > 0 && (
+            <span className="meta">
+              全 {totalRoutes} 件中 {(safePage - 1) * ROUTES_PER_PAGE + 1}〜
+              {Math.min(safePage * ROUTES_PER_PAGE, totalRoutes)} 件を表示
+            </span>
+          )}
+        </div>
         {routes.length === 0 ? (
           <p className="meta">投稿はまだありません。</p>
         ) : (
-          <div className="route-list profile-route-scroll">
-            {routes.map((route) => (
-              <RouteCard key={route.id} route={route} />
-            ))}
-          </div>
+          <>
+            <div className="route-list profile-route-scroll" ref={routeListScrollRef}>
+              {paginatedRoutes.map((route) => (
+                <RouteCard key={route.id} route={route} />
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <nav className="pagination-bar" aria-label="投稿一覧のページネーション">
+                <button
+                  type="button"
+                  className="pagination-btn"
+                  onClick={() => handlePageChange(safePage - 1)}
+                  disabled={safePage <= 1}
+                >
+                  ← 前へ
+                </button>
+
+                <div className="pagination-pages">
+                  {pageNumbers.map((item, index) =>
+                    item === 'ellipsis' ? (
+                      <span
+                        key={`ellipsis-${index}`}
+                        className="pagination-ellipsis"
+                        aria-hidden="true"
+                      >
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        key={item}
+                        type="button"
+                        className={`pagination-btn ${
+                          item === safePage ? 'is-active' : ''
+                        }`}
+                        aria-current={item === safePage ? 'page' : undefined}
+                        onClick={() => handlePageChange(item)}
+                      >
+                        {item}
+                      </button>
+                    ),
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  className="pagination-btn"
+                  onClick={() => handlePageChange(safePage + 1)}
+                  disabled={safePage >= totalPages}
+                >
+                  次へ →
+                </button>
+              </nav>
+            )}
+          </>
         )}
       </section>
     </section>

@@ -3,7 +3,7 @@ export default function BackgroundStamps() {
     <div className="bg-stamp-layer" aria-hidden="true">
       {/* 1. 左上：ポップなドライブカー */}
       <div className="bg-stamp bg-stamp-car">
-        <svg viewBox="0 0 120 120" width="120" height="120">
+        <svg viewBox="0 0 120 120" width="204" height="204">
           <g
             stroke="#0F172A"
             strokeWidth="4"
@@ -31,7 +31,7 @@ export default function BackgroundStamps() {
 
       {/* 2. 右上：富士山＆太陽 */}
       <div className="bg-stamp bg-stamp-fuji">
-        <svg viewBox="0 0 120 120" width="120" height="120">
+        <svg viewBox="0 0 120 120" width="204" height="204">
           <g
             stroke="#0F172A"
             strokeWidth="4"
@@ -57,7 +57,7 @@ export default function BackgroundStamps() {
 
       {/* 3. 左中：ツーリングバイク */}
       <div className="bg-stamp bg-stamp-bike">
-        <svg viewBox="0 0 120 120" width="120" height="120">
+        <svg viewBox="0 0 120 120" width="204" height="204">
           <g
             stroke="#0F172A"
             strokeWidth="4"
@@ -91,7 +91,7 @@ export default function BackgroundStamps() {
 
       {/* 4. 右中：日本の象徴 鳥居 */}
       <div className="bg-stamp bg-stamp-torii">
-        <svg viewBox="0 0 120 120" width="120" height="120">
+        <svg viewBox="0 0 120 120" width="204" height="204">
           <g
             stroke="#0F172A"
             strokeWidth="4"
@@ -114,7 +114,7 @@ export default function BackgroundStamps() {
 
       {/* 5. 左下：チェッカーフラッグ */}
       <div className="bg-stamp bg-stamp-flag">
-        <svg viewBox="0 0 120 120" width="120" height="120">
+        <svg viewBox="0 0 120 120" width="204" height="204">
           <g
             stroke="#0F172A"
             strokeWidth="4"
@@ -143,7 +143,7 @@ export default function BackgroundStamps() {
 
       {/* 6. 右下：ゴールの旗・ルートピン */}
       <div className="bg-stamp bg-stamp-goal">
-        <svg viewBox="0 0 120 120" width="120" height="120">
+        <svg viewBox="0 0 120 120" width="204" height="204">
           <g
             stroke="#0F172A"
             strokeWidth="4"

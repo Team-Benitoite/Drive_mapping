@@ -142,10 +142,10 @@ export default function Layout({ children }: { children: ReactNode }) {
                       プロフィール
                     </Link>
                     <Link href="/following" onClick={() => setMenuOpen(false)}>
-                      フォロー一覧
+                      フォロー中
                     </Link>
                     <Link href="/followers" onClick={() => setMenuOpen(false)}>
-                      フォロワー一覧
+                      フォロワー
                     </Link>
                     <Link href="/routes/new" onClick={() => setMenuOpen(false)}>
                       投稿する
