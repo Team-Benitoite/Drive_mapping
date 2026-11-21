@@ -220,6 +220,7 @@ export interface JapanMapProps {
   strictTopCards?: boolean;
   topCardsBadge?: string;
   topCardsTitle?: string;
+  showHeatToggle?: boolean;
 }
 
 // 初期スケール & 表示位置（デスクトップでは左側カード群と重ならないよう右側へオフセット）
@@ -240,6 +241,7 @@ export default function JapanMap({
   strictTopCards = false,
   topCardsBadge = 'POPULAR ROUTES',
   topCardsTitle = '注目の人気ドライブコース',
+  showHeatToggle = true,
 }: JapanMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -268,6 +270,9 @@ export default function JapanMap({
   const [pan, setPan] = useState(() => getInitialPan(hasCards));
   const [showGuide, setShowGuide] = useState(true);
 
+  const zoomRef = useRef(zoom);
+  const panRef = useRef(pan);
+
   // モバイル位置情報関連の状態
   const [currentLocationPref, setCurrentLocationPref] = useState<number | null>(null);
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
@@ -277,7 +282,23 @@ export default function JapanMap({
   const isMovedRef = useRef(false);
   const resetMovedTimerRef = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isPinching, setIsPinching] = useState(false);
+  const isPinchingRef = useRef(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
+  const pinchStartRef = useRef<{
+    distance: number;
+    zoom: number;
+    baseCenter: { x: number; y: number };
+    relStart: { x: number; y: number };
+  } | null>(null);
+
+  useEffect(() => {
+    zoomRef.current = zoom;
+  }, [zoom]);
+
+  useEffect(() => {
+    panRef.current = pan;
+  }, [pan]);
 
   const [heatOn, setHeatOn] = useState(() => {
     try {
@@ -286,6 +307,17 @@ export default function JapanMap({
       return false;
     }
   });
+
+  const toggleHeat = () => {
+    const next = !heatOn;
+    setHeatOn(next);
+    try {
+      localStorage.setItem('dm_heatmap_on', next ? '1' : '0');
+    } catch {
+      // ignore
+    }
+    window.dispatchEvent(new Event('dm_heatmap_toggle'));
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setShowGuide(false), 4500);
@@ -342,8 +374,11 @@ export default function JapanMap({
     const panX = - (targetZoom * dX) + desktopOffset;
     const panY = - (targetZoom * dY);
 
+    const nextPan = { x: Math.round(panX), y: Math.round(panY) };
+    zoomRef.current = targetZoom;
+    panRef.current = nextPan;
     setZoom(targetZoom);
-    setPan({ x: Math.round(panX), y: Math.round(panY) });
+    setPan(nextPan);
   }, []);
 
   // 取得した緯度経度から日本国内の最近傍都道府県を判定
@@ -450,8 +485,38 @@ export default function JapanMap({
       const zoomFactor = event.deltaY < 0 ? 1.12 : 0.88;
       setZoom((value) => Math.min(Math.max(value * zoomFactor, 0.8), 3.5));
     }
+    function isInsideOverlayUi(target: EventTarget | null) {
+      return (
+        target instanceof Element &&
+        Boolean(
+          target.closest(
+            '.game-controls, .game-card-deck, .game-map-heat-toggle, .mobile-geo-prompt-chip, .pref-hover-popover, .game-heat-legend'
+          )
+        )
+      );
+    }
+    function handleNativeTouchMove(event: globalThis.TouchEvent) {
+      if (isInsideOverlayUi(event.target)) return;
+      if (event.touches.length >= 2 || isPointerDownRef.current || isPinchingRef.current) {
+        event.preventDefault();
+      }
+    }
+    function handleGesturePrevent(event: Event) {
+      if (isInsideOverlayUi(event.target)) return;
+      event.preventDefault();
+    }
     container.addEventListener('wheel', handleWheel, { passive: false });
-    return () => container.removeEventListener('wheel', handleWheel);
+    container.addEventListener('touchmove', handleNativeTouchMove, { passive: false });
+    container.addEventListener('gesturestart', handleGesturePrevent, { passive: false });
+    container.addEventListener('gesturechange', handleGesturePrevent, { passive: false });
+    container.addEventListener('gestureend', handleGesturePrevent, { passive: false });
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+      container.removeEventListener('touchmove', handleNativeTouchMove);
+      container.removeEventListener('gesturestart', handleGesturePrevent);
+      container.removeEventListener('gesturechange', handleGesturePrevent);
+      container.removeEventListener('gestureend', handleGesturePrevent);
+    };
   }, []);
 
   function clearResetMovedTimer() {
@@ -512,22 +577,119 @@ export default function JapanMap({
     scheduleResetMoved();
   }
 
+  function getPinchMetrics(touchA: { clientX: number; clientY: number }, touchB: { clientX: number; clientY: number }) {
+    const distance = Math.max(
+      Math.hypot(touchB.clientX - touchA.clientX, touchB.clientY - touchA.clientY),
+      1
+    );
+    const mid = {
+      x: (touchA.clientX + touchB.clientX) / 2,
+      y: (touchA.clientY + touchB.clientY) / 2,
+    };
+    return { distance, mid };
+  }
+
+  function initPinchBaseline(
+    touchA: { clientX: number; clientY: number },
+    touchB: { clientX: number; clientY: number }
+  ) {
+    const { distance, mid } = getPinchMetrics(touchA, touchB);
+    const stageElement = containerRef.current?.querySelector('.game-map-stage') as HTMLElement | null;
+    const containerRect = containerRef.current?.getBoundingClientRect();
+    const stageRect = stageElement?.getBoundingClientRect();
+
+    const currentCenter = stageRect
+      ? {
+          x: stageRect.left + stageRect.width / 2,
+          y: stageRect.top + stageRect.height / 2,
+        }
+      : containerRect
+        ? {
+            x: containerRect.left + containerRect.width / 2 + panRef.current.x,
+            y: containerRect.top + containerRect.height / 2 + panRef.current.y,
+          }
+        : { x: mid.x, y: mid.y };
+
+    const currentPan = panRef.current;
+    const currentZoom = zoomRef.current;
+
+    pinchStartRef.current = {
+      distance,
+      zoom: currentZoom,
+      baseCenter: {
+        x: currentCenter.x - currentPan.x,
+        y: currentCenter.y - currentPan.y,
+      },
+      relStart: {
+        x: mid.x - currentCenter.x,
+        y: mid.y - currentCenter.y,
+      },
+    };
+  }
+
   function handleTouchStart(e: TouchEvent<HTMLDivElement>) {
-    if (e.touches.length !== 1) {
+    clearResetMovedTimer();
+    setShowGuide(false);
+
+    if (e.touches.length === 2) {
       isPointerDownRef.current = false;
       setIsDragging(false);
+      isMovedRef.current = true;
+      isPinchingRef.current = true;
+      setIsPinching(true);
+      initPinchBaseline(e.touches[0], e.touches[1]);
       return;
     }
+
+    if (e.touches.length !== 1) {
+      isPointerDownRef.current = false;
+      isPinchingRef.current = false;
+      pinchStartRef.current = null;
+      setIsDragging(false);
+      setIsPinching(false);
+      return;
+    }
+
     const touch = e.touches[0];
-    clearResetMovedTimer();
+    isPinchingRef.current = false;
+    pinchStartRef.current = null;
+    setIsPinching(false);
     isPointerDownRef.current = true;
     isMovedRef.current = false;
-    setShowGuide(false);
     mouseDownPosRef.current = { x: touch.clientX, y: touch.clientY };
-    dragStartRef.current = { x: touch.clientX - pan.x, y: touch.clientY - pan.y };
+    dragStartRef.current = { x: touch.clientX - panRef.current.x, y: touch.clientY - panRef.current.y };
   }
 
   function handleTouchMove(e: TouchEvent<HTMLDivElement>) {
+    if (e.touches.length === 2) {
+      if (!isPinchingRef.current || !pinchStartRef.current) {
+        isPointerDownRef.current = false;
+        setIsDragging(false);
+        isMovedRef.current = true;
+        isPinchingRef.current = true;
+        setIsPinching(true);
+        initPinchBaseline(e.touches[0], e.touches[1]);
+        return;
+      }
+
+      const baseline = pinchStartRef.current;
+      const { distance, mid } = getPinchMetrics(e.touches[0], e.touches[1]);
+      const rawZoom = baseline.zoom * (distance / baseline.distance);
+      const nextZoom = Math.min(Math.max(rawZoom, 0.8), 3.5);
+      const scaleRatio = nextZoom / baseline.zoom;
+
+      const nextPan = {
+        x: mid.x - baseline.baseCenter.x - scaleRatio * baseline.relStart.x,
+        y: mid.y - baseline.baseCenter.y - scaleRatio * baseline.relStart.y,
+      };
+
+      zoomRef.current = nextZoom;
+      panRef.current = nextPan;
+      setZoom(nextZoom);
+      setPan(nextPan);
+      return;
+    }
+
     if (!isPointerDownRef.current || e.touches.length !== 1) return;
     const touch = e.touches[0];
     const dx = Math.abs(touch.clientX - mouseDownPosRef.current.x);
@@ -537,22 +699,65 @@ export default function JapanMap({
       setIsDragging(true);
     }
     if (isMovedRef.current) {
-      setPan({
+      const nextPan = {
         x: touch.clientX - dragStartRef.current.x,
         y: touch.clientY - dragStartRef.current.y,
-      });
+      };
+      panRef.current = nextPan;
+      setPan(nextPan);
     }
   }
 
-  function handleTouchEnd() {
+  function handleTouchEnd(e: TouchEvent<HTMLDivElement>) {
+    if (e.touches.length === 1) {
+      // ピンチ操作から1本指操作へ滑らかに切り替え
+      const remainingTouch = e.touches[0];
+      isPinchingRef.current = false;
+      pinchStartRef.current = null;
+      setIsPinching(false);
+      isPointerDownRef.current = true;
+      isMovedRef.current = true;
+      setIsDragging(true);
+      mouseDownPosRef.current = { x: remainingTouch.clientX, y: remainingTouch.clientY };
+      dragStartRef.current = {
+        x: remainingTouch.clientX - panRef.current.x,
+        y: remainingTouch.clientY - panRef.current.y,
+      };
+      return;
+    }
+
+    if (e.touches.length === 2) {
+      isPointerDownRef.current = false;
+      setIsDragging(false);
+      isPinchingRef.current = true;
+      setIsPinching(true);
+      initPinchBaseline(e.touches[0], e.touches[1]);
+      return;
+    }
+
     isPointerDownRef.current = false;
+    isPinchingRef.current = false;
+    pinchStartRef.current = null;
     setIsDragging(false);
+    setIsPinching(false);
+    scheduleResetMoved();
+  }
+
+  function handleTouchCancel() {
+    isPointerDownRef.current = false;
+    isPinchingRef.current = false;
+    pinchStartRef.current = null;
+    setIsDragging(false);
+    setIsPinching(false);
     scheduleResetMoved();
   }
 
   function resetView() {
+    const initialPan = getInitialPan(hasCards);
+    zoomRef.current = INITIAL_ZOOM;
+    panRef.current = initialPan;
     setZoom(INITIAL_ZOOM);
-    setPan(getInitialPan(hasCards));
+    setPan(initialPan);
   }
 
   function getPrefectureHref(code: number): string {
@@ -677,7 +882,7 @@ export default function JapanMap({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
       >
         {/* 【新機能】お気に入りカード hover 連動：盤面背景写真バックドロップ */}
         <div
@@ -688,11 +893,26 @@ export default function JapanMap({
           aria-hidden="true"
         />
 
-        {/* ゲームタイトルバッジ */}
-        <div className="game-board-badge" aria-hidden="true">
-          <span className="game-badge-icon">🏍️</span>
-          <span className="game-badge-text">日本縦断ドライブ</span>
-        </div>
+        {/* マップ右上：投稿件数トグルボタン */}
+        {showHeatToggle && (
+          <div
+            className="game-map-heat-toggle"
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={toggleHeat}
+              aria-pressed={heatOn}
+              className={`game-header-btn heat-toggle-btn ${heatOn ? 'active' : ''}`}
+            >
+              <span>📊 投稿件数</span>
+              <span className="game-header-badge">
+                {heatOn ? 'ON' : 'OFF'}
+              </span>
+            </button>
+          </div>
+        )}
 
         {/* モバイル専用：位置情報確認チップ */}
         {showLocationPrompt && (
@@ -729,18 +949,33 @@ export default function JapanMap({
           </div>
         )}
 
-        {/* ガイダンス（ドラッグ案内：手のマーク） */}
+        {/* ガイダンス（ドラッグ案内：カスタム手のひらSVGアイコン） */}
         {showGuide && (
           <div className="drag-guide-overlay game-guide-overlay">
             <span className="drag-hand-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+              <svg viewBox="0 0 24 24" width="20" height="20">
                 <path
-                  d="M9 11V5.5C9 4.67 9.67 4 10.5 4C11.33 4 12 4.67 12 5.5V10M12 5.5V4.5C12 3.67 12.67 3 13.5 3C14.33 3 15 3.67 15 4.5V10.5M15 6.5C15 5.67 15.67 5 16.5 5C17.33 5 18 5.67 18 6.5V14C18 17.87 14.87 21 11 21C7.69 21 5 18.31 5 15V12.5C5 11.67 5.67 11 6.5 11C7.33 11 8 11.67 8 12.5V14"
+                  d="M8.2 20.5 L6.4 16.4 L4.0 12.8 C3.4 11.7 4.4 10.4 5.6 10.7 C6.5 10.9 7.2 11.7 7.6 12.4 L7.6 5.8 C7.6 4.5 10.1 4.5 10.1 5.8 L10.1 4.1 C10.1 2.8 13.2 2.8 13.2 4.1 L13.2 5.0 C13.2 3.7 16.2 3.7 16.2 5.0 L16.2 7.4 C16.2 6.2 18.9 6.4 18.9 7.7 L18.4 14.6 C18.1 17.4 16.8 19.2 15.8 20.5 Z"
+                  fill="#0F172A"
+                  stroke="#0F172A"
+                  strokeWidth="2"
+                  strokeLinejoin="round"
+                  transform="translate(1.3 1.4)"
+                  opacity="0.35"
+                />
+                <path
+                  d="M8.2 20.5 L6.4 16.4 L4.0 12.8 C3.4 11.7 4.4 10.4 5.6 10.7 C6.5 10.9 7.2 11.7 7.6 12.4 L7.6 5.8 C7.6 4.5 10.1 4.5 10.1 5.8 L10.1 4.1 C10.1 2.8 13.2 2.8 13.2 4.1 L13.2 5.0 C13.2 3.7 16.2 3.7 16.2 5.0 L16.2 7.4 C16.2 6.2 18.9 6.4 18.9 7.7 L18.4 14.6 C18.1 17.4 16.8 19.2 15.8 20.5 Z"
                   fill="#FFFFFF"
                   stroke="#0F172A"
                   strokeWidth="2"
-                  strokeLinecap="round"
                   strokeLinejoin="round"
+                />
+                <path
+                  d="M10.1 5.8 L10.1 10.6 M13.2 5.0 L13.2 10.6 M16.2 7.4 L16.2 11.2"
+                  fill="none"
+                  stroke="#0F172A"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
                 />
               </svg>
             </span>
@@ -947,7 +1182,7 @@ export default function JapanMap({
             style={{
               transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
               transformOrigin: 'center center',
-              transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+              transition: isDragging || isPinching ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
           >
             {/* map.jpg（ref維持用） */}

@@ -1,14 +1,13 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import AuthGuard from '../components/AuthGuard';
 import JapanMap from '../components/JapanMap';
 import ProfileAvatar from '../components/ProfileAvatar';
 import RouteCard from '../components/RouteCard';
 import { useAuth } from '../contexts/AuthContext';
-import { profileIconBucket, supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { getRouteGoogleMapsUrl } from '../utils/googleMaps';
 import { getPrefectureName } from '../utils/prefectures';
 import { getPublicPhotoUrl } from '../utils/routeData';
-import { loadProfilesByIds } from '../utils/profileData';
 import { getAuthHref, Link, navigate } from '../utils/navigation';
 import { getErrorMessage } from '../utils/errors';
 import type {
@@ -19,96 +18,32 @@ import type {
   TopPrefecture,
 } from '../types/models';
 
-function safeStorageName(file: File): string {
-  const extension = file.name.includes('.')
-    ? file.name.split('.').pop()?.toLowerCase() || 'jpg'
-    : 'jpg';
-  const token =
-    typeof crypto !== 'undefined' && crypto.randomUUID
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  return `${token}.${extension}`;
-}
-
-interface ProfileListProps {
-  currentUserId: string | undefined;
-  followedIds: Set<string>;
-  onToggleFollow: (followeeId: string) => void;
-  saving: boolean;
-  title: string;
-  profiles: ProfileSummary[];
-}
-
-function ProfileList({
-  currentUserId,
-  followedIds,
-  onToggleFollow,
-  saving,
-  title,
-  profiles,
-}: ProfileListProps) {
-  return (
-    <section className="panel">
-      <h2>{title}</h2>
-      {profiles.length === 0 ? (
-        <p className="meta">まだいません。</p>
-      ) : (
-        <div className="profile-list">
-          {profiles.map((profile) => (
-            <div key={profile.id} className="profile-list-row">
-              <ProfileAvatar
-                profile={profile}
-                userId={profile.id}
-                size="medium"
-              />
-              {currentUserId && currentUserId !== profile.id && (
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    onToggleFollow(profile.id);
-                  }}
-                  disabled={saving}
-                >
-                  {followedIds.has(profile.id) ? 'フォロー解除' : 'フォロー'}
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
-export default function ProfilePage({ id }: { id?: string }) {
-  const { profile: currentProfile, setProfile, user } = useAuth();
+export default function MyPage({ id }: { id?: string }) {
+  const { profile: currentProfile, user } = useAuth();
   const targetId = id || user?.id;
   const isOwnProfile = Boolean(user?.id && targetId === user.id);
+
   const [profile, setLocalProfile] = useState<ProfileSummary | null>(null);
-  const [form, setForm] = useState({ bio: '' });
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [password, setPassword] = useState('');
   const [routes, setRoutes] = useState<
     (RouteListItem & { route_points?: RouteLocationPoint[] | null })[]
   >([]);
   const [counts, setCounts] = useState<PrefectureCounts>({});
-  const [followingProfiles, setFollowingProfiles] = useState<ProfileSummary[]>(
-    [],
-  );
-  const [followerProfiles, setFollowerProfiles] = useState<ProfileSummary[]>(
-    [],
-  );
+  const [followingCount, setFollowingCount] = useState(0);
+  const [followerCount, setFollowerCount] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [currentUserFolloweeIds, setCurrentUserFolloweeIds] = useState<
-    Set<string>
-  >(() => new Set());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
   const totalRoutes = routes.length;
+  const totalLikes = useMemo(
+    () =>
+      routes.reduce(
+        (sum, route) => sum + (route.route_likes?.length || 0),
+        0,
+      ),
+    [routes],
+  );
 
   const userTopPrefectures = useMemo<TopPrefecture[]>(() => {
     if (routes.length === 0) return [];
@@ -184,10 +119,9 @@ export default function ProfilePage({ id }: { id?: string }) {
     return map;
   }, [routes]);
 
-  async function loadProfile() {
+  const loadMyPage = useCallback(async () => {
     setLoading(true);
     setError('');
-    setMessage('');
 
     if (!supabase || !targetId) {
       setLoading(false);
@@ -207,9 +141,6 @@ export default function ProfilePage({ id }: { id?: string }) {
     }
 
     setLocalProfile(profileData);
-    setForm({
-      bio: profileData?.bio || '',
-    });
 
     const { data: routeData, error: routesError } = await supabase
       .from('routes')
@@ -255,165 +186,74 @@ export default function ProfilePage({ id }: { id?: string }) {
     });
     setCounts(nextCounts);
 
-    const [{ data: followingRows }, { data: followerRows }] = await Promise.all([
+    const [{ count: nextFollowingCount }, { count: nextFollowerCount }] = await Promise.all([
       supabase
         .from('profile_follows')
-        .select('followee_id, created_at')
-        .eq('follower_id', targetId)
-        .order('created_at', { ascending: false }),
+        .select('followee_id', { count: 'exact', head: true })
+        .eq('follower_id', targetId),
       supabase
         .from('profile_follows')
-        .select('follower_id, created_at')
-        .eq('followee_id', targetId)
-        .order('created_at', { ascending: false }),
+        .select('follower_id', { count: 'exact', head: true })
+        .eq('followee_id', targetId),
     ]);
 
-    const followingMap = await loadProfilesByIds(
-      (followingRows || []).map((row) => row.followee_id),
-    );
-    const followerMap = await loadProfilesByIds(
-      (followerRows || []).map((row) => row.follower_id),
-    );
+    setFollowingCount(nextFollowingCount || 0);
+    setFollowerCount(nextFollowerCount || 0);
 
-    setFollowingProfiles(
-      (followingRows || [])
-        .map((row) => followingMap[row.followee_id])
-        .filter(Boolean),
-    );
-    setFollowerProfiles(
-      (followerRows || [])
-        .map((row) => followerMap[row.follower_id])
-        .filter(Boolean),
-    );
-
-    if (user) {
-      const { data: currentFollowingRows } = await supabase
+    if (user && !isOwnProfile) {
+      const { data: followRow } = await supabase
         .from('profile_follows')
         .select('followee_id')
         .eq('follower_id', user.id)
-        .order('created_at', { ascending: false });
-      const nextFolloweeIds = new Set(
-        (currentFollowingRows || []).map((row) => row.followee_id),
-      );
-      setCurrentUserFolloweeIds(nextFolloweeIds);
-      setIsFollowing(nextFolloweeIds.has(targetId));
+        .eq('followee_id', targetId)
+        .maybeSingle();
+      setIsFollowing(Boolean(followRow));
     } else {
-      setCurrentUserFolloweeIds(new Set());
       setIsFollowing(false);
     }
 
     setLoading(false);
-  }
+  }, [isOwnProfile, targetId, user]);
 
   useEffect(() => {
-    loadProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetId, user?.id]);
+    void loadMyPage();
+  }, [loadMyPage]);
 
-  async function handleProfileSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  useEffect(() => {
+    const handleFollowUpdated = () => {
+      void loadMyPage();
+    };
+    window.addEventListener('dm_follow_updated', handleFollowUpdated);
+    return () => window.removeEventListener('dm_follow_updated', handleFollowUpdated);
+  }, [loadMyPage]);
 
-    if (!supabase || !user) {
-      setError('Supabase環境変数が未設定です。');
-      return;
-    }
-
-    setSaving(true);
-    setError('');
-    setMessage('');
-
-    try {
-      let avatarPath = profile?.avatar_path || null;
-
-      if (avatarFile) {
-        avatarPath = `${user.id}/${safeStorageName(avatarFile)}`;
-        const { error: uploadError } = await supabase.storage
-          .from(profileIconBucket)
-          .upload(avatarPath, avatarFile, { upsert: true });
-        if (uploadError) throw uploadError;
-      }
-
-      const payload = {
-        id: user.id,
-        name: profile?.name || currentProfile?.name || user.email?.split('@')[0] || 'ユーザー',
-        bio: form.bio.trim() || null,
-        avatar_path: avatarPath,
-      };
-
-      const { data, error: updateError } = await supabase
-        .from('profiles')
-        .upsert(payload)
-        .select('id, name, avatar_path, bio')
-        .single();
-
-      if (updateError) throw updateError;
-
-      setLocalProfile(data);
-      setProfile(data);
-      setAvatarFile(null);
-      setMessage('プロフィールを保存しました。');
-    } catch (submitError) {
-      setError(
-        getErrorMessage(submitError, 'プロフィールの保存に失敗しました。'),
-      );
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handlePasswordSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!supabase) {
-      setError('Supabase環境変数が未設定です。');
-      return;
-    }
-
-    setSaving(true);
-    setError('');
-    setMessage('');
-
-    try {
-      const { error: updateError } = await supabase.auth.updateUser({
-        password,
-      });
-      if (updateError) throw updateError;
-      setPassword('');
-      setMessage('パスワードを変更しました。');
-    } catch (submitError) {
-      setError(getErrorMessage(submitError, 'パスワード変更に失敗しました。'));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function toggleFollow(followeeId: string | undefined = targetId) {
+  async function toggleFollow() {
     if (!user) {
       navigate(getAuthHref('/login'));
       return;
     }
-    if (!followeeId || followeeId === user.id) return;
-    if (!supabase) return;
+    if (!targetId || targetId === user.id || !supabase) return;
 
     setSaving(true);
     setError('');
 
     try {
-      if (currentUserFolloweeIds.has(followeeId)) {
+      if (isFollowing) {
         const { error: deleteError } = await supabase
           .from('profile_follows')
           .delete()
           .eq('follower_id', user.id)
-          .eq('followee_id', followeeId);
+          .eq('followee_id', targetId);
         if (deleteError) throw deleteError;
       } else {
         const { error: insertError } = await supabase
           .from('profile_follows')
-          .insert({ follower_id: user.id, followee_id: followeeId });
+          .insert({ follower_id: user.id, followee_id: targetId });
         if (insertError) throw insertError;
       }
 
-      await loadProfile();
+      window.dispatchEvent(new Event('dm_follow_updated'));
+      await loadMyPage();
     } catch (followError) {
       setError(getErrorMessage(followError, 'フォローの更新に失敗しました。'));
     } finally {
@@ -429,8 +269,11 @@ export default function ProfilePage({ id }: { id?: string }) {
     );
   }
 
-  if (loading) return <section className="panel">プロフィールを読み込んでいます...</section>;
+  if (loading) return <section className="panel">マイページを読み込んでいます...</section>;
   if (error && !profile) return <p className="error">{error}</p>;
+
+  const followingHref = isOwnProfile ? '/following' : `/profiles/${targetId}/following`;
+  const followersHref = isOwnProfile ? '/followers' : `/profiles/${targetId}/followers`;
 
   return (
     <section className="profile-page">
@@ -438,22 +281,32 @@ export default function ProfilePage({ id }: { id?: string }) {
         <Link href="/" className="button back-button">
           ← トップ（日本地図）へ戻る
         </Link>
+        {isOwnProfile && (
+          <Link href="/profile" className="button">
+            ⚙️ プロフィール・アカウント設定
+          </Link>
+        )}
       </div>
 
       <div className="profile-header panel">
         <ProfileAvatar
-          profile={profile || currentProfile}
+          profile={profile || (isOwnProfile ? currentProfile : null)}
           userId={targetId}
           size="large"
           showName={false}
         />
-        <div>
-          <h1>{profile?.name || 'プロフィール'}</h1>
+        <div className="profile-header-info">
+          <div className="profile-header-title-row">
+            <h1>{profile?.name || (isOwnProfile ? 'マイページ' : 'ユーザー')}</h1>
+            <span className="profile-role-badge">
+              {isOwnProfile ? 'MY PAGE' : 'DRIVER'}
+            </span>
+          </div>
           <p className="pre-line">{profile?.bio || '自己紹介は未入力です。'}</p>
           {!isOwnProfile && (
             <button
               type="button"
-              onClick={() => toggleFollow(targetId)}
+              onClick={toggleFollow}
               disabled={saving}
             >
               {isFollowing ? 'フォロー解除' : 'フォローする'}
@@ -462,63 +315,7 @@ export default function ProfilePage({ id }: { id?: string }) {
         </div>
       </div>
 
-      {message && <p className="success">{message}</p>}
       {error && <p className="error">{error}</p>}
-
-      {isOwnProfile && (
-        <div className="profile-grid">
-          <section className="panel">
-            <h2>アイコン設定・自己紹介</h2>
-            <form onSubmit={handleProfileSubmit}>
-              <label>
-                アイコン画像
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={(event) =>
-                    setAvatarFile(event.target.files?.[0] || null)
-                  }
-                />
-              </label>
-              <label>
-                自己紹介
-                <textarea
-                  maxLength={1000}
-                  value={form.bio}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      bio: event.target.value,
-                    }))
-                  }
-                />
-              </label>
-              <button type="submit" disabled={saving}>
-                保存する
-              </button>
-            </form>
-          </section>
-
-          <section className="panel">
-            <h2>パスワード変更</h2>
-            <form onSubmit={handlePasswordSubmit}>
-              <label>
-                新しいパスワード
-                <input
-                  type="password"
-                  minLength={6}
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  required
-                />
-              </label>
-              <button type="submit" disabled={saving}>
-                変更する
-              </button>
-            </form>
-          </section>
-        </div>
-      )}
 
       <section className="panel profile-map-panel">
         <h2>投稿マップ</h2>
@@ -529,7 +326,12 @@ export default function ProfilePage({ id }: { id?: string }) {
           showTopCards={routes.length > 0}
           strictTopCards={true}
           topCardsBadge="MY POPULAR ROUTES"
-          topCardsTitle="自分の投稿のいいね人気順"
+          topCardsTitle={
+            isOwnProfile
+              ? '自分の投稿のいいね人気順'
+              : `${profile?.name || 'ユーザー'}さんの人気投稿`
+          }
+          showHeatToggle={true}
           hrefForCode={(code) =>
             `/routes?prefecture_code=${code}&user_id=${targetId}`
           }
@@ -566,42 +368,27 @@ export default function ProfilePage({ id }: { id?: string }) {
             <dt>総投稿数</dt>
             <dd>{totalRoutes} 件</dd>
             <dt>獲得いいね合計</dt>
-            <dd>
-              {routes.reduce(
-                (sum, route) => sum + (route.route_likes?.length || 0),
-                0,
-              )}{' '}
-              pt
-            </dd>
+            <dd>{totalLikes} pt</dd>
             <dt>フォロー中</dt>
-            <dd>{followingProfiles.length} 人</dd>
+            <dd className="summary-count-row">
+              <span className="summary-count-value">{followingCount} 人</span>
+              <Link href={followingHref} className="summary-jump-btn">
+                一覧を見る →
+              </Link>
+            </dd>
             <dt>フォロワー</dt>
-            <dd>{followerProfiles.length} 人</dd>
+            <dd className="summary-count-row">
+              <span className="summary-count-value">{followerCount} 人</span>
+              <Link href={followersHref} className="summary-jump-btn">
+                一覧を見る →
+              </Link>
+            </dd>
           </dl>
         </section>
       </div>
 
-      <div className="profile-grid">
-        <ProfileList
-          currentUserId={user?.id}
-          followedIds={currentUserFolloweeIds}
-          onToggleFollow={toggleFollow}
-          profiles={followingProfiles}
-          saving={saving}
-          title="フォロー一覧"
-        />
-        <ProfileList
-          currentUserId={user?.id}
-          followedIds={currentUserFolloweeIds}
-          onToggleFollow={toggleFollow}
-          profiles={followerProfiles}
-          saving={saving}
-          title="フォロワー一覧"
-        />
-      </div>
-
       <section className="panel">
-        <h2>投稿一覧</h2>
+        <h2>{isOwnProfile ? '自分の投稿一覧' : '投稿一覧'}</h2>
         {routes.length === 0 ? (
           <p className="meta">投稿はまだありません。</p>
         ) : (

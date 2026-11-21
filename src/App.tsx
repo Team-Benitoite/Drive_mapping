@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import Layout from './components/Layout';
 import EnvNotice from './components/EnvNotice';
 import FavoritesPage from './pages/FavoritesPage';
+import FollowListPage from './pages/FollowListPage';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import LogoutPage from './pages/LogoutPage';
-import ProfilePage from './pages/ProfilePage';
+import MyPage from './pages/MyPage';
+import ProfileSettingsPage from './pages/ProfileSettingsPage';
 import RouteFormPage from './pages/RouteFormPage';
 import RouteShowPage from './pages/RouteShowPage';
 import RoutesIndexPage from './pages/RoutesIndexPage';
@@ -17,13 +19,18 @@ type AppRoute =
   | { name: 'signup' }
   | { name: 'login' }
   | { name: 'logout' }
+  | { name: 'mypage' }
   | { name: 'profile' }
+  | { name: 'following' }
+  | { name: 'followers' }
   | { name: 'favorites' }
   | { name: 'routes_index' }
   | { name: 'routes_create' }
   | { name: 'routes_edit'; id: number }
   | { name: 'routes_show'; id: number }
   | { name: 'profile_show'; id: string }
+  | { name: 'profile_following'; id: string }
+  | { name: 'profile_followers'; id: string }
   | { name: 'not_found' };
 
 function parseRoute(pathname: string): AppRoute {
@@ -31,7 +38,10 @@ function parseRoute(pathname: string): AppRoute {
   if (pathname === '/signup') return { name: 'signup' };
   if (pathname === '/login') return { name: 'login' };
   if (pathname === '/logout') return { name: 'logout' };
+  if (pathname === '/mypage') return { name: 'mypage' };
   if (pathname === '/profile') return { name: 'profile' };
+  if (pathname === '/following') return { name: 'following' };
+  if (pathname === '/followers') return { name: 'followers' };
   if (pathname === '/favorites') return { name: 'favorites' };
   if (pathname === '/routes') return { name: 'routes_index' };
   if (pathname === '/routes/new') return { name: 'routes_create' };
@@ -41,6 +51,20 @@ function parseRoute(pathname: string): AppRoute {
 
   const showMatch = pathname.match(/^\/routes\/(\d+)$/);
   if (showMatch) return { name: 'routes_show', id: Number(showMatch[1]) };
+
+  const profileFollowingMatch = pathname.match(
+    /^\/profiles\/([0-9a-f-]+)\/following$/i,
+  );
+  if (profileFollowingMatch) {
+    return { name: 'profile_following', id: profileFollowingMatch[1] };
+  }
+
+  const profileFollowersMatch = pathname.match(
+    /^\/profiles\/([0-9a-f-]+)\/followers$/i,
+  );
+  if (profileFollowersMatch) {
+    return { name: 'profile_followers', id: profileFollowersMatch[1] };
+  }
 
   const profileMatch = pathname.match(/^\/profiles\/([0-9a-f-]+)$/i);
   if (profileMatch) return { name: 'profile_show', id: profileMatch[1] };
@@ -74,8 +98,17 @@ export default function App() {
       {route.name === 'signup' && <SignupPage />}
       {route.name === 'login' && <LoginPage />}
       {route.name === 'logout' && <LogoutPage />}
-      {route.name === 'profile' && <ProfilePage />}
-      {route.name === 'profile_show' && <ProfilePage id={route.id} />}
+      {route.name === 'mypage' && <MyPage />}
+      {route.name === 'profile' && <ProfileSettingsPage />}
+      {route.name === 'following' && <FollowListPage mode="following" />}
+      {route.name === 'followers' && <FollowListPage mode="followers" />}
+      {route.name === 'profile_show' && <MyPage id={route.id} />}
+      {route.name === 'profile_following' && (
+        <FollowListPage mode="following" id={route.id} />
+      )}
+      {route.name === 'profile_followers' && (
+        <FollowListPage mode="followers" id={route.id} />
+      )}
       {route.name === 'favorites' && <FavoritesPage />}
       {route.name === 'routes_index' && <RoutesIndexPage />}
       {route.name === 'routes_create' && <RouteFormPage mode="create" />}

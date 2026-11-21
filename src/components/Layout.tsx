@@ -1,4 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
+import BackgroundStamps from './BackgroundStamps';
 import ProfileAvatar from './ProfileAvatar';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -10,21 +11,6 @@ export default function Layout({ children }: { children: ReactNode }) {
   const userName = profile?.name || user?.email || 'ユーザー';
 
   const [menuOpen, setMenuOpen] = useState(false);
-
-  const [heatOn, setHeatOn] = useState(() => {
-    try {
-      return localStorage.getItem('dm_heatmap_on') === '1';
-    } catch {
-      return false;
-    }
-  });
-
-  const toggleHeat = () => {
-    const next = !heatOn;
-    setHeatOn(next);
-    localStorage.setItem('dm_heatmap_on', next ? '1' : '0');
-    window.dispatchEvent(new Event('dm_heatmap_toggle'));
-  };
 
   const [accountQuery, setAccountQuery] = useState('');
   const [accountResults, setAccountResults] = useState<ProfileSummary[]>([]);
@@ -94,6 +80,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         next.delete(profileId);
         return next;
       });
+      window.dispatchEvent(new Event('dm_follow_updated'));
       return;
     }
 
@@ -105,10 +92,12 @@ export default function Layout({ children }: { children: ReactNode }) {
       return;
     }
     setFollowedIds((current) => new Set(current).add(profileId));
+    window.dispatchEvent(new Event('dm_follow_updated'));
   }
 
   return (
     <div className="app-shell">
+      <BackgroundStamps />
       {loading ? (
         <main className="container">
           <div className="panel">ログイン状態を確認しています...</div>
@@ -117,20 +106,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         <main className="container">
           {/* ヘッダー操作バー */}
           <div className="auth-header-bar">
-            {/* 1. 投稿件数トグルボタン */}
-            <button
-              type="button"
-              onClick={toggleHeat}
-              aria-pressed={heatOn}
-              className={`game-header-btn heat-toggle-btn ${heatOn ? 'active' : ''}`}
-            >
-              <span>📊 投稿件数</span>
-              <span className="game-header-badge">
-                {heatOn ? 'ON' : 'OFF'}
-              </span>
-            </button>
-
-            {/* 2. 投稿一覧ボタン */}
+            {/* 1. 投稿一覧ボタン */}
             <Link
               href="/routes"
               className="game-header-btn routes-list-btn"
@@ -138,7 +114,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               🚩 投稿一覧
             </Link>
 
-            {/* 3. 三本バーメニューボタン */}
+            {/* 2. 三本バーメニューボタン */}
             <button
               type="button"
               className="game-header-btn menu-toggle-btn"
@@ -159,8 +135,17 @@ export default function Layout({ children }: { children: ReactNode }) {
                       ログイン中：<strong>{userName}</strong> さん
                     </div>
                     <hr className="auth-dropdown-divider" />
+                    <Link href="/mypage" onClick={() => setMenuOpen(false)}>
+                      マイページ
+                    </Link>
                     <Link href="/profile" onClick={() => setMenuOpen(false)}>
                       プロフィール
+                    </Link>
+                    <Link href="/following" onClick={() => setMenuOpen(false)}>
+                      フォロー一覧
+                    </Link>
+                    <Link href="/followers" onClick={() => setMenuOpen(false)}>
+                      フォロワー一覧
                     </Link>
                     <Link href="/routes/new" onClick={() => setMenuOpen(false)}>
                       投稿する
