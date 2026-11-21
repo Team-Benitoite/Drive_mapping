@@ -29,6 +29,7 @@ export default function HomePage() {
             .from('routes')
             .select(`
               id, title, prefecture_code, address, google_maps_url,
+              route_prefectures(prefecture_code, is_main),
               route_points(label, address, sort_order),
               route_likes(user_id),
               route_photos(storage_path, thumb_path, sort_order)
@@ -40,26 +41,39 @@ export default function HomePage() {
           if (cancelled) return;
 
           for (const route of data || []) {
-            const code = route.prefecture_code;
-            nextCounts[code] = (nextCounts[code] || 0) + 1;
+            const prefCodes = Array.from(
+              new Set(
+                [
+                  route.prefecture_code,
+                  ...(route.route_prefectures || []).map((pref) => pref.prefecture_code),
+                ].filter((code): code is number => Number.isFinite(code) && code > 0),
+              ),
+            );
             const likeCount = route.route_likes.length;
-            const previous = popularByPrefecture.get(code);
-            if (!previous || likeCount > previous.like_count) {
-              const photo = route.route_photos[0];
-              popularByPrefecture.set(code, {
-                route_id: route.id,
-                prefecture_code: code,
-                title: route.title,
-                like_count: likeCount,
-                image_url: getPublicPhotoUrl(photo?.thumb_path || photo?.storage_path) || null,
-                google_maps_url: getRouteGoogleMapsUrl({
-                  address: route.address,
-                  google_maps_url: route.google_maps_url,
-                  route_points: route.route_points,
+            const photo = route.route_photos[0];
+            const imageUrl =
+              getPublicPhotoUrl(photo?.thumb_path || photo?.storage_path) || null;
+            const mapsUrl = getRouteGoogleMapsUrl({
+              address: route.address,
+              google_maps_url: route.google_maps_url,
+              route_points: route.route_points,
+              title: route.title,
+              prefecture_name: getPrefectureName(route.prefecture_code),
+            });
+
+            for (const code of prefCodes) {
+              nextCounts[code] = (nextCounts[code] || 0) + 1;
+              const previous = popularByPrefecture.get(code);
+              if (!previous || likeCount > previous.like_count) {
+                popularByPrefecture.set(code, {
+                  route_id: route.id,
+                  prefecture_code: code,
                   title: route.title,
-                  prefecture_name: getPrefectureName(code),
-                }),
-              });
+                  like_count: likeCount,
+                  image_url: imageUrl,
+                  google_maps_url: mapsUrl,
+                });
+              }
             }
           }
           if (!data || data.length < pageSize) break;
@@ -71,11 +85,23 @@ export default function HomePage() {
           routesMap[k] = v;
         });
         setPopularRoutes(routesMap);
-        setTopPrefectures(
-          [...popularByPrefecture.values()]
-            .sort((left, right) => right.like_count - left.like_count || left.prefecture_code - right.prefecture_code)
-            .slice(0, 3),
+
+        const sortedCandidates = [...popularByPrefecture.values()].sort(
+          (left, right) =>
+            right.like_count - left.like_count ||
+            left.prefecture_code - right.prefecture_code,
         );
+        const topUniqueRoutes: TopPrefecture[] = [];
+        const seenRouteIds = new Set<number>();
+        for (const item of sortedCandidates) {
+          if (item.route_id !== undefined) {
+            if (seenRouteIds.has(item.route_id)) continue;
+            seenRouteIds.add(item.route_id);
+          }
+          topUniqueRoutes.push(item);
+          if (topUniqueRoutes.length >= 3) break;
+        }
+        setTopPrefectures(topUniqueRoutes);
       } catch (fetchError) {
         if (!cancelled) setError(getErrorMessage(fetchError, '投稿データの取得に失敗しました。'));
       }

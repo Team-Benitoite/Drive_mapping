@@ -28,6 +28,7 @@ export default function FavoritesPage() {
             created_at,
             routes(
               *,
+              route_prefectures(prefecture_code, is_main),
               route_photos(storage_path, thumb_path, sort_order),
               route_likes(user_id)
             )

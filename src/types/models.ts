@@ -67,6 +67,7 @@ export interface RouteLocationSource {
 
 /** 一覧・カード表示用の投稿（プロフィールを後から合成する） */
 export interface RouteListItem extends RouteRow {
+  route_prefectures?: RoutePrefectureRef[] | null;
   route_photos?: RouteListPhoto[] | null;
   route_likes?: RouteLikeRef[] | null;
   route_favorites?: RouteFavoriteRef[] | null;

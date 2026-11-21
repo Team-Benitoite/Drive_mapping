@@ -218,6 +218,7 @@ export interface JapanMapProps {
   hrefForCode?: (code: number) => string;
   showTopCards?: boolean;
   strictTopCards?: boolean;
+  topCardsBadge?: string;
   topCardsTitle?: string;
 }
 
@@ -237,6 +238,7 @@ export default function JapanMap({
   hrefForCode,
   showTopCards = true,
   strictTopCards = false,
+  topCardsBadge = 'POPULAR ROUTES',
   topCardsTitle = '注目の人気ドライブコース',
 }: JapanMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -666,7 +668,7 @@ export default function JapanMap({
     <div className="japan-map-component-root">
       {/* ゲーム盤面ビューポート（深みと透明感のあるマリンブルーグラデーション ＋ 薄いグリッドマス目） */}
       <div
-        className={`dm-map-viewport game-board-viewport ${hasCards ? 'has-cards' : 'no-cards'}`}
+        className={`dm-map-viewport game-board-viewport ${hasCards ? 'has-cards' : 'no-cards'} ${isDragging ? 'is-dragging' : ''}`}
         ref={containerRef}
         onMouseDown={handleMouseDown}
         onMouseMove={handleContainerMouseMove}
@@ -799,7 +801,7 @@ export default function JapanMap({
             onTouchStart={(e) => e.stopPropagation()}
           >
             <div className="game-deck-header-ribbon">
-              <span className="game-ribbon-tag">POPULAR ROUTES</span>
+              <span className="game-ribbon-tag">{topCardsBadge}</span>
               <span className="game-ribbon-title">{topCardsTitle}</span>
             </div>
             <div className="dm-sea-deck-cards">

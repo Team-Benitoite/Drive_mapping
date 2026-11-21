@@ -108,10 +108,7 @@ export default function ProfilePage({ id }: { id?: string }) {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const totalRoutes = useMemo(
-    () => Object.values(counts).reduce((sum, count) => sum + count, 0),
-    [counts],
-  );
+  const totalRoutes = routes.length;
 
   const userTopPrefectures = useMemo<TopPrefecture[]>(() => {
     if (routes.length === 0) return [];
@@ -151,24 +148,37 @@ export default function ProfilePage({ id }: { id?: string }) {
         new Date(right.created_at).getTime() - new Date(left.created_at).getTime(),
     );
     for (const route of sorted) {
-      if (!map[route.prefecture_code]) {
-        const firstPhoto = route.route_photos?.[0];
-        map[route.prefecture_code] = {
-          route_id: route.id,
-          prefecture_code: route.prefecture_code,
-          title: route.title,
-          like_count: route.route_likes?.length || 0,
-          image_url:
-            getPublicPhotoUrl(firstPhoto?.thumb_path || firstPhoto?.storage_path) ||
-            null,
-          google_maps_url: getRouteGoogleMapsUrl({
-            address: route.address,
-            google_maps_url: route.google_maps_url,
-            route_points: route.route_points,
+      const prefCodes = Array.from(
+        new Set(
+          [
+            route.prefecture_code,
+            ...(route.route_prefectures || []).map((pref) => pref.prefecture_code),
+          ].filter((code): code is number => Number.isFinite(code) && code > 0),
+        ),
+      );
+      const firstPhoto = route.route_photos?.[0];
+      const imageUrl =
+        getPublicPhotoUrl(firstPhoto?.thumb_path || firstPhoto?.storage_path) ||
+        null;
+      const mapsUrl = getRouteGoogleMapsUrl({
+        address: route.address,
+        google_maps_url: route.google_maps_url,
+        route_points: route.route_points,
+        title: route.title,
+        prefecture_name: getPrefectureName(route.prefecture_code),
+      });
+
+      for (const code of prefCodes) {
+        if (!map[code]) {
+          map[code] = {
+            route_id: route.id,
+            prefecture_code: code,
             title: route.title,
-            prefecture_name: getPrefectureName(route.prefecture_code),
-          }),
-        };
+            like_count: route.route_likes?.length || 0,
+            image_url: imageUrl,
+            google_maps_url: mapsUrl,
+          };
+        }
       }
     }
     return map;
@@ -206,6 +216,7 @@ export default function ProfilePage({ id }: { id?: string }) {
       .select(
         `
           *,
+          route_prefectures(prefecture_code, is_main),
           route_points(label, address, sort_order),
           route_photos(storage_path, thumb_path, sort_order),
           route_likes(user_id)
@@ -228,8 +239,19 @@ export default function ProfilePage({ id }: { id?: string }) {
 
     const nextCounts: PrefectureCounts = {};
     (routeData || []).forEach((route) => {
-      const code = Number(route.prefecture_code);
-      if (code) nextCounts[code] = (nextCounts[code] || 0) + 1;
+      const prefCodes = Array.from(
+        new Set(
+          [
+            Number(route.prefecture_code),
+            ...(route.route_prefectures || []).map((pref) =>
+              Number(pref.prefecture_code),
+            ),
+          ].filter((code) => Number.isFinite(code) && code > 0),
+        ),
+      );
+      prefCodes.forEach((code) => {
+        nextCounts[code] = (nextCounts[code] || 0) + 1;
+      });
     });
     setCounts(nextCounts);
 
@@ -506,6 +528,7 @@ export default function ProfilePage({ id }: { id?: string }) {
           popularRoutes={userPopularRoutes}
           showTopCards={routes.length > 0}
           strictTopCards={true}
+          topCardsBadge="MY POPULAR ROUTES"
           topCardsTitle="自分の投稿のいいね人気順"
           hrefForCode={(code) =>
             `/routes?prefecture_code=${code}&user_id=${targetId}`

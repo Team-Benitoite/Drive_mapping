@@ -1,10 +1,19 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import AuthGuard from '../components/AuthGuard';
 import PrefectureSelect from '../components/PrefectureSelect';
 import { useAuth } from '../contexts/AuthContext';
 import { storageBucket, supabase } from '../lib/supabase';
-import { isGoogleMapsUrl } from '../utils/googleMaps';
-import { prefectures } from '../utils/prefectures';
+import {
+  isGoogleMapsUrl,
+  parseGoogleMapsRouteUrl,
+  type ParsedGoogleMapsRoute,
+} from '../utils/googleMaps';
+import {
+  lookupAddressByPostalCode,
+  matchPrefectureCodeFromAddress,
+  reverseGeocodeToJapaneseAddress,
+} from '../utils/addressLookup';
+import { getPrefectureName, prefectures } from '../utils/prefectures';
 import { getPublicPhotoUrl, isOwner, normalizeMiddlePoints } from '../utils/routeData';
 import { Link, navigate } from '../utils/navigation';
 import { getErrorMessage } from '../utils/errors';
@@ -13,6 +22,8 @@ import type {
   MiddlePointInput,
   RouteDetailPhoto,
 } from '../types/models';
+
+export type RouteInputMode = 'google_maps' | 'manual';
 
 export interface RouteFormValues {
   title: string;
@@ -105,6 +116,13 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
   const isEditMode = mode === 'edit';
   const { user } = useAuth();
   const [form, setForm] = useState<RouteFormValues>(emptyForm);
+  const [routeInputMode, setRouteInputMode] = useState<RouteInputMode>('google_maps');
+  const [postalCode, setPostalCode] = useState('');
+  const [addressLookupLoading, setAddressLookupLoading] = useState<
+    'geo' | 'postal' | 'coords' | null
+  >(null);
+  const [addressLookupMessage, setAddressLookupMessage] = useState('');
+  const [addressLookupError, setAddressLookupError] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [existingPhotos, setExistingPhotos] = useState<RouteDetailPhoto[]>([]);
   const [deletePhotoIds, setDeletePhotoIds] = useState<number[]>([]);
@@ -113,7 +131,18 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
   const [error, setError] = useState('');
   const [notOwner, setNotOwner] = useState(false);
 
+  const lastAutoFillRef = useRef({
+    address: '',
+    startLabel: '',
+    goalLabel: '',
+  });
+
   const pageTitle = isEditMode ? '投稿編集' : '投稿作成';
+
+  const parsedGoogleMaps: ParsedGoogleMapsRoute = useMemo(
+    () => parseGoogleMapsRouteUrl(form.googleMapsUrl),
+    [form.googleMapsUrl],
+  );
 
   const remainingPhotoCount = useMemo(
     () => existingPhotos.length - deletePhotoIds.length + files.length,
@@ -150,6 +179,207 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
     value: RouteFormValues[Field],
   ) {
     setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function handleMainPrefectureChange(nextCode: string) {
+    setForm((current) => ({
+      ...current,
+      prefectureCode: nextCode,
+      subPrefectureCodes: current.subPrefectureCodes.filter(
+        (code) => code !== nextCode,
+      ),
+    }));
+  }
+
+  function toggleSubPrefecture(code: string) {
+    if (code === form.prefectureCode) return;
+    setForm((current) => {
+      const exists = current.subPrefectureCodes.includes(code);
+      return {
+        ...current,
+        subPrefectureCodes: exists
+          ? current.subPrefectureCodes.filter((item) => item !== code)
+          : [...current.subPrefectureCodes, code],
+      };
+    });
+  }
+
+  function handleGoogleMapsUrlChange(nextUrl: string) {
+    const parsed = parseGoogleMapsRouteUrl(nextUrl);
+    setForm((current) => {
+      const next = { ...current, googleMapsUrl: nextUrl };
+
+      if (parsed.hasParsedRoute) {
+        if (
+          parsed.start &&
+          (!current.startLabel.trim() ||
+            current.startLabel === lastAutoFillRef.current.startLabel)
+        ) {
+          next.startLabel = parsed.start;
+          lastAutoFillRef.current.startLabel = parsed.start;
+        }
+        if (
+          parsed.goal &&
+          (!current.goalLabel.trim() ||
+            current.goalLabel === lastAutoFillRef.current.goalLabel)
+        ) {
+          next.goalLabel = parsed.goal;
+          lastAutoFillRef.current.goalLabel = parsed.goal;
+        }
+        if (parsed.waypoints.length > 0 && current.middlePoints.length === 0) {
+          next.middlePoints = parsed.waypoints.map((wp) => ({
+            label: wp,
+            address: '',
+          }));
+        }
+        if (
+          parsed.destinationAddressCandidate &&
+          (!current.address.trim() ||
+            current.address === lastAutoFillRef.current.address)
+        ) {
+          next.address = parsed.destinationAddressCandidate;
+          lastAutoFillRef.current.address = parsed.destinationAddressCandidate;
+          if (!current.prefectureCode) {
+            const matchedPref = matchPrefectureCodeFromAddress(
+              parsed.destinationAddressCandidate,
+            );
+            if (matchedPref) {
+              next.prefectureCode = matchedPref;
+              next.subPrefectureCodes = current.subPrefectureCodes.filter(
+                (c) => c !== matchedPref,
+              );
+            }
+          }
+        }
+      }
+
+      return next;
+    });
+  }
+
+  function applyParsedDestinationToAddress() {
+    const candidate = parsedGoogleMaps.destinationAddressCandidate;
+    if (!candidate) return;
+    setAddressLookupError('');
+    setAddressLookupMessage('');
+    setForm((current) => {
+      const next = { ...current, address: candidate };
+      lastAutoFillRef.current.address = candidate;
+      if (!current.prefectureCode) {
+        const matched = matchPrefectureCodeFromAddress(candidate);
+        if (matched) {
+          next.prefectureCode = matched;
+          next.subPrefectureCodes = current.subPrefectureCodes.filter(
+            (c) => c !== matched,
+          );
+        }
+      }
+      return next;
+    });
+    setAddressLookupMessage('GoogleマップURLの目的地を住所欄に反映しました。');
+  }
+
+  async function handleReverseGeocodeCoords(lat: number, lng: number) {
+    setAddressLookupLoading('coords');
+    setAddressLookupError('');
+    setAddressLookupMessage('');
+    try {
+      const result = await reverseGeocodeToJapaneseAddress(lat, lng);
+      setForm((current) => {
+        const next = { ...current, address: result.address };
+        lastAutoFillRef.current.address = result.address;
+        if (!current.prefectureCode && result.prefectureCode) {
+          next.prefectureCode = result.prefectureCode;
+          next.subPrefectureCodes = current.subPrefectureCodes.filter(
+            (c) => c !== result.prefectureCode,
+          );
+        }
+        return next;
+      });
+      setAddressLookupMessage('URLの座標から目的地の住所を取得しました。');
+    } catch (lookupErr) {
+      setAddressLookupError(
+        getErrorMessage(lookupErr, '座標からの住所取得に失敗しました。'),
+      );
+    } finally {
+      setAddressLookupLoading(null);
+    }
+  }
+
+  function handleCurrentLocationAddress() {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setAddressLookupError('お使いのブラウザは現在地取得に対応していません。');
+      return;
+    }
+
+    setAddressLookupLoading('geo');
+    setAddressLookupError('');
+    setAddressLookupMessage('');
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const result = await reverseGeocodeToJapaneseAddress(
+            position.coords.latitude,
+            position.coords.longitude,
+          );
+          setForm((current) => {
+            const next = { ...current, address: result.address };
+            lastAutoFillRef.current.address = result.address;
+            if (!current.prefectureCode && result.prefectureCode) {
+              next.prefectureCode = result.prefectureCode;
+              next.subPrefectureCodes = current.subPrefectureCodes.filter(
+                (c) => c !== result.prefectureCode,
+              );
+            }
+            return next;
+          });
+          setAddressLookupMessage('現在地から住所を自動入力しました。');
+        } catch (lookupErr) {
+          setAddressLookupError(
+            getErrorMessage(lookupErr, '現在地から住所を取得できませんでした。'),
+          );
+        } finally {
+          setAddressLookupLoading(null);
+        }
+      },
+      (geoError) => {
+        setAddressLookupLoading(null);
+        if (geoError.code === geoError.PERMISSION_DENIED) {
+          setAddressLookupError('位置情報の利用が許可されていません。ブラウザの設定をご確認ください。');
+        } else {
+          setAddressLookupError('現在地の取得に失敗しました。');
+        }
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 },
+    );
+  }
+
+  async function handlePostalCodeLookup() {
+    setAddressLookupLoading('postal');
+    setAddressLookupError('');
+    setAddressLookupMessage('');
+    try {
+      const result = await lookupAddressByPostalCode(postalCode);
+      setForm((current) => {
+        const next = { ...current, address: result.address };
+        lastAutoFillRef.current.address = result.address;
+        if (!current.prefectureCode && result.prefectureCode) {
+          next.prefectureCode = result.prefectureCode;
+          next.subPrefectureCodes = current.subPrefectureCodes.filter(
+            (c) => c !== result.prefectureCode,
+          );
+        }
+        return next;
+      });
+      setAddressLookupMessage('郵便番号から住所を自動入力しました。');
+    } catch (lookupErr) {
+      setAddressLookupError(
+        getErrorMessage(lookupErr, '郵便番号からの住所取得に失敗しました。'),
+      );
+    } finally {
+      setAddressLookupLoading(null);
+    }
   }
 
   function addMiddlePoint() {
@@ -239,6 +469,8 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
             address: point.address || '',
           })) || [];
 
+      const mainPrefStr = String(data.prefecture_code || '');
+
       setForm({
         title: data.title || '',
         summary: data.summary || '',
@@ -246,10 +478,14 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
         address: data.address || '',
         siteUrl: data.site_url || '',
         googleMapsUrl: data.google_maps_url || '',
-        prefectureCode: String(data.prefecture_code || ''),
+        prefectureCode: mainPrefStr,
         subPrefectureCodes:
           data.route_prefectures
-            ?.filter((prefecture) => !prefecture.is_main)
+            ?.filter(
+              (prefecture) =>
+                !prefecture.is_main &&
+                String(prefecture.prefecture_code) !== mainPrefStr,
+            )
             .map((prefecture) => String(prefecture.prefecture_code)) || [],
         startLabel: startPoint?.label || '',
         startAddress: startPoint?.address || '',
@@ -257,6 +493,13 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
         goalLabel: goalPoint?.label || '',
         goalAddress: goalPoint?.address || '',
       });
+
+      if (!data.google_maps_url && (startPoint || goalPoint || middlePoints.length > 0)) {
+        setRouteInputMode('manual');
+      } else {
+        setRouteInputMode('google_maps');
+      }
+
       setExistingPhotos(data.route_photos || []);
       setLoading(false);
     }
@@ -300,19 +543,25 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
       await client.from('route_prefectures').delete().eq('route_id', routeId);
     }
 
+    const uniqueSubCodes = Array.from(
+      new Set(
+        form.subPrefectureCodes.filter(
+          (code) => code && code !== form.prefectureCode,
+        ),
+      ),
+    );
+
     const rows: TablesInsert<'route_prefectures'>[] = [
       {
         route_id: routeId,
         prefecture_code: Number(form.prefectureCode),
         is_main: true,
       },
-      ...form.subPrefectureCodes
-        .filter((code) => code && code !== form.prefectureCode)
-        .map((code) => ({
-          route_id: routeId,
-          prefecture_code: Number(code),
-          is_main: false,
-        })),
+      ...uniqueSubCodes.map((code) => ({
+        route_id: routeId,
+        prefecture_code: Number(code),
+        is_main: false,
+      })),
     ];
 
     if (rows.length) {
@@ -468,6 +717,97 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
     );
   }
 
+  const addressFieldSection = (
+    <div className="address-field-block">
+      <label>
+        目的地の住所（任意）
+        <input
+          type="text"
+          maxLength={255}
+          value={form.address}
+          onChange={(event) => updateField('address', event.target.value)}
+          placeholder="例: 神奈川県藤沢市江の島2-3-8"
+        />
+        <small>
+          現在地・郵便番号からの自動取得や、GoogleマップURLの目的地から反映できます。
+        </small>
+      </label>
+
+      <div className="address-autofill-bar">
+        <button
+          type="button"
+          className="address-autofill-btn"
+          onClick={handleCurrentLocationAddress}
+          disabled={addressLookupLoading !== null}
+        >
+          {addressLookupLoading === 'geo'
+            ? '現在地を取得中...'
+            : '📍 現在地から住所を取得'}
+        </button>
+
+        {routeInputMode === 'google_maps' &&
+          parsedGoogleMaps.destinationAddressCandidate && (
+            <button
+              type="button"
+              className="address-autofill-btn is-accent"
+              onClick={applyParsedDestinationToAddress}
+              disabled={addressLookupLoading !== null}
+            >
+              🗺️ URLの目的地を住所に反映
+            </button>
+          )}
+
+        {routeInputMode === 'google_maps' &&
+          parsedGoogleMaps.destinationCoords && (
+            <button
+              type="button"
+              className="address-autofill-btn is-accent"
+              onClick={() =>
+                void handleReverseGeocodeCoords(
+                  parsedGoogleMaps.destinationCoords!.lat,
+                  parsedGoogleMaps.destinationCoords!.lng,
+                )
+              }
+              disabled={addressLookupLoading !== null}
+            >
+              {addressLookupLoading === 'coords'
+                ? '座標から住所取得中...'
+                : '📌 URLの座標から住所を取得'}
+            </button>
+          )}
+
+        <div className="postal-lookup-row">
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={8}
+            value={postalCode}
+            onChange={(event) => setPostalCode(event.target.value)}
+            placeholder="郵便番号 (例: 100-0001)"
+            aria-label="郵便番号"
+          />
+          <button
+            type="button"
+            className="address-autofill-btn"
+            onClick={() => void handlePostalCodeLookup()}
+            disabled={addressLookupLoading !== null || !postalCode.trim()}
+          >
+            {addressLookupLoading === 'postal'
+              ? '検索中...'
+              : '📮 郵便番号から住所を取得'}
+          </button>
+        </div>
+      </div>
+
+      {addressLookupMessage && (
+        <p className="success address-status-msg">{addressLookupMessage}</p>
+      )}
+      {addressLookupError && (
+        <p className="error address-status-msg">{addressLookupError}</p>
+      )}
+    </div>
+  );
+
   return (
     <AuthGuard>
       <section className="form-panel wide">
@@ -505,37 +845,71 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
           </label>
 
           <label>
-            メインで通った都道府県（必須）
+            メイン都道府県（必須）
             <PrefectureSelect
               value={form.prefectureCode}
-              onChange={(value) => updateField('prefectureCode', value)}
+              onChange={handleMainPrefectureChange}
               required
             />
+            <small>ドライブコースの中心となる都道府県を1つ選択してください。</small>
           </label>
 
-          <label>
-            サブで通った都道府県（任意・複数）
-            <select
-              multiple
-              size={6}
-              value={form.subPrefectureCodes}
-              onChange={(event) =>
-                updateField(
-                  'subPrefectureCodes',
-                  Array.from(event.target.selectedOptions).map(
-                    (option) => option.value,
-                  ),
-                )
-              }
-            >
-              {prefectures.map((prefecture) => (
-                <option key={prefecture.code} value={prefecture.code}>
-                  {prefecture.name}
-                </option>
-              ))}
-            </select>
-            <small>CtrlまたはCommandキーで複数選択できます。</small>
-          </label>
+          <div className="sub-pref-picker">
+            <div className="sub-pref-header">
+              <span className="sub-pref-label">
+                サブ都道府県（任意・複数選択可）
+              </span>
+              <div className="sub-pref-actions">
+                <span className="sub-pref-count">
+                  選択中: {form.subPrefectureCodes.length}件
+                </span>
+                {form.subPrefectureCodes.length > 0 && (
+                  <button
+                    type="button"
+                    className="sub-pref-clear-btn"
+                    onClick={() => updateField('subPrefectureCodes', [])}
+                  >
+                    選択をクリア
+                  </button>
+                )}
+              </div>
+            </div>
+            <p className="sub-pref-help">
+              県境をまたぐルートの場合、メイン以外に経由・関連する都道府県を複数選択できます（選択した都道府県の一覧検索にも表示されます）。
+            </p>
+            <div className="sub-pref-grid" role="group" aria-label="サブ都道府県（複数選択）">
+              {prefectures.map((prefecture) => {
+                const codeStr = String(prefecture.code);
+                const isMain = form.prefectureCode === codeStr;
+                const isSelected = form.subPrefectureCodes.includes(codeStr);
+                return (
+                  <label
+                    key={prefecture.code}
+                    className={`sub-pref-option ${isSelected ? 'is-selected' : ''} ${
+                      isMain ? 'is-main' : ''
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      disabled={isMain}
+                      onChange={() => toggleSubPrefecture(codeStr)}
+                    />
+                    <span>{prefecture.name}</span>
+                    {isMain && <em className="sub-pref-main-tag">メイン</em>}
+                  </label>
+                );
+              })}
+            </div>
+            {form.subPrefectureCodes.length > 0 && (
+              <p className="sub-pref-selected-names">
+                選択済み：
+                {form.subPrefectureCodes
+                  .map((code) => getPrefectureName(code))
+                  .join('・')}
+              </p>
+            )}
+          </div>
 
           <label>
             説明（任意）
@@ -544,16 +918,6 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
               onChange={(event) =>
                 updateField('description', event.target.value)
               }
-            />
-          </label>
-
-          <label>
-            住所（任意）
-            <input
-              type="text"
-              maxLength={255}
-              value={form.address}
-              onChange={(event) => updateField('address', event.target.value)}
             />
           </label>
 
@@ -567,88 +931,217 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
             />
           </label>
 
-          <label>
-            Google Maps共有URL（任意）
-            <input
-              type="url"
-              maxLength={2048}
-              value={form.googleMapsUrl}
-              onChange={(event) =>
-                updateField('googleMapsUrl', event.target.value)
-              }
-              placeholder="https://maps.app.goo.gl/..."
-            />
-            <small>
-              Google Mapsで経路を作成し、「共有」からコピーしたURLを入力してください。
-            </small>
-          </label>
-
           <hr />
 
-          <h2>ルート</h2>
-          <div className="point-box">
-            <h3>スタート</h3>
-            <input
-              type="text"
-              value={form.startLabel}
-              onChange={(event) => updateField('startLabel', event.target.value)}
-              placeholder="地点名"
-            />
-            <input
-              type="text"
-              value={form.startAddress}
-              onChange={(event) =>
-                updateField('startAddress', event.target.value)
-              }
-              placeholder="住所"
-            />
+          <h2>ルート設定</h2>
+          <div className="route-mode-tabs" role="tablist" aria-label="ルート作成方法">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={routeInputMode === 'google_maps'}
+              className={`route-mode-tab ${
+                routeInputMode === 'google_maps' ? 'is-active' : ''
+              }`}
+              onClick={() => setRouteInputMode('google_maps')}
+            >
+              🗺️ Googleマップでルート作成
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={routeInputMode === 'manual'}
+              className={`route-mode-tab ${
+                routeInputMode === 'manual' ? 'is-active' : ''
+              }`}
+              onClick={() => setRouteInputMode('manual')}
+            >
+              ✏️ 手動でルート作成
+            </button>
           </div>
 
-          <h3>中間地点</h3>
-          {form.middlePoints.map((point, index) => (
-            <div className="point-box" key={index}>
-              <input
-                type="text"
-                value={point.label}
-                onChange={(event) =>
-                  updateMiddlePoint(index, 'label', event.target.value)
-                }
-                placeholder="中間地点名"
-              />
-              <input
-                type="text"
-                value={point.address}
-                onChange={(event) =>
-                  updateMiddlePoint(index, 'address', event.target.value)
-                }
-                placeholder="住所"
-              />
-              <button type="button" onClick={() => removeMiddlePoint(index)}>
-                削除
-              </button>
+          {routeInputMode === 'google_maps' ? (
+            <div className="route-mode-panel" role="tabpanel">
+              <label>
+                GoogleマップのルートURL（任意）
+                <input
+                  type="url"
+                  maxLength={2048}
+                  value={form.googleMapsUrl}
+                  onChange={(event) =>
+                    handleGoogleMapsUrlChange(event.target.value)
+                  }
+                  placeholder="https://www.google.com/maps/dir/スタート地点/ゴール地点/..."
+                />
+                <small>
+                  Googleマップでルートを検索し、ブラウザのURLまたは共有URLを貼り付けてください。標準の経路URLからはスタート・ゴール・目的地を自動で抽出します。
+                </small>
+              </label>
+
+              {form.googleMapsUrl.trim() && (
+                <div className="gmaps-parse-preview">
+                  {!parsedGoogleMaps.isValidGoogleMapsUrl ? (
+                    <p className="gmaps-parse-warning">
+                      有効なGoogleマップのHTTPS URLを入力してください（google.co.jp/maps または maps.app.goo.gl）。
+                    </p>
+                  ) : parsedGoogleMaps.isShortenedUrl ? (
+                    <div className="gmaps-parse-notice">
+                      <p>
+                        短縮URL（maps.app.goo.gl）はブラウザ上でリンク先の地点名を直接読み取れないため、必要に応じて下欄にスタート・ゴールを手入力するか、ブラウザのアドレスバーの長いURL（https://www.google.com/maps/dir/...）を貼り付けてください。
+                      </p>
+                      <div className="gmaps-fallback-inputs">
+                        <input
+                          type="text"
+                          value={form.startLabel}
+                          onChange={(event) =>
+                            updateField('startLabel', event.target.value)
+                          }
+                          placeholder="🚩 スタート地点名（任意）"
+                        />
+                        <input
+                          type="text"
+                          value={form.goalLabel}
+                          onChange={(event) =>
+                            updateField('goalLabel', event.target.value)
+                          }
+                          placeholder="🏁 ゴール地点名（任意）"
+                        />
+                      </div>
+                    </div>
+                  ) : parsedGoogleMaps.hasParsedRoute ? (
+                    <div className="gmaps-parse-result">
+                      <div className="gmaps-parse-title">
+                        URLからルート情報を抽出しました
+                      </div>
+                      <div className="gmaps-parse-points">
+                        <div className="gmaps-parse-point">
+                          <span className="gmaps-parse-badge is-start">
+                            🚩 スタート
+                          </span>
+                          <span>
+                            {form.startLabel || parsedGoogleMaps.start || '未指定'}
+                          </span>
+                        </div>
+                        {parsedGoogleMaps.waypoints.length > 0 && (
+                          <div className="gmaps-parse-point">
+                            <span className="gmaps-parse-badge is-middle">
+                              📍 経由地
+                            </span>
+                            <span>{parsedGoogleMaps.waypoints.join(' → ')}</span>
+                          </div>
+                        )}
+                        <div className="gmaps-parse-point">
+                          <span className="gmaps-parse-badge is-goal">
+                            🏁 ゴール
+                          </span>
+                          <span>
+                            {form.goalLabel || parsedGoogleMaps.goal || '未指定'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="gmaps-fallback-inputs">
+                        <input
+                          type="text"
+                          value={form.startLabel}
+                          onChange={(event) =>
+                            updateField('startLabel', event.target.value)
+                          }
+                          placeholder="🚩 スタート表示名（微調整可）"
+                        />
+                        <input
+                          type="text"
+                          value={form.goalLabel}
+                          onChange={(event) =>
+                            updateField('goalLabel', event.target.value)
+                          }
+                          placeholder="🏁 ゴール表示名（微調整可）"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="gmaps-parse-warning">
+                      URLからスタート/ゴールを自動判別できませんでした。下の地点欄または「手動でルート作成」タブから地点を指定できます。
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {addressFieldSection}
             </div>
-          ))}
-          <button type="button" onClick={addMiddlePoint}>
-            中間地点を追加
-          </button>
+          ) : (
+            <div className="route-mode-panel" role="tabpanel">
+              {addressFieldSection}
 
-          <div className="point-box">
-            <h3>ゴール</h3>
-            <input
-              type="text"
-              value={form.goalLabel}
-              onChange={(event) => updateField('goalLabel', event.target.value)}
-              placeholder="地点名"
-            />
-            <input
-              type="text"
-              value={form.goalAddress}
-              onChange={(event) =>
-                updateField('goalAddress', event.target.value)
-              }
-              placeholder="住所"
-            />
-          </div>
+              <div className="point-box">
+                <h3>🚩 スタート地点</h3>
+                <input
+                  type="text"
+                  value={form.startLabel}
+                  onChange={(event) => updateField('startLabel', event.target.value)}
+                  placeholder="地点名（例: 東京駅丸の内口）"
+                />
+                <input
+                  type="text"
+                  value={form.startAddress}
+                  onChange={(event) =>
+                    updateField('startAddress', event.target.value)
+                  }
+                  placeholder="住所（任意）"
+                />
+              </div>
+
+              <div className="manual-middle-section">
+                <h3>📍 中間地点（経由スポット）</h3>
+                {form.middlePoints.map((point, index) => (
+                  <div className="point-box" key={index}>
+                    <input
+                      type="text"
+                      value={point.label}
+                      onChange={(event) =>
+                        updateMiddlePoint(index, 'label', event.target.value)
+                      }
+                      placeholder="中間地点名（例: 道の駅・展望台）"
+                    />
+                    <input
+                      type="text"
+                      value={point.address}
+                      onChange={(event) =>
+                        updateMiddlePoint(index, 'address', event.target.value)
+                      }
+                      placeholder="住所（任意）"
+                    />
+                    <button type="button" onClick={() => removeMiddlePoint(index)}>
+                      削除
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="add-middle-btn"
+                  onClick={addMiddlePoint}
+                >
+                  ＋ 中間地点を追加
+                </button>
+              </div>
+
+              <div className="point-box">
+                <h3>🏁 ゴール地点</h3>
+                <input
+                  type="text"
+                  value={form.goalLabel}
+                  onChange={(event) => updateField('goalLabel', event.target.value)}
+                  placeholder="地点名（例: 江の島展望灯台）"
+                />
+                <input
+                  type="text"
+                  value={form.goalAddress}
+                  onChange={(event) =>
+                    updateField('goalAddress', event.target.value)
+                  }
+                  placeholder="住所（任意）"
+                />
+              </div>
+            </div>
+          )}
 
           <hr />
 

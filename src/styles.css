@@ -3,17 +3,15 @@
    ========================================================================== */
 
 :root {
-  /* 角丸ゲーム矢印カーソル */
-  --cursor-default: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M6 3 C4.8 3 4.1 4.2 4.6 5.3 L10.8 23.6 C11.3 24.8 12.8 25.1 13.7 24.1 L16.8 20.6 L22.8 24.5 C23.8 25.1 25.1 24.5 25.4 23.3 L25.9 21.2 C26.2 20 25.5 18.8 24.4 18.2 L18.4 15.1 L23.1 12.8 C24.2 12.2 24.3 10.6 23.3 9.9 L7.7 3.2 C7.2 3.1 6.6 3 6 3 Z' fill='%23FACC15' stroke='%230F172A' stroke-width='2.4' stroke-linejoin='round' stroke-linecap='round'/%3E%3Cpath d='M8 7 L18 12 L14 14 L19 21 L16 22 L11 16 L8 19 Z' fill='%23FFFFFF' opacity='0.7' stroke-linejoin='round'/%3E%3C/svg%3E") 6 3, default;
+  /* 地図盤面外：くっきりしたゲーム風SVG矢印カーソル */
+  --cursor-default: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M4 3 L19 11.5 L12.2 13.5 L9.2 20.5 Z' fill='%23FACC15' stroke='%230F172A' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 4, default;
 
-  /* 角丸指差しグローブカーソル */
-  --cursor-pointer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cpath d='M13 3 C13 1.9 13.9 1 15 1 C16.1 1 17 1.9 17 3 L17 13 C17.3 12.4 18 12 18.8 12 C19.9 12 20.8 12.9 20.8 14 C21.1 13.4 21.8 13 22.5 13 C23.6 13 24.5 13.9 24.5 15 C24.8 14.4 25.5 14 26.2 14 C27.3 14 28.2 14.9 28.2 16 L28.2 24 C28.2 29.5 23.7 34 18.2 34 C13.5 34 10.5 30.5 9.5 26.5 L6.8 19.5 C6.4 18.5 6.9 17.3 8 16.9 C9.1 16.5 10.3 17 10.8 18.1 L13 22 Z' fill='%23FFFFFF' stroke='%230F172A' stroke-width='2.4' stroke-linejoin='round' stroke-linecap='round'/%3E%3Ccircle cx='15' cy='5' r='1.5' fill='%23FACC15'/%3E%3Cpath d='M13 20 C13.5 22 14.5 23 16 23' stroke='%23CBD5E1' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") 15 2, pointer;
+  /* クリック可能要素・ボタン・リンク・都道府県マス：カスタム指差しSVGカーソル */
+  --cursor-pointer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M8.4 20.2 L6.8 16.8 L3.9 12.6 C3.1 11.5 4.2 10.5 5.1 11.2 L6.5 12.4 L6.5 4.4 C6.5 2.7 9.5 2.7 9.5 4.4 L9.5 10.2 C9.5 8.9 12.4 8.9 12.4 10.2 C12.4 9.3 15.2 9.3 15.2 10.6 C15.2 10.0 18.0 10.1 18.0 11.4 L17.6 15.6 C17.3 17.8 16.4 19.1 15.6 20.2 Z' fill='%230F172A' stroke='%230F172A' stroke-width='2' stroke-linejoin='round' transform='translate(1.3 1.4)' opacity='0.35'/%3E%3Cpath d='M8.4 20.2 L6.8 16.8 L3.9 12.6 C3.1 11.5 4.2 10.5 5.1 11.2 L6.5 12.4 L6.5 4.4 C6.5 2.7 9.5 2.7 9.5 4.4 L9.5 10.2 C9.5 8.9 12.4 8.9 12.4 10.2 C12.4 9.3 15.2 9.3 15.2 10.6 C15.2 10.0 18.0 10.1 18.0 11.4 L17.6 15.6 C17.3 17.8 16.4 19.1 15.6 20.2 Z' fill='%23FFFFFF' stroke='%230F172A' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M9.5 10.2 L9.5 13.4 M12.4 10.2 L12.4 13.4 M15.2 10.6 L15.2 13.6' fill='none' stroke='%230F172A' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E") 8 4, pointer;
 
-  /* つかむ手カーソル */
-  --cursor-grab: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cpath d='M10 13 L10 7 C10 5.9 10.9 5 12 5 C13.1 5 14 5.9 14 7 L14 12 M14 7 C14 5.9 14.9 5 16 5 C17.1 5 18 5.9 18 7 L18 12 M18 8 C18 6.9 18.9 6 20 6 C21.1 6 22 6.9 22 8 L22 14 M22 11 C22 9.9 22.9 9 24 9 C25.1 9 26 9.9 26 11 L26 21 C26 26.5 21.5 31 16 31 C10.5 31 7 26.5 7 21 L7 17 C7 15.9 7.9 15 9 15 C10.1 15 10 16 10 17 Z' fill='%23FFFFFF' stroke='%230F172A' stroke-width='2.4' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E") 16 16, grab;
-
-  /* つかんだカーソル */
-  --cursor-grabbing: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cpath d='M10 14 C10 12.5 11.5 11.5 13 11.5 C14.5 11.5 15.5 12.5 16.5 12.5 C17.5 12.5 18.5 11.5 20 11.5 C21.5 11.5 23 12.5 24 13.5 L24 21 C24 26.5 20.5 31 16 31 C11.5 31 8 26.5 8 21 L8 18 C8 16 9 14 10 14 Z' fill='%23FACC15' stroke='%230F172A' stroke-width='2.4' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E") 16 16, grabbing;
+  /* 地図盤面の通常カーソル（開いている手のひら）・ドラッグ中カーソル（握った手） */
+  --cursor-grab: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M8.2 20.5 L6.4 16.4 L4.0 12.8 C3.4 11.7 4.4 10.4 5.6 10.7 C6.5 10.9 7.2 11.7 7.6 12.4 L7.6 5.8 C7.6 4.5 10.1 4.5 10.1 5.8 L10.1 4.1 C10.1 2.8 13.2 2.8 13.2 4.1 L13.2 5.0 C13.2 3.7 16.2 3.7 16.2 5.0 L16.2 7.4 C16.2 6.2 18.9 6.4 18.9 7.7 L18.4 14.6 C18.1 17.4 16.8 19.2 15.8 20.5 Z' fill='%230F172A' stroke='%230F172A' stroke-width='2' stroke-linejoin='round' transform='translate(1.3 1.4)' opacity='0.35'/%3E%3Cpath d='M8.2 20.5 L6.4 16.4 L4.0 12.8 C3.4 11.7 4.4 10.4 5.6 10.7 C6.5 10.9 7.2 11.7 7.6 12.4 L7.6 5.8 C7.6 4.5 10.1 4.5 10.1 5.8 L10.1 4.1 C10.1 2.8 13.2 2.8 13.2 4.1 L13.2 5.0 C13.2 3.7 16.2 3.7 16.2 5.0 L16.2 7.4 C16.2 6.2 18.9 6.4 18.9 7.7 L18.4 14.6 C18.1 17.4 16.8 19.2 15.8 20.5 Z' fill='%23FFFFFF' stroke='%230F172A' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M10.1 5.8 L10.1 10.6 M13.2 5.0 L13.2 10.6 M16.2 7.4 L16.2 11.2' fill='none' stroke='%230F172A' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E") 12 12, grab;
+  --cursor-grabbing: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M8.4 19.6 L6.4 16.4 L5.4 13.6 C5.1 12.2 6.0 11.0 7.2 11.3 C7.4 11.4 7.6 11.5 7.7 11.6 L7.7 9.4 C7.7 8.1 10.6 8.1 10.6 9.4 L10.6 8.8 C10.6 7.5 13.5 7.5 13.5 8.8 L13.5 9.2 C13.5 7.9 16.4 7.9 16.4 9.2 L16.4 10.3 C16.4 9.1 19.0 9.2 19.0 10.5 L18.6 15.2 C18.3 17.6 17.0 18.8 15.8 19.6 Z' fill='%230F172A' stroke='%230F172A' stroke-width='2' stroke-linejoin='round' transform='translate(1.3 1.4)' opacity='0.35'/%3E%3Cpath d='M8.4 19.6 L6.4 16.4 L5.4 13.6 C5.1 12.2 6.0 11.0 7.2 11.3 C7.4 11.4 7.6 11.5 7.7 11.6 L7.7 9.4 C7.7 8.1 10.6 8.1 10.6 9.4 L10.6 8.8 C10.6 7.5 13.5 7.5 13.5 8.8 L13.5 9.2 C13.5 7.9 16.4 7.9 16.4 9.2 L16.4 10.3 C16.4 9.1 19.0 9.2 19.0 10.5 L18.6 15.2 C18.3 17.6 17.0 18.8 15.8 19.6 Z' fill='%23FFFFFF' stroke='%230F172A' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M10.6 9.4 L10.6 12.8 M13.5 8.8 L13.5 12.8 M16.4 9.2 L16.4 13.0 M7.6 11.5 C8.6 12.2 8.8 13.8 8.0 14.8' fill='none' stroke='%230F172A' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E") 12 12, grabbing;
 
   /* ボードゲームカラーパレット */
   --game-dark: #0f172a;
@@ -107,10 +105,25 @@ button,
 select,
 input[type="submit"],
 input[type="button"],
+input[type="checkbox"],
+input[type="radio"],
+[role="button"],
 .route-card,
 .game-pref-group,
-.pref-hover-popover {
+.pref-hover-popover,
+.sub-pref-option,
+.route-mode-tab {
   cursor: var(--cursor-pointer);
+}
+
+input[type="text"],
+input[type="url"],
+input[type="search"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea {
+  cursor: text;
 }
 
 /* ==========================================================================
@@ -618,8 +631,17 @@ textarea:focus {
   background-position: 0 0, 0 0, 0 0;
 }
 
-.game-board-viewport:active {
-  cursor: var(--cursor-grabbing);
+.game-board-viewport:active,
+.game-board-viewport.is-dragging,
+.game-board-viewport.is-dragging * {
+  cursor: var(--cursor-grabbing) !important;
+}
+
+.game-card-deck,
+.game-controls,
+.game-heat-legend,
+.mobile-geo-prompt-chip {
+  cursor: var(--cursor-default);
 }
 
 /* お気に入りカード hover 連動：盤面背景写真バックドロップ */
@@ -915,7 +937,7 @@ textarea:focus {
   border-radius: 14px;
   padding: 6px;
   box-shadow: 4px 4px 0 var(--game-dark);
-  cursor: default;
+  cursor: var(--cursor-default);
   transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
   overflow: visible;
@@ -1395,7 +1417,7 @@ textarea:focus {
   border-radius: var(--game-radius);
   overflow: hidden;
   box-shadow: var(--game-shadow-sm);
-  cursor: default;
+  cursor: var(--cursor-default);
 }
 
 .dm-mobile-card-actions {
@@ -1529,6 +1551,36 @@ textarea:focus {
   font-size: 12px;
   font-weight: 900;
   flex-shrink: 0;
+}
+
+.route-card-pref-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 8px;
+}
+
+.route-card-pref-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 2px solid var(--game-dark);
+  font-size: 11.5px;
+  font-weight: 900;
+  line-height: 1.3;
+  box-shadow: 1.5px 1.5px 0 var(--game-dark);
+}
+
+.route-card-pref-pill.is-main {
+  background: #fef08a;
+  color: var(--game-dark);
+}
+
+.route-card-pref-pill.is-sub {
+  background: #e0f2fe;
+  color: #0369a1;
 }
 
 .route-thumb-link {
@@ -1954,6 +2006,304 @@ textarea:focus {
   margin-top: 12px;
 }
 
+/* ==========================================================================
+   投稿フォーム拡張UI（サブ都道府県ピッカー・ルートモード切替・住所自動取得）
+   ========================================================================== */
+
+.sub-pref-picker {
+  margin-top: 18px;
+  padding: 16px;
+  border: 2.5px solid var(--game-dark);
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.sub-pref-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.sub-pref-label {
+  font-size: 13.5px;
+  font-weight: 900;
+  color: var(--game-dark);
+}
+
+.sub-pref-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sub-pref-count {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--game-yellow);
+  border: 2px solid var(--game-dark);
+  font-size: 11.5px;
+  font-weight: 900;
+  color: var(--game-dark);
+}
+
+.sub-pref-clear-btn {
+  padding: 4px 12px;
+  font-size: 11.5px;
+  border-width: 2px;
+  background: #ffffff;
+}
+
+.sub-pref-help {
+  margin: 6px 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.sub-pref-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 4px 2px;
+}
+
+.sub-pref-option {
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border: 2px solid var(--game-dark);
+  border-radius: 10px;
+  background: #ffffff;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--game-dark);
+  box-shadow: 2px 2px 0 var(--game-dark);
+  transition: transform 0.1s ease, background-color 0.12s ease;
+  user-select: none;
+}
+
+.sub-pref-option:hover:not(.is-main) {
+  background: #fef9c3;
+  transform: translateY(-1px);
+}
+
+.sub-pref-option.is-selected {
+  background: #bae6fd;
+  color: var(--game-dark);
+}
+
+.sub-pref-option.is-main {
+  background: #fef08a;
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+.sub-pref-option input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+  accent-color: #0284c7;
+  box-shadow: none;
+}
+
+.sub-pref-main-tag {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: var(--game-dark);
+  color: #ffffff;
+}
+
+.sub-pref-selected-names {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #0369a1;
+}
+
+.route-mode-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0 16px;
+}
+
+.route-mode-tab {
+  flex: 1 1 220px;
+  padding: 11px 16px;
+  border-radius: 14px;
+  border: 2.5px solid var(--game-dark);
+  background: #f1f5f9;
+  color: var(--game-dark);
+  font-size: 14px;
+  font-weight: 900;
+  box-shadow: var(--game-shadow-sm);
+}
+
+.route-mode-tab.is-active {
+  background: var(--game-yellow);
+  color: var(--game-dark);
+  box-shadow: 0 5px 0 var(--game-dark);
+}
+
+.route-mode-panel {
+  border: 2.5px solid var(--game-dark);
+  border-radius: 16px;
+  padding: 18px;
+  background: #f8fafc;
+}
+
+.route-mode-panel > label:first-child,
+.route-mode-panel > .address-field-block:first-child label {
+  margin-top: 0;
+}
+
+.gmaps-parse-preview {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 2.5px solid var(--game-dark);
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 3px 3px 0 var(--game-dark);
+}
+
+.gmaps-parse-title {
+  font-size: 13px;
+  font-weight: 900;
+  color: #0369a1;
+  margin-bottom: 10px;
+}
+
+.gmaps-parse-points {
+  display: grid;
+  gap: 8px;
+}
+
+.gmaps-parse-point {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--game-dark);
+}
+
+.gmaps-parse-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 2px solid var(--game-dark);
+  font-size: 11.5px;
+  font-weight: 900;
+}
+
+.gmaps-parse-badge.is-start {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.gmaps-parse-badge.is-middle {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.gmaps-parse-badge.is-goal {
+  background: #fef08a;
+  color: var(--game-dark);
+}
+
+.gmaps-parse-notice p,
+.gmaps-parse-warning {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #475569;
+  line-height: 1.55;
+}
+
+.gmaps-parse-warning {
+  color: #b45309;
+}
+
+.gmaps-fallback-inputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.gmaps-fallback-inputs input {
+  margin-top: 0;
+}
+
+.address-field-block {
+  margin-top: 16px;
+}
+
+.address-autofill-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.address-autofill-btn {
+  padding: 8px 14px;
+  font-size: 12.5px;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.address-autofill-btn.is-accent {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.postal-lookup-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 280px;
+}
+
+.postal-lookup-row input {
+  margin-top: 0;
+  max-width: 185px;
+  padding: 8px 12px;
+}
+
+.address-status-msg {
+  margin: 8px 0 0;
+}
+
+.manual-middle-section {
+  margin-top: 18px;
+}
+
+.manual-middle-section h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.add-middle-btn {
+  margin-top: 12px;
+}
+
 .point-list {
   margin: 0;
   padding-left: 22px;
@@ -2243,5 +2593,21 @@ textarea:focus {
   .photo-delete-card {
     width: 140px;
     height: 105px;
+  }
+
+  .sub-pref-grid {
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  }
+
+  .gmaps-fallback-inputs {
+    grid-template-columns: 1fr;
+  }
+
+  .postal-lookup-row {
+    flex-wrap: wrap;
+  }
+
+  .postal-lookup-row input {
+    max-width: none;
   }
 }

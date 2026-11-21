@@ -45,6 +45,7 @@ export default function RoutesIndexPage() {
       .select(
         `
           *,
+          route_prefectures(prefecture_code, is_main),
           route_photos(storage_path, thumb_path, sort_order),
           route_likes(user_id)
         `,
@@ -62,8 +63,29 @@ export default function RoutesIndexPage() {
       );
     }
 
-    if (filters.prefectureCode) {
-      query = query.eq('prefecture_code', Number(filters.prefectureCode));
+    const targetPrefCode = filters.prefectureCode
+      ? Number(filters.prefectureCode)
+      : null;
+
+    if (targetPrefCode && !filters.q.trim()) {
+      const { data: prefMatches } = await supabase
+        .from('route_prefectures')
+        .select('route_id')
+        .eq('prefecture_code', targetPrefCode);
+
+      if (currentRequest !== requestId.current) return;
+
+      const matchedRouteIds = Array.from(
+        new Set((prefMatches || []).map((row) => row.route_id)),
+      );
+
+      if (matchedRouteIds.length === 0) {
+        query = query.eq('prefecture_code', targetPrefCode);
+      } else if (matchedRouteIds.length <= 200) {
+        query = query.or(
+          `prefecture_code.eq.${targetPrefCode},id.in.(${matchedRouteIds.join(',')})`,
+        );
+      }
     }
 
     if (filters.userId) {
@@ -76,13 +98,23 @@ export default function RoutesIndexPage() {
     if (fetchError) {
       setError(fetchError.message);
     } else {
+      const filteredData = targetPrefCode
+        ? (data || []).filter(
+            (route) =>
+              route.prefecture_code === targetPrefCode ||
+              route.route_prefectures?.some(
+                (pref) => pref.prefecture_code === targetPrefCode,
+              ),
+          )
+        : data || [];
+
       try {
         const profiles = await loadProfilesByIds(
-          (data || []).map((route) => route.user_id),
+          filteredData.map((route) => route.user_id),
         );
         if (currentRequest !== requestId.current) return;
         setRoutes(
-          (data || []).map((route) => ({
+          filteredData.map((route) => ({
             ...route,
             profile: profiles[route.user_id],
           })),
