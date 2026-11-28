@@ -500,13 +500,13 @@ button[type="submit"]:hover,
   background: var(--game-yellow);
   border-color: var(--game-dark);
   transform: translateX(4px);
-  box-shadow: 2px 2px 0 var(--game-dark);
+  box-shadow: none;
   text-decoration: none;
 }
 
 .auth-dropdown-stack > button.auth-dropdown-menu-item:active {
   transform: translateX(4px) translateY(1px);
-  box-shadow: 1px 1px 0 var(--game-dark);
+  box-shadow: none;
 }
 
 .auth-dropdown-guest {
@@ -528,28 +528,27 @@ button[type="submit"]:hover,
   font-size: 13.5px;
   font-weight: 900;
   line-height: 1.25;
-  box-shadow: var(--game-shadow-sm);
+  box-shadow: none;
   text-decoration: none;
   white-space: nowrap;
   cursor: var(--cursor-pointer);
   transition:
     background-color 0.14s ease,
     color 0.14s ease,
-    transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+    transform 0.12s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .auth-dropdown-guest a.auth-guest-btn:hover {
   background: var(--game-yellow);
   color: var(--game-dark);
   transform: translateY(-2px);
-  box-shadow: 0 6px 0 var(--game-dark);
+  box-shadow: none;
   text-decoration: none;
 }
 
 .auth-dropdown-guest a.auth-guest-btn:active {
   transform: translateY(2px);
-  box-shadow: var(--game-shadow-active);
+  box-shadow: none;
 }
 
 .account-search {
@@ -665,7 +664,7 @@ textarea {
   font-family: inherit;
   font-size: 14px;
   font-weight: 700;
-  box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.08);
+  box-shadow: none;
   transition: all 0.16s ease;
 }
 
@@ -683,10 +682,9 @@ input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--game-blue);
-  box-shadow:
-    0 0 0 4px var(--game-yellow),
-    inset 0 2px 4px rgba(15, 23, 42, 0.08);
-  outline: none;
+  box-shadow: none;
+  outline: 3px solid var(--game-yellow);
+  outline-offset: 1px;
 }
 
 /* ==========================================================================
@@ -740,7 +738,7 @@ textarea:focus {
   min-height: 520px;
   border: 5px solid var(--game-dark);
   border-radius: 26px;
-  box-shadow: var(--game-shadow-lg);
+  box-shadow: none;
   cursor: var(--cursor-grab);
   user-select: none;
   touch-action: none;
@@ -869,7 +867,7 @@ textarea:focus {
   gap: 8px;
   max-width: calc(100% - 24px);
   white-space: nowrap;
-  box-shadow: var(--game-shadow-md);
+  box-shadow: none;
   pointer-events: none;
   animation: fadeInOut 4.5s forwards;
 }
@@ -1571,7 +1569,7 @@ textarea:focus {
   background: #ffffff;
   color: var(--game-dark);
   border: 2px solid var(--game-dark);
-  box-shadow: 2px 2px 0 var(--game-dark);
+  box-shadow: none;
 }
 
 .game-mobile-card-likes {
@@ -1586,7 +1584,7 @@ textarea:focus {
   color: #ffffff;
   background: #e11d48;
   border: 2px solid var(--game-dark);
-  box-shadow: 2px 2px 0 var(--game-dark);
+  box-shadow: none;
   padding: 2px 8px;
   border-radius: 999px;
 }
@@ -1660,7 +1658,7 @@ textarea:focus {
   background: #ffe4e6;
   color: #be123c;
   border: 2px solid var(--game-dark);
-  box-shadow: 2px 2px 0 var(--game-dark);
+  box-shadow: none;
   font-size: 12px;
   font-weight: 900;
   flex-shrink: 0;
@@ -1683,7 +1681,7 @@ textarea:focus {
   font-size: 11.5px;
   font-weight: 900;
   line-height: 1.3;
-  box-shadow: 1.5px 1.5px 0 var(--game-dark);
+  box-shadow: none;
 }
 
 .route-card-pref-pill.is-main {
@@ -1708,7 +1706,7 @@ textarea:focus {
   object-fit: cover;
   border-radius: 12px;
   border: 2.5px solid var(--game-dark);
-  box-shadow: 2px 2px 0 var(--game-dark);
+  box-shadow: none;
   background: #bae6fd;
   transition: transform 0.2s ease;
   display: block;
@@ -1744,7 +1742,7 @@ textarea:focus {
   border: 2.5px solid var(--game-dark);
   border-radius: 50%;
   flex: 0 0 auto;
-  box-shadow: 2px 2px 0 var(--game-dark);
+  box-shadow: none;
 }
 
 .profile-header .avatar-image,
@@ -1888,18 +1886,18 @@ textarea:focus {
   background: rgba(255, 255, 255, 0.94);
   color: var(--game-dark);
   border: 2.5px solid var(--game-dark);
-  box-shadow: 0 3px 0 var(--game-dark);
+  box-shadow: none;
 }
 
 .carousel-nav-btn:hover {
   transform: translateY(-50%) scale(1.06);
   background: var(--game-yellow);
-  box-shadow: 0 4px 0 var(--game-dark);
+  box-shadow: none;
 }
 
 .carousel-nav-btn:active {
   transform: translateY(calc(-50% + 1px));
-  box-shadow: 0 1px 0 var(--game-dark);
+  box-shadow: none;
 }
 
 .carousel-prev {
@@ -1999,6 +1997,12 @@ textarea:focus {
   color: var(--game-dark);
   font-size: 22px;
   line-height: 1;
+  box-shadow: none;
+}
+
+.photo-modal-close:hover,
+.photo-modal-close:active {
+  box-shadow: none;
 }
 
 .account-modal-content {
@@ -2137,7 +2141,7 @@ textarea:focus {
   object-fit: cover;
   border-radius: 14px;
   border: 2.5px solid var(--game-dark);
-  box-shadow: 3px 3px 0 var(--game-dark);
+  box-shadow: none;
   display: block;
 }
 
@@ -2155,7 +2159,7 @@ textarea:focus {
   font-size: 18px;
   line-height: 1;
   border: 2.5px solid var(--game-dark);
-  box-shadow: 0 3px 0 var(--game-dark);
+  box-shadow: none;
 }
 
 .photo-delete-button:hover {
@@ -2173,7 +2177,7 @@ textarea:focus {
   padding: 16px;
   margin-top: 14px;
   background: #ffffff;
-  box-shadow: 3px 3px 0 var(--game-dark);
+  box-shadow: none;
 }
 
 .point-box h3 {
@@ -2303,7 +2307,7 @@ textarea:focus {
   font-size: 12.5px;
   font-weight: 800;
   color: var(--game-dark);
-  box-shadow: 2px 2px 0 var(--game-dark);
+  box-shadow: none;
   transition: transform 0.1s ease, background-color 0.12s ease;
   user-select: none;
 }
@@ -2363,10 +2367,11 @@ textarea:focus {
 }
 
 .route-mode-panel {
-  border: 2.5px solid var(--game-dark);
-  border-radius: 16px;
-  padding: 18px;
-  background: rgba(248, 250, 252, 0.92);
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .route-mode-panel > label:first-child,
@@ -2398,7 +2403,7 @@ textarea:focus {
   border: 2.5px solid var(--game-dark);
   border-radius: 14px;
   background: #ffffff;
-  box-shadow: 3px 3px 0 var(--game-dark);
+  box-shadow: none;
 }
 
 .gmaps-parse-title {
@@ -2603,7 +2608,7 @@ textarea:focus {
   overflow: hidden;
   border: 3.5px solid var(--game-dark);
   border-radius: 18px;
-  box-shadow: var(--game-shadow-sm);
+  box-shadow: none;
   background: #e2e8f0;
 }
 
@@ -2662,7 +2667,7 @@ textarea:focus {
   background: var(--game-yellow);
   color: var(--game-dark);
   border: 2px solid var(--game-dark);
-  box-shadow: 2px 2px 0 var(--game-dark);
+  box-shadow: none;
   font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.05em;
@@ -2784,12 +2789,11 @@ textarea:focus {
   font-size: 11.5px;
   font-weight: 900;
   line-height: 1.25;
-  box-shadow: 2px 2px 0 var(--game-dark);
+  box-shadow: none;
   text-decoration: none;
   cursor: var(--cursor-pointer);
   transition:
     transform 0.12s ease,
-    box-shadow 0.12s ease,
     background-color 0.12s ease;
 }
 
@@ -2797,13 +2801,13 @@ textarea:focus {
   background: #fde047;
   color: var(--game-dark);
   transform: translateY(-1px);
-  box-shadow: 3px 3px 0 var(--game-dark);
+  box-shadow: none;
   text-decoration: none;
 }
 
 .summary-jump-btn:active {
   transform: translateY(1px);
-  box-shadow: 1px 1px 0 var(--game-dark);
+  box-shadow: none;
 }
 
 .follow-tabs {
@@ -2823,12 +2827,11 @@ textarea:focus {
   color: var(--game-dark);
   font-size: 13px;
   font-weight: 900;
-  box-shadow: 3px 3px 0 var(--game-dark);
+  box-shadow: none;
   text-decoration: none;
   cursor: var(--cursor-pointer);
   transition:
     transform 0.12s ease,
-    box-shadow 0.12s ease,
     background-color 0.12s ease;
 }
 
@@ -2836,6 +2839,7 @@ textarea:focus {
   background: #fef9c3;
   color: var(--game-dark);
   transform: translateY(-1px);
+  box-shadow: none;
   text-decoration: none;
 }
 
@@ -3132,3 +3136,89 @@ textarea:focus {
     max-width: none;
   }
 }
+
+/* ==========================================================================
+   外枠以外の内部要素の影（box-shadow）を解除（日本地図エリアは除外）
+   ========================================================================== */
+
+:is(
+  .card,
+  .panel,
+  .form-panel,
+  .route-card,
+  .detail-header,
+  .search,
+  .auth-dropdown-menu,
+  .account-modal-content,
+  .confirm-modal-card,
+  .game-mobile-card
+) :is(
+  button,
+  .button,
+  .game-header-btn,
+  .game-card-action-link,
+  .route-card,
+  .game-mobile-card,
+  .panel,
+  .card,
+  .notice,
+  .empty,
+  input,
+  select,
+  textarea
+):not(.game-board-viewport):not(.game-board-viewport *),
+:is(
+  .card,
+  .panel,
+  .form-panel,
+  .route-card,
+  .detail-header,
+  .search,
+  .auth-dropdown-menu,
+  .account-modal-content,
+  .confirm-modal-card,
+  .game-mobile-card
+) :is(
+  button,
+  .button,
+  .game-header-btn,
+  .game-card-action-link,
+  .route-card,
+  .game-mobile-card,
+  .panel,
+  .card,
+  .notice,
+  .empty,
+  input,
+  select,
+  textarea
+):not(.game-board-viewport):not(.game-board-viewport *):hover,
+:is(
+  .card,
+  .panel,
+  .form-panel,
+  .route-card,
+  .detail-header,
+  .search,
+  .auth-dropdown-menu,
+  .account-modal-content,
+  .confirm-modal-card,
+  .game-mobile-card
+) :is(
+  button,
+  .button,
+  .game-header-btn,
+  .game-card-action-link,
+  .route-card,
+  .game-mobile-card,
+  .panel,
+  .card,
+  .notice,
+  .empty,
+  input,
+  select,
+  textarea
+):not(.game-board-viewport):not(.game-board-viewport *):active {
+  box-shadow: none;
+}
+
