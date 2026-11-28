@@ -28,7 +28,7 @@
 
   /* サーフェス */
   --bg-game: #e0f2fe;
-  --card-bg: #ffffff;
+  --card-bg: rgba(255, 255, 255, 0.92);
   --game-radius: 18px;
   --font-main:
     "M PLUS Rounded 1c",
@@ -61,10 +61,10 @@ body {
 }
 
 body {
-  background-color: #f0f9ff;
+  background-color: #ecf7ff;
   background-image:
-    radial-gradient(#bae6fd 1.5px, transparent 1.5px),
-    radial-gradient(#e0f2fe 1.5px, #f0f9ff 1.5px);
+    radial-gradient(#93c5fd 1.6px, transparent 1.6px),
+    radial-gradient(#bae6fd 1.6px, #f0f9ff 1.6px);
   background-size: 32px 32px;
   background-position: 0 0, 16px 16px;
   color: var(--game-dark);
@@ -111,8 +111,7 @@ input[type="radio"],
 .route-card,
 .game-pref-group,
 .pref-hover-popover,
-.sub-pref-option,
-.route-mode-tab {
+.sub-pref-option {
   cursor: var(--cursor-pointer);
 }
 
@@ -552,6 +551,7 @@ button[type="submit"]:hover,
 .route-card,
 .detail-header {
   background: var(--card-bg);
+  backdrop-filter: blur(3px);
   border: 3.5px solid var(--game-dark);
   border-radius: var(--game-radius);
   padding: 22px 24px;
@@ -576,6 +576,24 @@ button[type="submit"]:hover,
 
 .form-panel.wide {
   max-width: 820px;
+}
+
+.route-form-page {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.route-form-page .form-panel.wide {
+  max-width: 100%;
+}
+
+.route-form-topnav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 14px;
+  margin-bottom: 18px;
 }
 
 .form-panel > p {
@@ -655,7 +673,8 @@ textarea:focus {
 }
 
 .search {
-  background: #ffffff;
+  background: var(--card-bg);
+  backdrop-filter: blur(3px);
   border: 3px solid var(--game-dark);
   border-radius: var(--game-radius);
   padding: 16px 20px;
@@ -2243,42 +2262,34 @@ textarea:focus {
   color: #0369a1;
 }
 
-.route-mode-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 12px 0 16px;
-}
-
-.route-mode-tab {
-  flex: 1 1 220px;
-  padding: 11px 16px;
-  border-radius: 14px;
-  border: 2.5px solid var(--game-dark);
-  background: #f1f5f9;
-  color: var(--game-dark);
-  font-size: 14px;
-  font-weight: 900;
-  box-shadow: var(--game-shadow-sm);
-}
-
-.route-mode-tab.is-active {
-  background: var(--game-yellow);
-  color: var(--game-dark);
-  box-shadow: 0 5px 0 var(--game-dark);
-}
-
 .route-mode-panel {
   border: 2.5px solid var(--game-dark);
   border-radius: 16px;
   padding: 18px;
-  background: #f8fafc;
+  background: rgba(248, 250, 252, 0.92);
 }
 
 .route-mode-panel > label:first-child,
 .route-mode-panel > .point-box:first-child,
 .route-mode-panel > .address-field-block:first-child label {
   margin-top: 0;
+}
+
+.gmaps-url-section {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 2.5px dashed #cbd5e1;
+}
+
+.gmaps-url-section label {
+  margin-top: 0;
+}
+
+.gmaps-parse-hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
 }
 
 .gmaps-parse-preview {
@@ -2776,7 +2787,8 @@ textarea:focus {
 
 .notice,
 .empty {
-  background: #ffffff;
+  background: var(--card-bg);
+  backdrop-filter: blur(3px);
   border: 3px solid var(--game-dark);
   border-left: 8px solid var(--game-yellow);
   border-radius: var(--game-radius);
@@ -2828,13 +2840,22 @@ textarea:focus {
 }
 
 @media (max-width: 768px) {
+  :root {
+    --card-bg: rgba(255, 255, 255, 0.88);
+  }
+
   .container {
-    padding: 12px 12px 36px;
+    padding: 14px 20px 44px;
   }
 
   .auth-header-bar {
     gap: 8px;
     margin-bottom: 12px;
+  }
+
+  .route-form-topnav {
+    gap: 10px 12px;
+    margin-bottom: 14px;
   }
 
   .game-header-btn {
@@ -2869,9 +2890,45 @@ textarea:focus {
   }
 
   .bg-stamp {
-    width: clamp(76px, min(20vw, 19dvh), 132px);
-    height: clamp(76px, min(20vw, 19dvh), 132px);
-    opacity: 0.09;
+    width: clamp(72px, min(21vw, 15dvh), 116px);
+    height: clamp(72px, min(21vw, 15dvh), 116px);
+    opacity: 0.16;
+  }
+
+  .bg-stamp-car {
+    top: 8px;
+    left: -6px;
+    opacity: 0.16;
+  }
+
+  .bg-stamp-fuji {
+    top: 66px;
+    right: -4px;
+    opacity: 0.16;
+  }
+
+  .bg-stamp-bike {
+    top: 44%;
+    left: -8px;
+    opacity: 0.15;
+  }
+
+  .bg-stamp-torii {
+    top: 57%;
+    right: -8px;
+    opacity: 0.15;
+  }
+
+  .bg-stamp-flag {
+    bottom: 10px;
+    left: -4px;
+    opacity: 0.16;
+  }
+
+  .bg-stamp-goal {
+    bottom: 12px;
+    right: -4px;
+    opacity: 0.16;
   }
 
   .dm-map-viewport.has-cards .game-heat-legend,

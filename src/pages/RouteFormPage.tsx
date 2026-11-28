@@ -23,8 +23,6 @@ import type {
   RouteDetailPhoto,
 } from '../types/models';
 
-export type RouteInputMode = 'google_maps' | 'manual';
-
 export interface RouteFormValues {
   title: string;
   summary: string;
@@ -52,7 +50,7 @@ const emptyForm: RouteFormValues = {
   subPrefectureCodes: [],
   startLabel: '',
   startAddress: '',
-  middlePoints: [],
+  middlePoints: [{ label: '', address: '' }],
   goalLabel: '',
   goalAddress: '',
 };
@@ -241,8 +239,9 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
   const isEditMode = mode === 'edit';
   const { user } = useAuth();
   const [form, setForm] = useState<RouteFormValues>(emptyForm);
-  const [routeInputMode, setRouteInputMode] = useState<RouteInputMode>('google_maps');
-  const [middlePointKeys, setMiddlePointKeys] = useState<string[]>([]);
+  const [middlePointKeys, setMiddlePointKeys] = useState<string[]>([
+    'middle-point-init-0',
+  ]);
   const [files, setFiles] = useState<File[]>([]);
   const [existingPhotos, setExistingPhotos] = useState<RouteDetailPhoto[]>([]);
   const [deletePhotoIds, setDeletePhotoIds] = useState<number[]>([]);
@@ -252,7 +251,7 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
   const [notOwner, setNotOwner] = useState(false);
 
   const middleKeySeqRef = useRef(0);
-  const middlePointKeysRef = useRef<string[]>([]);
+  const middlePointKeysRef = useRef<string[]>(['middle-point-init-0']);
 
   const lastAutoFillRef = useRef({
     address: '',
@@ -363,7 +362,10 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
           next.goalLabel = parsed.goal;
           lastAutoFillRef.current.goalLabel = parsed.goal;
         }
-        if (parsed.waypoints.length > 0 && current.middlePoints.length === 0) {
+        if (
+          parsed.waypoints.length > 0 &&
+          normalizeMiddlePoints(current.middlePoints).length === 0
+        ) {
           next.middlePoints = parsed.waypoints.map((wp) => ({
             label: wp,
             address: '',
@@ -543,6 +545,9 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
 
       const mainPrefStr = String(data.prefecture_code || '');
 
+      const initialMiddlePoints =
+        middlePoints.length > 0 ? middlePoints : [{ label: '', address: '' }];
+
       setForm({
         title: data.title || '',
         summary: data.summary || '',
@@ -561,19 +566,13 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
             .map((prefecture) => String(prefecture.prefecture_code)) || [],
         startLabel: startPoint?.label || '',
         startAddress: startPoint?.address || '',
-        middlePoints,
+        middlePoints: initialMiddlePoints,
         goalLabel: goalPoint?.label || '',
         goalAddress: goalPoint?.address || '',
       });
       syncMiddlePointKeys(
-        middlePoints.map(() => createMiddlePointKey()),
+        initialMiddlePoints.map(() => createMiddlePointKey()),
       );
-
-      if (!data.google_maps_url && (startPoint || goalPoint || middlePoints.length > 0)) {
-        setRouteInputMode('manual');
-      } else {
-        setRouteInputMode('google_maps');
-      }
 
       setExistingPhotos(data.route_photos || []);
       setLoading(false);
@@ -782,20 +781,10 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
     }
   }
 
-  if (loading) return <section className="panel">投稿を読み込んでいます...</section>;
-  if (notOwner) {
+  if (loading) {
     return (
-      <section className="panel">
-        <h1>権限がありません</h1>
-        <p>この投稿を編集できるのは投稿者本人だけです。</p>
-      </section>
-    );
-  }
-
-  return (
-    <AuthGuard>
-      <section className="form-panel wide">
-        <div className="topnav">
+      <div className="route-form-page">
+        <div className="topnav route-form-topnav">
           <Link href="/" className="button back-button">
             ← トップ（日本地図）へ戻る
           </Link>
@@ -803,10 +792,45 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
             🚩 投稿一覧
           </Link>
         </div>
-        <h1>{pageTitle}</h1>
-        {error && <p className="error">{error}</p>}
+        <section className="panel">投稿を読み込んでいます...</section>
+      </div>
+    );
+  }
+  if (notOwner) {
+    return (
+      <div className="route-form-page">
+        <div className="topnav route-form-topnav">
+          <Link href="/" className="button back-button">
+            ← トップ（日本地図）へ戻る
+          </Link>
+          <Link href="/routes" className="button">
+            🚩 投稿一覧
+          </Link>
+        </div>
+        <section className="panel">
+          <h1>権限がありません</h1>
+          <p>この投稿を編集できるのは投稿者本人だけです。</p>
+        </section>
+      </div>
+    );
+  }
 
-        <form onSubmit={handleSubmit}>
+  return (
+    <AuthGuard>
+      <div className="route-form-page">
+        <div className="topnav route-form-topnav">
+          <Link href="/" className="button back-button">
+            ← トップ（日本地図）へ戻る
+          </Link>
+          <Link href="/routes" className="button">
+            🚩 投稿一覧
+          </Link>
+        </div>
+        <section className="form-panel wide">
+          <h1>{pageTitle}</h1>
+          {error && <p className="error">{error}</p>}
+
+          <form onSubmit={handleSubmit}>
           <label>
             タイトル（必須）
             <input
@@ -936,35 +960,105 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
           <hr />
 
           <h2>ルート設定</h2>
-          <div className="route-mode-tabs" role="tablist" aria-label="ルート作成方法">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={routeInputMode === 'google_maps'}
-              className={`route-mode-tab ${
-                routeInputMode === 'google_maps' ? 'is-active' : ''
-              }`}
-              onClick={() => setRouteInputMode('google_maps')}
-            >
-              🗺️ Googleマップでルート作成
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={routeInputMode === 'manual'}
-              className={`route-mode-tab ${
-                routeInputMode === 'manual' ? 'is-active' : ''
-              }`}
-              onClick={() => setRouteInputMode('manual')}
-            >
-              ✏️ 手動でルート作成
-            </button>
-          </div>
+          <div className="route-mode-panel">
+            <div className="point-box">
+              <h3>🚩 スタート地点</h3>
+              <input
+                type="text"
+                value={form.startLabel}
+                onChange={(event) => updateField('startLabel', event.target.value)}
+                placeholder="地点名（例: 東京駅丸の内口）"
+              />
+              <input
+                type="text"
+                value={form.startAddress}
+                onChange={(event) =>
+                  updateField('startAddress', event.target.value)
+                }
+                placeholder="住所（任意）"
+              />
+              <PointAddressAutofill
+                pointLabel="スタート地点"
+                onApplyAddress={(address, prefCode) =>
+                  applyFixedPointAddress('startAddress', address, prefCode)
+                }
+              />
+            </div>
 
-          {routeInputMode === 'google_maps' ? (
-            <div className="route-mode-panel" role="tabpanel">
+            <div className="manual-middle-section">
+              <h3>📍 中間地点（経由スポット）</h3>
+              {form.middlePoints.map((point, index) => {
+                const pointKey = middlePointKeys[index] || `middle-fallback-${index}`;
+                return (
+                  <div className="point-box" key={pointKey}>
+                    <input
+                      type="text"
+                      value={point.label}
+                      onChange={(event) =>
+                        updateMiddlePoint(index, 'label', event.target.value)
+                      }
+                      placeholder="中間地点名（例: 道の駅・展望台）"
+                    />
+                    <input
+                      type="text"
+                      value={point.address}
+                      onChange={(event) =>
+                        updateMiddlePoint(index, 'address', event.target.value)
+                      }
+                      placeholder="住所（任意）"
+                    />
+                    <PointAddressAutofill
+                      pointLabel={`中間地点${index + 1}`}
+                      onApplyAddress={(address, prefCode) =>
+                        applyMiddlePointAddressByKey(pointKey, address, prefCode)
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="danger-button"
+                      onClick={() => removeMiddlePoint(index)}
+                    >
+                      削除
+                    </button>
+                  </div>
+                );
+              })}
+              <button
+                type="button"
+                className="add-middle-btn"
+                onClick={addMiddlePoint}
+              >
+                ＋ 中間地点を追加
+              </button>
+            </div>
+
+            <div className="point-box">
+              <h3>🏁 ゴール地点</h3>
+              <input
+                type="text"
+                value={form.goalLabel}
+                onChange={(event) => updateField('goalLabel', event.target.value)}
+                placeholder="地点名（例: 江の島展望灯台）"
+              />
+              <input
+                type="text"
+                value={form.goalAddress}
+                onChange={(event) =>
+                  updateField('goalAddress', event.target.value)
+                }
+                placeholder="住所（任意）"
+              />
+              <PointAddressAutofill
+                pointLabel="ゴール地点"
+                onApplyAddress={(address, prefCode) =>
+                  applyFixedPointAddress('goalAddress', address, prefCode)
+                }
+              />
+            </div>
+
+            <div className="gmaps-url-section">
               <label>
-                GoogleマップのルートURL（任意）
+                🗺️ GoogleマップのルートURL（任意）
                 <input
                   type="url"
                   maxLength={2048}
@@ -975,7 +1069,7 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
                   placeholder="https://www.google.com/maps/dir/スタート地点/ゴール地点/..."
                 />
                 <small>
-                  Googleマップでルートを検索し、ブラウザのURLまたは共有URLを貼り付けてください。標準の経路URLからはスタート・ゴールを自動で抽出します。
+                  Googleマップでルートを検索し、ブラウザのURLまたは共有URLを貼り付けてください。標準の経路URLからはスタート・ゴールを自動で抽出して上欄に反映します。
                 </small>
               </label>
 
@@ -988,26 +1082,8 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
                   ) : parsedGoogleMaps.isShortenedUrl ? (
                     <div className="gmaps-parse-notice">
                       <p>
-                        短縮URL（maps.app.goo.gl）はブラウザ上でリンク先の地点名を直接読み取れないため、必要に応じて下欄にスタート・ゴールを手入力するか、ブラウザのアドレスバーの長いURL（https://www.google.com/maps/dir/...）を貼り付けてください。
+                        短縮URL（maps.app.goo.gl）はブラウザ上でリンク先の地点名を直接読み取れないため、必要に応じて上欄にスタート・ゴールを手入力するか、ブラウザのアドレスバーの長いURL（https://www.google.com/maps/dir/...）を貼り付けてください。
                       </p>
-                      <div className="gmaps-fallback-inputs">
-                        <input
-                          type="text"
-                          value={form.startLabel}
-                          onChange={(event) =>
-                            updateField('startLabel', event.target.value)
-                          }
-                          placeholder="🚩 スタート地点名（任意）"
-                        />
-                        <input
-                          type="text"
-                          value={form.goalLabel}
-                          onChange={(event) =>
-                            updateField('goalLabel', event.target.value)
-                          }
-                          placeholder="🏁 ゴール地点名（任意）"
-                        />
-                      </div>
                     </div>
                   ) : parsedGoogleMaps.hasParsedRoute ? (
                     <div className="gmaps-parse-result">
@@ -1040,131 +1116,19 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
                           </span>
                         </div>
                       </div>
-                      <div className="gmaps-fallback-inputs">
-                        <input
-                          type="text"
-                          value={form.startLabel}
-                          onChange={(event) =>
-                            updateField('startLabel', event.target.value)
-                          }
-                          placeholder="🚩 スタート表示名（微調整可）"
-                        />
-                        <input
-                          type="text"
-                          value={form.goalLabel}
-                          onChange={(event) =>
-                            updateField('goalLabel', event.target.value)
-                          }
-                          placeholder="🏁 ゴール表示名（微調整可）"
-                        />
-                      </div>
+                      <p className="gmaps-parse-hint">
+                        ※抽出した地点名は上の各入力欄に反映されています（そのまま編集できます）。
+                      </p>
                     </div>
                   ) : (
                     <p className="gmaps-parse-warning">
-                      URLからスタート/ゴールを自動判別できませんでした。「手動でルート作成」タブから地点を指定できます。
+                      URLからスタート/ゴールを自動判別できませんでした。上欄のスタート・中間・ゴール地点から直接入力できます。
                     </p>
                   )}
                 </div>
               )}
             </div>
-          ) : (
-            <div className="route-mode-panel" role="tabpanel">
-              <div className="point-box">
-                <h3>🚩 スタート地点</h3>
-                <input
-                  type="text"
-                  value={form.startLabel}
-                  onChange={(event) => updateField('startLabel', event.target.value)}
-                  placeholder="地点名（例: 東京駅丸の内口）"
-                />
-                <input
-                  type="text"
-                  value={form.startAddress}
-                  onChange={(event) =>
-                    updateField('startAddress', event.target.value)
-                  }
-                  placeholder="住所（任意）"
-                />
-                <PointAddressAutofill
-                  pointLabel="スタート地点"
-                  onApplyAddress={(address, prefCode) =>
-                    applyFixedPointAddress('startAddress', address, prefCode)
-                  }
-                />
-              </div>
-
-              <div className="manual-middle-section">
-                <h3>📍 中間地点（経由スポット）</h3>
-                {form.middlePoints.map((point, index) => {
-                  const pointKey = middlePointKeys[index] || `middle-fallback-${index}`;
-                  return (
-                    <div className="point-box" key={pointKey}>
-                      <input
-                        type="text"
-                        value={point.label}
-                        onChange={(event) =>
-                          updateMiddlePoint(index, 'label', event.target.value)
-                        }
-                        placeholder="中間地点名（例: 道の駅・展望台）"
-                      />
-                      <input
-                        type="text"
-                        value={point.address}
-                        onChange={(event) =>
-                          updateMiddlePoint(index, 'address', event.target.value)
-                        }
-                        placeholder="住所（任意）"
-                      />
-                      <PointAddressAutofill
-                        pointLabel={`中間地点${index + 1}`}
-                        onApplyAddress={(address, prefCode) =>
-                          applyMiddlePointAddressByKey(pointKey, address, prefCode)
-                        }
-                      />
-                      <button
-                        type="button"
-                        className="danger-button"
-                        onClick={() => removeMiddlePoint(index)}
-                      >
-                        削除
-                      </button>
-                    </div>
-                  );
-                })}
-                <button
-                  type="button"
-                  className="add-middle-btn"
-                  onClick={addMiddlePoint}
-                >
-                  ＋ 中間地点を追加
-                </button>
-              </div>
-
-              <div className="point-box">
-                <h3>🏁 ゴール地点</h3>
-                <input
-                  type="text"
-                  value={form.goalLabel}
-                  onChange={(event) => updateField('goalLabel', event.target.value)}
-                  placeholder="地点名（例: 江の島展望灯台）"
-                />
-                <input
-                  type="text"
-                  value={form.goalAddress}
-                  onChange={(event) =>
-                    updateField('goalAddress', event.target.value)
-                  }
-                  placeholder="住所（任意）"
-                />
-                <PointAddressAutofill
-                  pointLabel="ゴール地点"
-                  onApplyAddress={(address, prefCode) =>
-                    applyFixedPointAddress('goalAddress', address, prefCode)
-                  }
-                />
-              </div>
-            </div>
-          )}
+          </div>
 
           <hr />
 
@@ -1231,8 +1195,9 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
               {submitting ? '保存中...' : isEditMode ? '更新する' : '投稿する'}
             </button>
           </div>
-        </form>
-      </section>
+          </form>
+        </section>
+      </div>
     </AuthGuard>
   );
 }
