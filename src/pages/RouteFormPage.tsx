@@ -1204,11 +1204,14 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
           <div className="heading-with-help section-heading-with-help">
             <h2>写真</h2>
             <HelpTip
-              title="写真"
-              description="ドライブ中に撮影した風景や愛車の写真を登録するエリアです（最大10枚まで）。"
-              usage="1枚目の写真が一覧カードのサムネイルや地図の人気カードに表示されます。削除したい写真は右上の「×」ボタンで取り消せます。"
+              title="写真（最大10枚）"
+              description="ドライブ中に撮影した風景や愛車の写真（JPG・PNG・WebP形式）を最大10枚までアップロードできます。1枚目の写真が投稿一覧や日本地図カードのサムネイル（代表写真）になります。"
+              usage="複数枚をまとめて選ぶことも、追加で選び足すことも可能です（合計10枚まで）。削除したい写真はプレビュー右上の「×」ボタンで取り消せます。"
             />
           </div>
+          <p className="photo-section-note">
+            ※1枚目の写真が投稿一覧や地図カードのサムネイルになります（JPG・PNG・WebP形式／最大10枚まで）。
+          </p>
           {(visibleExistingPhotos.length > 0 || filePreviews.length > 0) && (
             <div className="existing-photos">
               {visibleExistingPhotos.map((photo) => (
@@ -1252,11 +1255,6 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
           <div className="form-field">
             <div className="form-field-label-row">
               <label htmlFor="route-photos">写真を追加（最大10枚）</label>
-              <HelpTip
-                title="写真を追加（最大10枚）"
-                description="JPG・PNG・WebP形式の画像ファイルを選択してアップロードします。"
-                usage="複数枚をまとめて選ぶことも、追加で選び足すことも可能です（合計10枚まで）。"
-              />
             </div>
             <input
               id="route-photos"
