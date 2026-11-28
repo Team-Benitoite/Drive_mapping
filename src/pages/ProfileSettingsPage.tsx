@@ -3,7 +3,6 @@ import AuthGuard from '../components/AuthGuard';
 import ProfileAvatar from '../components/ProfileAvatar';
 import { useAuth } from '../contexts/AuthContext';
 import { profileIconBucket, supabase } from '../lib/supabase';
-import { Link } from '../utils/navigation';
 import { getErrorMessage } from '../utils/errors';
 import type { ProfileSummary } from '../types/models';
 
@@ -225,15 +224,6 @@ export default function ProfileSettingsPage() {
         <section className="panel">プロフィール設定を読み込んでいます...</section>
       ) : (
         <section className="profile-page">
-          <div className="topnav">
-            <Link href="/" className="button back-button">
-              ← トップ（日本地図）へ戻る
-            </Link>
-            <Link href="/mypage" className="button">
-              🗺️ マイページを見る
-            </Link>
-          </div>
-
           {/* ユーザー基本情報バー */}
           <div className="profile-header panel profile-identity-bar">
             {avatarPreviewUrl ? (

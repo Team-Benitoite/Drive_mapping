@@ -319,17 +319,6 @@ export default function MyPage({ id }: { id?: string }) {
 
   return (
     <section className="profile-page">
-      <div className="topnav">
-        <Link href="/" className="button back-button">
-          ← トップ（日本地図）へ戻る
-        </Link>
-        {isOwnProfile && (
-          <Link href="/profile" className="button">
-            ⚙️ プロフィール・アカウント設定
-          </Link>
-        )}
-      </div>
-
       <div className="profile-header panel">
         <ProfileAvatar
           profile={profile || (isOwnProfile ? currentProfile : null)}

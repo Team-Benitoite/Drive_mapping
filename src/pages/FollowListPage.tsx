@@ -150,7 +150,6 @@ export default function FollowListPage({ mode, id }: FollowListPageProps) {
 
   if (loading) return <section className="panel">一覧を読み込んでいます...</section>;
 
-  const myPageHref = isOwnList ? '/mypage' : `/profiles/${targetId}`;
   const followingHref = isOwnList ? '/following' : `/profiles/${targetId}/following`;
   const followersHref = isOwnList ? '/followers' : `/profiles/${targetId}/followers`;
   const activeProfiles = mode === 'following' ? followingProfiles : followerProfiles;
@@ -158,22 +157,6 @@ export default function FollowListPage({ mode, id }: FollowListPageProps) {
 
   return (
     <section className="profile-page">
-      <div className="topnav">
-        <div className="actions">
-          <Link href="/" className="button back-button">
-            ← トップ（日本地図）へ戻る
-          </Link>
-          <Link href={myPageHref} className="button">
-            🗺️ マイページへ戻る
-          </Link>
-        </div>
-        {isOwnList && (
-          <Link href="/profile" className="button">
-            ⚙️ プロフィール・アカウント設定
-          </Link>
-        )}
-      </div>
-
       <div className="profile-header panel">
         <ProfileAvatar
           profile={targetProfile}

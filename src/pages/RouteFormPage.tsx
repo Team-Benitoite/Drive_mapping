@@ -15,7 +15,7 @@ import {
 } from '../utils/addressLookup';
 import { getPrefectureName, prefectures } from '../utils/prefectures';
 import { getPublicPhotoUrl, isOwner, normalizeMiddlePoints } from '../utils/routeData';
-import { Link, navigate } from '../utils/navigation';
+import { navigate } from '../utils/navigation';
 import { getErrorMessage } from '../utils/errors';
 import type { TablesInsert } from '../types/database';
 import type {
@@ -784,14 +784,6 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
   if (loading) {
     return (
       <div className="route-form-page">
-        <div className="topnav route-form-topnav">
-          <Link href="/" className="button back-button">
-            ← トップ（日本地図）へ戻る
-          </Link>
-          <Link href="/routes" className="button">
-            🚩 投稿一覧
-          </Link>
-        </div>
         <section className="panel">投稿を読み込んでいます...</section>
       </div>
     );
@@ -799,14 +791,6 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
   if (notOwner) {
     return (
       <div className="route-form-page">
-        <div className="topnav route-form-topnav">
-          <Link href="/" className="button back-button">
-            ← トップ（日本地図）へ戻る
-          </Link>
-          <Link href="/routes" className="button">
-            🚩 投稿一覧
-          </Link>
-        </div>
         <section className="panel">
           <h1>権限がありません</h1>
           <p>この投稿を編集できるのは投稿者本人だけです。</p>
@@ -818,14 +802,6 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
   return (
     <AuthGuard>
       <div className="route-form-page">
-        <div className="topnav route-form-topnav">
-          <Link href="/" className="button back-button">
-            ← トップ（日本地図）へ戻る
-          </Link>
-          <Link href="/routes" className="button">
-            🚩 投稿一覧
-          </Link>
-        </div>
         <section className="form-panel wide">
           <h1>{pageTitle}</h1>
           {error && <p className="error">{error}</p>}

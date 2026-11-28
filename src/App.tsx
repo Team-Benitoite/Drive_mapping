@@ -92,7 +92,7 @@ export default function App() {
   );
 
   return (
-    <Layout>
+    <Layout showBackToHome={route.name !== 'home'}>
       {!hasSupabaseEnv && <EnvNotice />}
       {route.name === 'home' && <HomePage />}
       {route.name === 'signup' && <SignupPage />}

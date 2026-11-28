@@ -1,16 +1,26 @@
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import BackgroundStamps from './BackgroundStamps';
 import ProfileAvatar from './ProfileAvatar';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { getAuthHref, Link } from '../utils/navigation';
+import { getAuthHref, Link, navigate } from '../utils/navigation';
+import { getErrorMessage } from '../utils/errors';
 import type { ProfileSummary } from '../types/models';
 
-export default function Layout({ children }: { children: ReactNode }) {
+export default function Layout({
+  children,
+  showBackToHome = false,
+}: {
+  children: ReactNode;
+  showBackToHome?: boolean;
+}) {
   const { authError, loading, profile, user } = useAuth();
   const userName = profile?.name || user?.email || 'ユーザー';
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState('');
 
   const [accountQuery, setAccountQuery] = useState('');
   const [accountResults, setAccountResults] = useState<ProfileSummary[]>([]);
@@ -20,6 +30,53 @@ export default function Layout({ children }: { children: ReactNode }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchError, setSearchError] = useState('');
   const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    if (!logoutConfirmOpen) return undefined;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape' && !loggingOut) {
+        setLogoutConfirmOpen(false);
+        setLogoutError('');
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [logoutConfirmOpen, loggingOut]);
+
+  function openLogoutConfirm() {
+    setMenuOpen(false);
+    setLogoutError('');
+    setLogoutConfirmOpen(true);
+  }
+
+  function closeLogoutConfirm() {
+    if (loggingOut) return;
+    setLogoutConfirmOpen(false);
+    setLogoutError('');
+  }
+
+  async function handleConfirmLogout() {
+    if (!supabase) {
+      setLogoutError('Supabase環境変数が未設定です。');
+      return;
+    }
+
+    setLoggingOut(true);
+    setLogoutError('');
+
+    try {
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) throw signOutError;
+      setLogoutConfirmOpen(false);
+      navigate('/');
+    } catch (error) {
+      setLogoutError(getErrorMessage(error, 'ログアウトに失敗しました。'));
+    } finally {
+      setLoggingOut(false);
+    }
+  }
 
   async function handleAccountSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -105,26 +162,34 @@ export default function Layout({ children }: { children: ReactNode }) {
       ) : (
         <main className="container">
           {/* ヘッダー操作バー */}
-          <div className="auth-header-bar">
-            {/* 1. 投稿一覧ボタン */}
-            <Link
-              href="/routes"
-              className="game-header-btn routes-list-btn"
-            >
-              🚩 投稿一覧
-            </Link>
+          <header className={`auth-header-bar${showBackToHome ? ' has-back' : ''}`}>
+            {showBackToHome && (
+              <Link href="/" className="game-header-btn back-button">
+                ← トップ（日本地図）へ戻る
+              </Link>
+            )}
 
-            {/* 2. 三本バーメニューボタン */}
-            <button
-              type="button"
-              className="game-header-btn menu-toggle-btn"
-              onClick={() => setMenuOpen(!menuOpen)}
-              aria-label="メニューを開く"
-              aria-expanded={menuOpen}
-              title="メニュー"
-            >
-              ☰
-            </button>
+            <div className="auth-header-actions">
+              {/* 1. 投稿一覧ボタン */}
+              <Link
+                href="/routes"
+                className="game-header-btn routes-list-btn"
+              >
+                🚩 投稿一覧
+              </Link>
+
+              {/* 2. 三本バーメニューボタン */}
+              <button
+                type="button"
+                className="game-header-btn menu-toggle-btn"
+                onClick={() => setMenuOpen(!menuOpen)}
+                aria-label="メニューを開く"
+                aria-expanded={menuOpen}
+                title="メニュー"
+              >
+                ☰
+              </button>
+            </div>
 
             {/* ドロップダウンメニュー */}
             {menuOpen && (
@@ -153,9 +218,13 @@ export default function Layout({ children }: { children: ReactNode }) {
                     <Link href="/favorites" onClick={() => setMenuOpen(false)}>
                       お気に入り
                     </Link>
-                    <Link href="/logout" onClick={() => setMenuOpen(false)}>
+                    <button
+                      type="button"
+                      className="auth-dropdown-menu-item"
+                      onClick={openLogoutConfirm}
+                    >
                       ログアウト
-                    </Link>
+                    </button>
 
                     <form className="account-search" onSubmit={handleAccountSearch}>
                       <input
@@ -190,7 +259,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 )}
               </div>
             )}
-          </div>
+          </header>
 
           {authError && (
             <div className="notice">
@@ -228,6 +297,48 @@ export default function Layout({ children }: { children: ReactNode }) {
                       </button>
                     </div>
                   ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {logoutConfirmOpen && (
+            <div
+              className="confirm-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="logout-confirm-title"
+              onClick={closeLogoutConfirm}
+            >
+              <div
+                className="confirm-modal-card"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <h2 id="logout-confirm-title" className="confirm-modal-title">
+                  ログアウトしますか？
+                </h2>
+                {logoutError && (
+                  <p className="error confirm-modal-error" role="alert">
+                    {logoutError}
+                  </p>
+                )}
+                <div className="confirm-modal-actions">
+                  <button
+                    type="button"
+                    className="confirm-modal-btn confirm-modal-btn-danger"
+                    onClick={handleConfirmLogout}
+                    disabled={loggingOut}
+                  >
+                    {loggingOut ? 'ログアウト中...' : 'はい（ログアウトする）'}
+                  </button>
+                  <button
+                    type="button"
+                    className="confirm-modal-btn confirm-modal-btn-cancel"
+                    onClick={closeLogoutConfirm}
+                    disabled={loggingOut}
+                  >
+                    キャンセル
+                  </button>
                 </div>
               </div>
             </div>

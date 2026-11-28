@@ -4,7 +4,6 @@ import RouteCard from '../components/RouteCard';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { loadProfilesByIds } from '../utils/profileData';
-import { Link } from '../utils/navigation';
 import type { RouteListItem } from '../types/models';
 
 export default function FavoritesPage() {
@@ -63,16 +62,9 @@ export default function FavoritesPage() {
   return (
     <AuthGuard>
       <section>
-        <div className="topnav">
-          <Link href="/" className="button back-button">
-            ← トップ（日本地図）へ戻る
-          </Link>
-        </div>
         <div className="page-heading">
           <h1>お気に入り</h1>
-          <div className="meta">
-            ログイン中：{user?.email} さん / {routes.length} 件
-          </div>
+          <div className="meta">全{routes.length}件</div>
         </div>
         {loading && <div className="panel">お気に入りを読み込んでいます...</div>}
         {error && <p className="error">{error}</p>}

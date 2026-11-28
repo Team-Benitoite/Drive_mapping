@@ -252,11 +252,6 @@ export default function RouteShowPage({ id }: { id: number }) {
     <article className="route-detail-page">
       <div className="detail-header">
         <div className="detail-title-block">
-          <div className="detail-back-wrap">
-            <Link href="/routes" className="button back-button">
-              ← 投稿一覧へ戻る
-            </Link>
-          </div>
           <h1>{route.title}</h1>
           <p className="meta">
             投稿日：{new Date(route.created_at).toLocaleString('ja-JP')}

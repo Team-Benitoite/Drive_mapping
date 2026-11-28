@@ -3,7 +3,7 @@ import RouteCard from '../components/RouteCard';
 import PrefectureSelect from '../components/PrefectureSelect';
 import { supabase } from '../lib/supabase';
 import { loadProfilesByIds } from '../utils/profileData';
-import { Link, navigate } from '../utils/navigation';
+import { navigate } from '../utils/navigation';
 import { getErrorMessage } from '../utils/errors';
 import type { RouteListItem } from '../types/models';
 
@@ -155,15 +155,6 @@ export default function RoutesIndexPage() {
 
   return (
     <section>
-      <div className="topnav">
-        <Link href="/" className="button back-button">
-          ← トップ（日本地図）へ戻る
-        </Link>
-        <Link href="/routes/new" className="button button-primary">
-          ＋ 投稿する
-        </Link>
-      </div>
-
       <div className="page-heading">
         <h1>投稿一覧</h1>
       </div>

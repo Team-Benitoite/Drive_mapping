@@ -268,6 +268,17 @@ hr {
   margin-bottom: 16px;
 }
 
+.auth-header-bar.has-back {
+  justify-content: space-between;
+}
+
+.auth-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
 /* すべてのボタン・ナビゲーションリンクを統一ポップゲームボタンスタイルに */
 button,
 .button,
@@ -328,6 +339,13 @@ button:disabled,
   box-shadow: none;
   cursor: not-allowed;
   transform: none;
+}
+
+/* ヘッダー共通ボタン（角丸の四角・太枠線・ドロップシャドウ） */
+.game-header-btn {
+  border-radius: 14px;
+  border: 2.5px solid var(--game-dark);
+  box-shadow: var(--game-shadow-sm);
 }
 
 /* メニューボタン（三本バーのみでコンパクト表示） */
@@ -458,25 +476,37 @@ button[type="submit"]:hover,
   margin: 4px 0;
 }
 
-.auth-dropdown-stack > a {
+.auth-dropdown-stack > a,
+.auth-dropdown-stack > button.auth-dropdown-menu-item {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+  width: 100%;
   border-radius: 12px;
   border: 2px solid transparent;
   padding: 8px 14px;
+  background: transparent;
   box-shadow: none;
+  font-size: 15px;
   font-weight: 900;
   color: var(--game-dark);
+  text-align: left;
   text-decoration: none;
   transition: all 0.12s ease;
 }
 
-.auth-dropdown-stack > a:hover {
+.auth-dropdown-stack > a:hover,
+.auth-dropdown-stack > button.auth-dropdown-menu-item:hover {
   background: var(--game-yellow);
   border-color: var(--game-dark);
   transform: translateX(4px);
   box-shadow: 2px 2px 0 var(--game-dark);
   text-decoration: none;
+}
+
+.auth-dropdown-stack > button.auth-dropdown-menu-item:active {
+  transform: translateX(4px) translateY(1px);
+  box-shadow: 1px 1px 0 var(--game-dark);
 }
 
 .auth-dropdown-guest {
@@ -2013,6 +2043,76 @@ textarea:focus {
   gap: 8px;
 }
 
+/* 確認モーダル（ログアウト確認など） */
+.confirm-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.confirm-modal-card {
+  width: min(420px, 100%);
+  background: #ffffff;
+  border: 3.5px solid var(--game-dark);
+  border-radius: var(--game-radius);
+  box-shadow: var(--game-shadow-lg);
+  padding: 28px 24px 24px;
+  text-align: center;
+}
+
+.confirm-modal-title {
+  margin: 0 0 22px;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.4;
+  color: var(--game-dark);
+}
+
+.confirm-modal-error {
+  margin: -10px 0 16px;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.confirm-modal-btn {
+  flex: 1 1 160px;
+  border-radius: 14px;
+  padding: 11px 16px;
+  font-size: 13.5px;
+  font-weight: 900;
+}
+
+.confirm-modal-btn-danger {
+  background: linear-gradient(180deg, #ff6b4a 0%, #ef4444 100%);
+  color: #ffffff;
+}
+
+.confirm-modal-btn-danger:hover {
+  background: linear-gradient(180deg, #ff8164 0%, #dc2626 100%);
+  color: #ffffff;
+}
+
+.confirm-modal-btn-cancel {
+  background: #f8fafc;
+  color: var(--game-dark);
+}
+
+.confirm-modal-btn-cancel:hover {
+  background: var(--game-yellow);
+  color: var(--game-dark);
+}
+
 /* ==========================================================================
    写真フォームプレビュー＆削除ボタン（作成・編集画面）
    ========================================================================== */
@@ -2853,14 +2953,38 @@ textarea:focus {
     margin-bottom: 12px;
   }
 
+  .auth-header-actions {
+    gap: 8px;
+  }
+
   .route-form-topnav {
     gap: 10px 12px;
     margin-bottom: 14px;
   }
 
   .game-header-btn {
-    padding: 8px 14px;
-    font-size: 12.5px;
+    padding: 8px 12px;
+    font-size: 12px;
+    border-radius: 12px;
+  }
+
+  .menu-toggle-btn {
+    padding: 8px 12px;
+    font-size: 15px;
+  }
+
+  .confirm-modal-card {
+    padding: 22px 18px 20px;
+  }
+
+  .confirm-modal-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .confirm-modal-btn {
+    flex: 0 0 auto;
+    width: 100%;
   }
 
   .game-card-deck {
