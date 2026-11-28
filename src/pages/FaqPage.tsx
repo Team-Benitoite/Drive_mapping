@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import HelpTip from '../components/HelpTip';
-import { Link } from '../utils/navigation';
 
 interface FaqItem {
   id: string;
@@ -163,18 +162,6 @@ export default function FaqPage() {
               </div>
             );
           })}
-        </div>
-
-        <div className="faq-footer-links">
-          <Link href="/" className="button">
-            🗺️ トップ（日本地図）へ
-          </Link>
-          <Link href="/routes" className="button">
-            🚩 投稿一覧を見る
-          </Link>
-          <Link href="/routes/new" className="button button-primary">
-            ✏️ ルートを投稿する
-          </Link>
         </div>
       </section>
     </section>
