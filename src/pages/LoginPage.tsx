@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import HelpTip from '../components/HelpTip';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import {
@@ -100,27 +101,48 @@ export default function LoginPage() {
 
   return (
     <section className="form-panel">
-      <h1>ログイン</h1>
+      <div className="heading-with-help page-title-with-help">
+        <h1>ログイン</h1>
+        <HelpTip
+          title="ログイン"
+          description="登録済みのアカウントでサインインし、ルート投稿・いいね・お気に入り・フォロー機能を利用するための画面です。"
+          usage="新規登録時に使用したメールアドレスとパスワードを入力して「ログイン」ボタンを押してください。"
+        />
+      </div>
       {error && <p className="error">{error}</p>}
       <form onSubmit={handleSubmit}>
-        <label>
-          メールアドレス
+        <div className="form-field">
+          <div className="form-field-label-row">
+            <label htmlFor="login-email">メールアドレス</label>
+            <HelpTip
+              title="メールアドレス"
+              description="アカウント登録時に指定したメールアドレスを入力してください。"
+            />
+          </div>
           <input
+            id="login-email"
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             required
           />
-        </label>
-        <label>
-          パスワード
+        </div>
+        <div className="form-field">
+          <div className="form-field-label-row">
+            <label htmlFor="login-password">パスワード</label>
+            <HelpTip
+              title="パスワード"
+              description="登録時に設定した6文字以上のパスワードを入力してください。"
+            />
+          </div>
           <input
+            id="login-password"
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             required
           />
-        </label>
+        </div>
         <button type="submit" disabled={submitting}>
           {submitting ? 'ログイン中...' : 'ログイン'}
         </button>

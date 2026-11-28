@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import type { AuthError, AuthResponse } from '@supabase/supabase-js';
+import HelpTip from '../components/HelpTip';
 import { supabase } from '../lib/supabase';
 import {
   getAuthHref,
@@ -100,37 +101,65 @@ export default function SignupPage() {
 
   return (
     <section className="form-panel">
-      <h1>新規登録</h1>
+      <div className="heading-with-help page-title-with-help">
+        <h1>新規登録</h1>
+        <HelpTip
+          title="新規登録"
+          description="ドライブマッピングの新しいアカウントを作成する画面です。"
+          usage="ユーザー名・メールアドレス・パスワード（6文字以上）を入力して「登録する」を押すと、投稿やマイページ機能が使えるようになります。"
+        />
+      </div>
       {error && <p className="error">{error}</p>}
       {success && <p className="success">{success}</p>}
       <form onSubmit={handleSubmit}>
-        <label>
-          ユーザー名
+        <div className="form-field">
+          <div className="form-field-label-row">
+            <label htmlFor="signup-name">ユーザー名</label>
+            <HelpTip
+              title="ユーザー名"
+              description="投稿カードやマイページ・アカウント検索で他のユーザーに表示されるニックネームです。"
+            />
+          </div>
           <input
+            id="signup-name"
             type="text"
             value={name}
             onChange={(event) => setName(event.target.value)}
             required
           />
-        </label>
-        <label>
-          メールアドレス
+        </div>
+        <div className="form-field">
+          <div className="form-field-label-row">
+            <label htmlFor="signup-email">メールアドレス</label>
+            <HelpTip
+              title="メールアドレス"
+              description="ログイン認証に使用するメールアドレスを入力してください。"
+            />
+          </div>
           <input
+            id="signup-email"
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             required
           />
-        </label>
-        <label>
-          パスワード
+        </div>
+        <div className="form-field">
+          <div className="form-field-label-row">
+            <label htmlFor="signup-password">パスワード</label>
+            <HelpTip
+              title="パスワード"
+              description="ログイン時に使う6文字以上のパスワードを設定してください。"
+            />
+          </div>
           <input
+            id="signup-password"
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             required
           />
-        </label>
+        </div>
         <button type="submit" disabled={submitting}>
           {submitting ? '登録中...' : '登録する'}
         </button>

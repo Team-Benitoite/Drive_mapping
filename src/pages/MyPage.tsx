@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AuthGuard from '../components/AuthGuard';
+import HelpTip from '../components/HelpTip';
 import JapanMap from '../components/JapanMap';
 import ProfileAvatar from '../components/ProfileAvatar';
 import RouteCard from '../components/RouteCard';
@@ -332,6 +333,19 @@ export default function MyPage({ id }: { id?: string }) {
             <span className="profile-role-badge">
               {isOwnProfile ? 'MY PAGE' : 'DRIVER'}
             </span>
+            <HelpTip
+              title={isOwnProfile ? 'マイページ' : 'ドライバープロフィール'}
+              description={
+                isOwnProfile
+                  ? 'あなた自身が投稿したルートや走破した都道府県マップ、いいね数・フォロー数を確認できるホーム画面です。'
+                  : 'このドライバーが投稿したルートや日本地図、フォロー状況を確認できる画面です。'
+              }
+              usage={
+                isOwnProfile
+                  ? 'アイコンや自己紹介を変更したい場合は、右上の「☰」メニュー内の「プロフィール」から設定できます。'
+                  : '「フォローする」ボタンで相手をフォローしてマイページからいつでも見返せます。'
+              }
+            />
           </div>
           <p className="pre-line">{profile?.bio || '自己紹介は未入力です。'}</p>
           {!isOwnProfile && (
@@ -349,7 +363,14 @@ export default function MyPage({ id }: { id?: string }) {
       {error && <p className="error">{error}</p>}
 
       <section className="panel profile-map-panel">
-        <h2>投稿マップ</h2>
+        <div className="heading-with-help section-heading-with-help">
+          <h2>投稿マップ</h2>
+          <HelpTip
+            title="投稿マップ"
+            description="このユーザーが投稿したルート（メイン・サブ都道府県）だけを日本地図上に可視化したマップです。"
+            usage="右上の「投稿件数」をONにすると投稿数に応じて都道府県の色が変わります。県マスをクリックするとそのユーザーの該当県ルートだけを見られます。"
+          />
+        </div>
         <JapanMap
           counts={counts}
           topPrefectures={userTopPrefectures}
@@ -371,7 +392,14 @@ export default function MyPage({ id }: { id?: string }) {
 
       <div className="profile-grid">
         <section className="panel">
-          <h2>投稿数一覧</h2>
+          <div className="heading-with-help section-heading-with-help">
+            <h2>投稿数一覧</h2>
+            <HelpTip
+              title="投稿数一覧"
+              description="都道府県ごとの投稿件数をリストで確認できるボックスです。"
+              usage="都道府県名をクリックすると、このユーザーのその県の投稿一覧ページへ移動します。"
+            />
+          </div>
           <div className="profile-count-scroll">
             {totalRoutes === 0 ? (
               <p className="meta">まだ投稿がありません。</p>
@@ -394,7 +422,14 @@ export default function MyPage({ id }: { id?: string }) {
         </section>
 
         <section className="panel">
-          <h2>投稿サマリー</h2>
+          <div className="heading-with-help section-heading-with-help">
+            <h2>投稿サマリー</h2>
+            <HelpTip
+              title="投稿サマリー"
+              description="総投稿数・獲得いいね合計・フォロー中・フォロワー数をひと目で確認できる集計パネルです。"
+              usage="「一覧を見る →」ボタンをクリックすると、フォロー中・フォロワーのユーザー一覧画面へ移動できます。"
+            />
+          </div>
           <dl className="info-list">
             <dt>総投稿数</dt>
             <dd>{totalRoutes} 件</dd>
@@ -420,7 +455,14 @@ export default function MyPage({ id }: { id?: string }) {
 
       <section className="panel" ref={routesSectionRef}>
         <div className="profile-section-header">
-          <h2>{isOwnProfile ? '自分の投稿一覧' : '投稿一覧'}</h2>
+          <div className="heading-with-help">
+            <h2>{isOwnProfile ? '自分の投稿一覧' : '投稿一覧'}</h2>
+            <HelpTip
+              title={isOwnProfile ? '自分の投稿一覧' : '投稿一覧'}
+              description="投稿したドライブコースが新しい順に最大20件ずつ表示されます。"
+              usage="カードをクリックして詳細の確認や編集・削除が行えます。21件以上ある場合は下のページ番号で切り替えられます。"
+            />
+          </div>
           {totalRoutes > 0 && (
             <span className="meta">
               全 {totalRoutes} 件中 {(safePage - 1) * ROUTES_PER_PAGE + 1}〜

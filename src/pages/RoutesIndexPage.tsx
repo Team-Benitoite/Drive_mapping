@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import HelpTip from '../components/HelpTip';
 import RouteCard from '../components/RouteCard';
 import PrefectureSelect from '../components/PrefectureSelect';
 import { supabase } from '../lib/supabase';
@@ -156,20 +157,43 @@ export default function RoutesIndexPage() {
   return (
     <section>
       <div className="page-heading">
-        <h1>投稿一覧</h1>
+        <div className="heading-with-help">
+          <h1>投稿一覧</h1>
+          <HelpTip
+            title="投稿一覧"
+            description="全国のユーザーが投稿したドライブコースを一覧で閲覧・検索できるページです。"
+            usage="カードをクリックするとルート詳細・写真・Googleマップ経路を確認できます。上の検索欄からキーワードや都道府県で絞り込めます。"
+          />
+        </div>
       </div>
 
       <form className="search" onSubmit={handleSubmit}>
-        <input
-          type="search"
-          placeholder="キーワード（タイトル/概要/説明）"
-          value={q}
-          onChange={(event) => setFilters({ ...filters, q: event.target.value })}
-        />
-        <PrefectureSelect
-          value={prefectureCode}
-          onChange={(value) => setFilters({ ...filters, prefectureCode: value })}
-        />
+        <div className="search-field-item">
+          <input
+            type="search"
+            placeholder="キーワード（タイトル/概要/説明）"
+            aria-label="キーワード検索"
+            value={q}
+            onChange={(event) => setFilters({ ...filters, q: event.target.value })}
+          />
+          <HelpTip
+            title="キーワード検索"
+            description="ルートのタイトル・概要・説明文に含まれる言葉で投稿を絞り込みます。"
+            usage="「富士山」「海岸」「道の駅」などのキーワードを入力して「検索」ボタンを押してください。"
+          />
+        </div>
+        <div className="search-field-item">
+          <PrefectureSelect
+            value={prefectureCode}
+            onChange={(value) => setFilters({ ...filters, prefectureCode: value })}
+            ariaLabel="都道府県で絞り込み"
+          />
+          <HelpTip
+            title="都道府県フィルター"
+            description="選択した都道府県を走るドライブコースだけを抽出します。"
+            usage="メイン都道府県だけでなく、経由地として「サブ都道府県」に登録されたルートもヒットします。"
+          />
+        </div>
         <button type="submit">検索</button>
       </form>
 

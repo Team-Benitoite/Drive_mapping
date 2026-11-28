@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import HelpTip from '../components/HelpTip';
 import JapanMap from '../components/JapanMap';
 import { supabase } from '../lib/supabase';
 import { getRouteGoogleMapsUrl } from '../utils/googleMaps';
@@ -113,6 +114,16 @@ export default function HomePage() {
 
   return (
     <div className="home-top-container">
+      <div className="page-heading home-page-heading">
+        <div className="heading-with-help">
+          <h1>全国ドライブマップ</h1>
+          <HelpTip
+            title="全国ドライブマップ（TOP画面）"
+            description="日本全国の都道府県ごとのドライブコースを探せるメインマップ画面です。"
+            usage="気になる都道府県マスをクリックするとその地域の投稿一覧へ移動します。盤面はドラッグで移動でき、マウスホイールや右下ボタン（スマホは2本指ピンチ）で拡大・縮小できます。"
+          />
+        </div>
+      </div>
       {error && <p className="error" role="alert">{error}</p>}
       <JapanMap counts={counts} topPrefectures={topPrefectures} popularRoutes={popularRoutes} />
     </div>

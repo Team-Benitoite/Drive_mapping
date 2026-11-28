@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import AuthGuard from '../components/AuthGuard';
+import HelpTip from '../components/HelpTip';
 import PrefectureSelect from '../components/PrefectureSelect';
 import { useAuth } from '../contexts/AuthContext';
 import { storageBucket, supabase } from '../lib/supabase';
@@ -803,58 +804,106 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
     <AuthGuard>
       <div className="route-form-page">
         <section className="form-panel wide">
-          <h1>{pageTitle}</h1>
+          <div className="heading-with-help page-title-with-help">
+            <h1>{pageTitle}</h1>
+            <HelpTip
+              title={pageTitle}
+              description={
+                isEditMode
+                  ? '投稿済みのドライブコースの内容・都道府県・ルート地点・写真を更新する画面です。'
+                  : 'おすすめのドライブコースやツーリングルートを新しく投稿して共有する画面です。'
+              }
+              usage="タイトルとメイン都道府県を入力し、必要に応じてルート地点やGoogleマップURL、写真（最大10枚）を設定して「投稿する／更新する」を押してください。"
+            />
+          </div>
           {error && <p className="error">{error}</p>}
 
           <form onSubmit={handleSubmit}>
-          <label>
-            タイトル（必須）
+          <div className="form-field">
+            <div className="form-field-label-row">
+              <label htmlFor="route-title">タイトル（必須）</label>
+              <HelpTip
+                title="タイトル（必須）"
+                description="投稿一覧や日本地図の人気カードに表示されるドライブコースの名前です（100文字以内）。"
+                usage="「湘南海岸サンセットロード」のように、走る場所や魅力が伝わるタイトルを入力してください。"
+              />
+            </div>
             <input
+              id="route-title"
               type="text"
               maxLength={100}
               value={form.title}
               onChange={(event) => updateField('title', event.target.value)}
               required
             />
-          </label>
+          </div>
 
-          <label>
-            概要（任意）
+          <div className="form-field">
+            <div className="form-field-label-row">
+              <label htmlFor="route-summary">概要（任意）</label>
+              <HelpTip
+                title="概要（任意）"
+                description="一覧カードに短く表示されるキャッチコピー・一言まとめです（255文字以内）。"
+                usage="「海沿いを走る約40kmの爽快コース」など、コースの特徴を1〜2行で入力できます。"
+              />
+            </div>
             <input
+              id="route-summary"
               type="text"
               maxLength={255}
               value={form.summary}
               onChange={(event) => updateField('summary', event.target.value)}
             />
-          </label>
+          </div>
 
-          <label>
-            説明（任意）
+          <div className="form-field">
+            <div className="form-field-label-row">
+              <label htmlFor="route-description">説明（任意）</label>
+              <HelpTip
+                title="説明（任意）"
+                description="投稿詳細ページに表示されるコースの見どころやアドバイスを自由に書ける欄です。"
+                usage="おすすめの時間帯、駐車場・道の駅の情報、景観のポイントなどを詳しく書くと他のドライバーの参考になります。"
+              />
+            </div>
             <textarea
+              id="route-description"
               value={form.description}
               onChange={(event) =>
                 updateField('description', event.target.value)
               }
             />
-          </label>
+          </div>
 
-          <label>
-            メイン都道府県（必須）
+          <div className="form-field">
+            <div className="form-field-label-row">
+              <label htmlFor="route-main-prefecture">メイン都道府県（必須）</label>
+              <HelpTip
+                title="メイン都道府県（必須）"
+                description="このドライブコースの中心となる都道府県を1つ指定します。"
+                usage="プルダウンから選択してください。選択した都道府県の日本地図カウントに反映され、下の「サブ都道府県」も選択できるようになります。"
+              />
+            </div>
             <PrefectureSelect
+              id="route-main-prefecture"
               value={form.prefectureCode}
               onChange={handleMainPrefectureChange}
               required
             />
             <small>ドライブコースの中心となる都道府県を1つ選択してください。</small>
-          </label>
+          </div>
 
           <div
             className={`sub-pref-picker ${!hasMainPrefecture ? 'is-disabled' : ''}`}
             aria-disabled={!hasMainPrefecture}
           >
             <div className="sub-pref-header">
-              <span className="sub-pref-label">
-                サブ都道府県（任意・複数選択可）
+              <span className="sub-pref-label heading-with-help">
+                <span>サブ都道府県（任意・複数選択可）</span>
+                <HelpTip
+                  title="サブ都道府県（任意・複数選択可）"
+                  description="県境をまたぐルートで、メイン以外に経由・関連する都道府県を追加登録できる項目です。"
+                  usage="先にメイン都道府県を選ぶとロックが解除されます。経由する都道府県にチェックを入れると、それらの県の検索や地図カウントにも表示されます。"
+                />
               </span>
               <div className="sub-pref-actions">
                 <span className="sub-pref-count">
@@ -923,22 +972,44 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
             )}
           </div>
 
-          <label>
-            目的地のサイト（任意）
+          <div className="form-field">
+            <div className="form-field-label-row">
+              <label htmlFor="route-site-url">目的地のサイト（任意）</label>
+              <HelpTip
+                title="目的地のサイト（任意）"
+                description="立ち寄り先や観光スポット・道の駅などの公式WebサイトURLを登録できる欄です。"
+                usage="https:// から始まるURLを入力すると、投稿詳細画面からリンクで開けるようになります。"
+              />
+            </div>
             <input
+              id="route-site-url"
               type="url"
               value={form.siteUrl}
               onChange={(event) => updateField('siteUrl', event.target.value)}
               placeholder="https://example.com"
             />
-          </label>
+          </div>
 
           <hr />
 
-          <h2>ルート設定</h2>
+          <div className="heading-with-help section-heading-with-help">
+            <h2>ルート設定</h2>
+            <HelpTip
+              title="ルート設定"
+              description="ドライブの出発地・経由スポット・目的地、およびGoogleマップの経路URLを登録するエリアです。"
+              usage="各地点の名称や住所を手入力するか、「📍 現在地を取得」「📮 郵便番号から住所を取得」、または下のGoogleマップURL欄からルート情報を自動反映できます。"
+            />
+          </div>
           <div className="route-mode-panel">
             <div className="point-box">
-              <h3>🚩 スタート地点</h3>
+              <div className="heading-with-help point-heading-with-help">
+                <h3>🚩 スタート地点</h3>
+                <HelpTip
+                  title="スタート地点"
+                  description="ドライブコースの出発地点名と住所を設定する欄です。"
+                  usage="地点名と住所を入力するか、「📍 現在地を取得」／郵便番号検索で住所を自動入力できます。"
+                />
+              </div>
               <input
                 type="text"
                 value={form.startLabel}
@@ -962,7 +1033,14 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
             </div>
 
             <div className="manual-middle-section">
-              <h3>📍 中間地点（経由スポット）</h3>
+              <div className="heading-with-help point-heading-with-help">
+                <h3>📍 中間地点（経由スポット）</h3>
+                <HelpTip
+                  title="中間地点（経由スポット）"
+                  description="途中で立ち寄りたい道の駅・展望台・景勝地などの経由地を登録する欄です。"
+                  usage="「＋ 中間地点を追加」で経由スポットをいくつでも追加できます。現在地や郵便番号からの住所取得にも対応しています。"
+                />
+              </div>
               {form.middlePoints.map((point, index) => {
                 const pointKey = middlePointKeys[index] || `middle-fallback-${index}`;
                 return (
@@ -1009,7 +1087,14 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
             </div>
 
             <div className="point-box">
-              <h3>🏁 ゴール地点</h3>
+              <div className="heading-with-help point-heading-with-help">
+                <h3>🏁 ゴール地点</h3>
+                <HelpTip
+                  title="ゴール地点"
+                  description="ドライブコースの終点（目的地）の名称と住所を設定する欄です。"
+                  usage="地点名と住所を入力するか、「📍 現在地を取得」／郵便番号検索で住所を自動入力できます。"
+                />
+              </div>
               <input
                 type="text"
                 value={form.goalLabel}
@@ -1033,9 +1118,17 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
             </div>
 
             <div className="gmaps-url-section">
-              <label>
-                🗺️ GoogleマップのルートURL（任意）
+              <div className="form-field">
+                <div className="form-field-label-row">
+                  <label htmlFor="route-gmaps-url">🗺️ GoogleマップのルートURL（任意）</label>
+                  <HelpTip
+                    title="GoogleマップのルートURL（任意）"
+                    description="Googleマップで作成したルートを共有し、詳細画面にリンク・埋め込み表示するためのURL欄です。"
+                    usage="Googleマップで経路検索したブラウザのURL（https://www.google.com/maps/dir/...）を貼り付けると、スタート・経由地・ゴールが上の欄へ自動反映されます。"
+                  />
+                </div>
                 <input
+                  id="route-gmaps-url"
                   type="url"
                   maxLength={2048}
                   value={form.googleMapsUrl}
@@ -1047,7 +1140,7 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
                 <small>
                   Googleマップでルートを検索し、ブラウザのURLまたは共有URLを貼り付けてください。標準の経路URLからはスタート・ゴールを自動で抽出して上欄に反映します。
                 </small>
-              </label>
+              </div>
 
               {form.googleMapsUrl.trim() && (
                 <div className="gmaps-parse-preview">
@@ -1108,7 +1201,14 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
 
           <hr />
 
-          <h2>写真</h2>
+          <div className="heading-with-help section-heading-with-help">
+            <h2>写真</h2>
+            <HelpTip
+              title="写真"
+              description="ドライブ中に撮影した風景や愛車の写真を登録するエリアです（最大10枚まで）。"
+              usage="1枚目の写真が一覧カードのサムネイルや地図の人気カードに表示されます。削除したい写真は右上の「×」ボタンで取り消せます。"
+            />
+          </div>
           {(visibleExistingPhotos.length > 0 || filePreviews.length > 0) && (
             <div className="existing-photos">
               {visibleExistingPhotos.map((photo) => (
@@ -1149,9 +1249,17 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
             </div>
           )}
 
-          <label>
-            写真を追加（最大10枚）
+          <div className="form-field">
+            <div className="form-field-label-row">
+              <label htmlFor="route-photos">写真を追加（最大10枚）</label>
+              <HelpTip
+                title="写真を追加（最大10枚）"
+                description="JPG・PNG・WebP形式の画像ファイルを選択してアップロードします。"
+                usage="複数枚をまとめて選ぶことも、追加で選び足すことも可能です（合計10枚まで）。"
+              />
+            </div>
             <input
+              id="route-photos"
               type="file"
               accept="image/jpeg,image/png,image/webp"
               multiple
@@ -1164,7 +1272,7 @@ export default function RouteFormPage({ mode, id }: RouteFormPageProps) {
               }}
             />
             <small>現在の保存予定: {remainingPhotoCount} / 10枚</small>
-          </label>
+          </div>
 
           <div className="form-submit-row">
             <button type="submit" disabled={submitting}>

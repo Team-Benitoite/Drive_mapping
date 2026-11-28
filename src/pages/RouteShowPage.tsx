@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import HelpTip from '../components/HelpTip';
 import { googleMapsApiKey, supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -252,7 +253,14 @@ export default function RouteShowPage({ id }: { id: number }) {
     <article className="route-detail-page">
       <div className="detail-header">
         <div className="detail-title-block">
-          <h1>{route.title}</h1>
+          <div className="heading-with-help">
+            <h1>{route.title}</h1>
+            <HelpTip
+              title="投稿詳細ページ"
+              description="ドライブコースの写真・解説・ルート地点・Googleマップ経路をまとめて確認できるページです。"
+              usage="「★ お気に入り」で自分用の保存、「♥ いいね」で投稿の応援ができます。ご自身の投稿の場合は「編集」「削除」も行えます。"
+            />
+          </div>
           <p className="meta">
             投稿日：{new Date(route.created_at).toLocaleString('ja-JP')}
           </p>
@@ -309,7 +317,14 @@ export default function RouteShowPage({ id }: { id: number }) {
       <div className="detail-grid">
         <div className="stack">
           <section className="panel">
-            <h2>写真</h2>
+            <div className="heading-with-help section-heading-with-help">
+              <h2>写真</h2>
+              <HelpTip
+                title="写真ギャラリー"
+                description="このドライブコースで撮影された写真の一覧です。"
+                usage="左右の矢印やスワイプで写真を切り替え、写真をクリックすると大きなサイズで拡大表示できます。"
+              />
+            </div>
             {photos.length ? (
               <div className="photo-carousel">
                 <div className="photo-carousel-frame">
@@ -390,14 +405,27 @@ export default function RouteShowPage({ id }: { id: number }) {
           </section>
 
           <section className="panel">
-            <h2>説明</h2>
+            <div className="heading-with-help section-heading-with-help">
+              <h2>説明</h2>
+              <HelpTip
+                title="説明"
+                description="投稿者が紹介しているコースの見どころやドライブのポイントです。"
+              />
+            </div>
             <p className="pre-line">
               {route.description || '説明は未入力です。'}
             </p>
           </section>
 
           <section className="panel">
-            <h2>ルート</h2>
+            <div className="heading-with-help section-heading-with-help">
+              <h2>ルート</h2>
+              <HelpTip
+                title="ルート地点一覧"
+                description="スタート地点・中間地点（経由スポット）・ゴール地点の順番を示しています。"
+                usage="各スポット名と住所をもとに、下のGoogle Maps経路とあわせて道順を確認できます。"
+              />
+            </div>
             {route.route_points?.length ? (
               <ol className="point-list">
                 {route.route_points.map((point, index) => (
@@ -419,7 +447,14 @@ export default function RouteShowPage({ id }: { id: number }) {
             <section className="panel google-maps-panel">
               <div className="google-maps-heading">
                 <div>
-                  <h2 className="google-maps-title">Google Maps経路</h2>
+                  <div className="heading-with-help">
+                    <h2 className="google-maps-title">Google Maps経路</h2>
+                    <HelpTip
+                      title="Google Maps経路"
+                      description="登録された地点情報や共有URLから、実際の地図ルートを開くためのエリアです。"
+                      usage="「登録地点から経路を開く」または「保存した共有経路を開く」ボタンを押すと、別タブでGoogleマップの経路案内が開きます。"
+                    />
+                  </div>
                   <p className="meta">
                     登録地点または保存された共有URLから経路を確認できます。
                   </p>
@@ -464,7 +499,13 @@ export default function RouteShowPage({ id }: { id: number }) {
         </div>
 
         <aside className="panel">
-          <h2>情報</h2>
+          <div className="heading-with-help section-heading-with-help">
+            <h2>情報</h2>
+            <HelpTip
+              title="基本情報"
+              description="このルートの概要・メイン都道府県・サブ都道府県・住所・目的地サイトをまとめたカードです。"
+            />
+          </div>
           <dl className="info-list">
             <dt>概要</dt>
             <dd>{route.summary || '未入力'}</dd>

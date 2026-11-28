@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import AuthGuard from '../components/AuthGuard';
+import HelpTip from '../components/HelpTip';
 import ProfileAvatar from '../components/ProfileAvatar';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -170,6 +171,15 @@ export default function FollowListPage({ mode, id }: FollowListPageProps) {
               {targetProfile?.name ? `${targetProfile.name} さんの` : ''}
               {pageTitle}
             </h1>
+            <HelpTip
+              title={pageTitle}
+              description={
+                mode === 'following'
+                  ? 'フォローしているドライバーの一覧を確認できるページです。'
+                  : 'このアカウントをフォローしているフォロワーの一覧ページです。'
+              }
+              usage="「フォロー中」「フォロワー」タブで表示を切り替えられます。ユーザー名をクリックするとその人のマイページへ移動します。"
+            />
           </div>
           <div className="follow-tabs">
             <Link
@@ -191,9 +201,16 @@ export default function FollowListPage({ mode, id }: FollowListPageProps) {
       {error && <p className="error">{error}</p>}
 
       <section className="panel">
-        <h2>
-          {pageTitle}（{activeProfiles.length}人）
-        </h2>
+        <div className="heading-with-help section-heading-with-help">
+          <h2>
+            {pageTitle}（{activeProfiles.length}人）
+          </h2>
+          <HelpTip
+            title="ユーザーリスト"
+            description="ユーザーごとのアイコン・自己紹介とフォロー状態が表示されます。"
+            usage="右側のボタンからワンクリックでフォロー・フォロー解除を切り替えられます。"
+          />
+        </div>
         {activeProfiles.length === 0 ? (
           <p className="meta">
             {mode === 'following'

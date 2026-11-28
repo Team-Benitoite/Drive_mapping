@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Layout from './components/Layout';
 import EnvNotice from './components/EnvNotice';
 import FavoritesPage from './pages/FavoritesPage';
+import FaqPage from './pages/FaqPage';
 import FollowListPage from './pages/FollowListPage';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -24,6 +25,7 @@ type AppRoute =
   | { name: 'following' }
   | { name: 'followers' }
   | { name: 'favorites' }
+  | { name: 'faq' }
   | { name: 'routes_index' }
   | { name: 'routes_create' }
   | { name: 'routes_edit'; id: number }
@@ -43,6 +45,7 @@ function parseRoute(pathname: string): AppRoute {
   if (pathname === '/following') return { name: 'following' };
   if (pathname === '/followers') return { name: 'followers' };
   if (pathname === '/favorites') return { name: 'favorites' };
+  if (pathname === '/faq') return { name: 'faq' };
   if (pathname === '/routes') return { name: 'routes_index' };
   if (pathname === '/routes/new') return { name: 'routes_create' };
 
@@ -110,6 +113,7 @@ export default function App() {
         <FollowListPage mode="followers" id={route.id} />
       )}
       {route.name === 'favorites' && <FavoritesPage />}
+      {route.name === 'faq' && <FaqPage />}
       {route.name === 'routes_index' && <RoutesIndexPage />}
       {route.name === 'routes_create' && <RouteFormPage mode="create" />}
       {route.name === 'routes_show' && <RouteShowPage id={route.id} />}

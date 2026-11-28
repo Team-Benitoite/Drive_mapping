@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import AuthGuard from '../components/AuthGuard';
+import HelpTip from '../components/HelpTip';
 import ProfileAvatar from '../components/ProfileAvatar';
 import { useAuth } from '../contexts/AuthContext';
 import { profileIconBucket, supabase } from '../lib/supabase';
@@ -244,6 +245,11 @@ export default function ProfileSettingsPage() {
               <div className="profile-header-title-row">
                 <h1>{displayName}</h1>
                 <span className="profile-role-badge">PROFILE</span>
+                <HelpTip
+                  title="プロフィール設定"
+                  description="アカウントのアイコン画像・自己紹介文、ログイン用のメールアドレスやパスワードを変更・管理する画面です。"
+                  usage="変更したい項目のセクションで新しい内容を入力し、それぞれの保存・変更ボタンを押してください。"
+                />
               </div>
               <p className="profile-email-meta">
                 メールアドレス：{user?.email || '未登録'}
@@ -267,11 +273,26 @@ export default function ProfileSettingsPage() {
 
           {/* アイコン設定・自己紹介編集 */}
           <section className="panel">
-            <h2>アイコン設定・自己紹介</h2>
+            <div className="heading-with-help section-heading-with-help">
+              <h2>アイコン設定・自己紹介</h2>
+              <HelpTip
+                title="アイコン設定・自己紹介"
+                description="マイページや投稿一覧カードに表示されるプロフィールアイコンと自己紹介文を編集できます。"
+                usage="画像または自己紹介文を変更して「保存する」を押すと、全ページの表示が更新されます。"
+              />
+            </div>
             <form onSubmit={handleProfileSubmit}>
-              <label>
-                アイコン画像
+              <div className="form-field">
+                <div className="form-field-label-row">
+                  <label htmlFor="profile-avatar-input">アイコン画像</label>
+                  <HelpTip
+                    title="アイコン画像"
+                    description="あなたのアカウントを表す丸型プロフィール画像です。"
+                    usage="JPG / PNG / WebP（5MB以下）の画像を選択すると上にプレビューが表示され、「保存する」で反映されます。"
+                  />
+                </div>
                 <input
+                  id="profile-avatar-input"
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
                   onChange={(event) =>
@@ -279,16 +300,24 @@ export default function ProfileSettingsPage() {
                   }
                 />
                 <small>JPG / PNG / WebP（5MB以下）</small>
-              </label>
-              <label>
-                自己紹介
+              </div>
+              <div className="form-field">
+                <div className="form-field-label-row">
+                  <label htmlFor="profile-bio-input">自己紹介</label>
+                  <HelpTip
+                    title="自己紹介"
+                    description="マイページやアカウント検索結果に表示される紹介文です（1000文字以内）。"
+                    usage="乗っている車やバイク、よく走るエリア、好きなドライブスポットなどを自由に書けます。"
+                  />
+                </div>
                 <textarea
+                  id="profile-bio-input"
                   maxLength={1000}
                   value={bio}
                   onChange={(event) => setBio(event.target.value)}
                   placeholder="愛車やよく走るエリア、好きなドライブスポットなどを入力してください"
                 />
-              </label>
+              </div>
               <div className="profile-form-actions">
                 <button type="submit" disabled={savingProfile}>
                   {savingProfile ? '保存中...' : '保存する'}
@@ -300,12 +329,26 @@ export default function ProfileSettingsPage() {
           {/* 左：メールアドレス変更 ／ 右：パスワード変更 */}
           <div className="profile-grid">
             <section className="panel">
-              <h2>メールアドレス変更</h2>
+              <div className="heading-with-help section-heading-with-help">
+                <h2>メールアドレス変更</h2>
+                <HelpTip
+                  title="メールアドレス変更"
+                  description="ログインや通知に使用するメールアドレスを新しいアドレスへ変更します。"
+                  usage="新しいメールアドレスを入力して送信後、届いた確認メール内のリンクを開くと変更が完了します。"
+                />
+              </div>
               <p className="meta">現在のメールアドレス：{user?.email || '未設定'}</p>
               <form onSubmit={handleEmailSubmit}>
-                <label>
-                  新しいメールアドレス
+                <div className="form-field">
+                  <div className="form-field-label-row">
+                    <label htmlFor="profile-email-input">新しいメールアドレス</label>
+                    <HelpTip
+                      title="新しいメールアドレス"
+                      description="現在登録されているものとは別の有効なメールアドレスを入力してください。"
+                    />
+                  </div>
                   <input
+                    id="profile-email-input"
                     type="email"
                     autoComplete="email"
                     value={newEmail}
@@ -316,7 +359,7 @@ export default function ProfileSettingsPage() {
                   <small>
                     変更後、確認用メールが送信されます。メール内のリンクを開いて更新を完了してください。
                   </small>
-                </label>
+                </div>
                 <div className="profile-form-actions">
                   <button type="submit" disabled={savingEmail}>
                     {savingEmail ? '送信中...' : 'メールアドレスを更新する'}
@@ -326,11 +369,25 @@ export default function ProfileSettingsPage() {
             </section>
 
             <section className="panel">
-              <h2>パスワード変更</h2>
+              <div className="heading-with-help section-heading-with-help">
+                <h2>パスワード変更</h2>
+                <HelpTip
+                  title="パスワード変更"
+                  description="ログイン時に使用するパスワードを新しく設定し直します。"
+                  usage="6文字以上の新しいパスワードを入力し、「変更する」を押してください。"
+                />
+              </div>
               <form onSubmit={handlePasswordSubmit}>
-                <label>
-                  新しいパスワード
+                <div className="form-field">
+                  <div className="form-field-label-row">
+                    <label htmlFor="profile-password-input">新しいパスワード</label>
+                    <HelpTip
+                      title="新しいパスワード"
+                      description="6文字以上の半角英数字・記号で設定してください。"
+                    />
+                  </div>
                   <input
+                    id="profile-password-input"
                     type="password"
                     minLength={6}
                     autoComplete="new-password"
@@ -339,7 +396,7 @@ export default function ProfileSettingsPage() {
                     placeholder="6文字以上で入力"
                     required
                   />
-                </label>
+                </div>
                 <div className="profile-form-actions">
                   <button type="submit" disabled={savingPassword}>
                     {savingPassword ? '変更中...' : '変更する'}

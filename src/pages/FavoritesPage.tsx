@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import AuthGuard from '../components/AuthGuard';
+import HelpTip from '../components/HelpTip';
 import RouteCard from '../components/RouteCard';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -63,7 +64,14 @@ export default function FavoritesPage() {
     <AuthGuard>
       <section>
         <div className="page-heading">
-          <h1>お気に入り</h1>
+          <div className="heading-with-help">
+            <h1>お気に入り</h1>
+            <HelpTip
+              title="お気に入り一覧"
+              description="各投稿の詳細ページで「★ お気に入り」に登録したドライブコースをまとめて見返せる保存リストです。"
+              usage="カードをクリックするとルート詳細が開きます。お気に入り解除も投稿詳細ページの「★ お気に入り済み」ボタンから行えます。"
+            />
+          </div>
           <div className="meta">全{routes.length}件</div>
         </div>
         {loading && <div className="panel">お気に入りを読み込んでいます...</div>}

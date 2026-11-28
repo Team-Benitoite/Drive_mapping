@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type TouchEvent } from 'react';
+import HelpTip from './HelpTip';
 import { prefectureMap } from '../utils/prefectures';
 import { buildGoogleMapsSearchUrl } from '../utils/googleMaps';
 import { Link, navigate } from '../utils/navigation';
@@ -911,6 +912,12 @@ export default function JapanMap({
                 {heatOn ? 'ON' : 'OFF'}
               </span>
             </button>
+            <HelpTip
+              className="is-map-control"
+              title="投稿件数ヒートマップ切り替え"
+              description="日本地図の各都道府県マスの色分けモードを切り替えるスイッチです。"
+              usage="OFFでは地方別のカラー、ONにすると投稿件数に応じた色（0件〜21件以上）に変化し、人気エリアや未開拓エリアが一目で分かります。"
+            />
           </div>
         )}
 
@@ -1037,7 +1044,15 @@ export default function JapanMap({
           >
             <div className="game-deck-header-ribbon">
               <span className="game-ribbon-tag">{topCardsBadge}</span>
-              <span className="game-ribbon-title">{topCardsTitle}</span>
+              <div className="heading-with-help">
+                <span className="game-ribbon-title">{topCardsTitle}</span>
+                <HelpTip
+                  className="is-map-control"
+                  title={topCardsTitle}
+                  description="いいね数が上位の人気ドライブコースを最大3件ピックアップ表示しています。"
+                  usage="カードにカーソルを合わせると該当する都道府県と写真が連動して強調され、「ルート詳細を見る」や「Googleマップを表示」からすぐ確認できます。"
+                />
+              </div>
             </div>
             <div className="dm-sea-deck-cards">
               {displayCards.map((item, idx) => {
@@ -1303,9 +1318,16 @@ export default function JapanMap({
       {hasCards && (
         <div className="dm-mobile-cards-wrap game-mobile-cards-wrap">
           <div className="dm-mobile-cards-header">
-            <span className="dm-mobile-cards-title">
-              🎴 {topCardsTitle !== '注目の人気ドライブコース' ? topCardsTitle : 'おすすめイベントカード'}
-            </span>
+            <div className="heading-with-help">
+              <span className="dm-mobile-cards-title">
+                🎴 {topCardsTitle !== '注目の人気ドライブコース' ? topCardsTitle : 'おすすめイベントカード'}
+              </span>
+              <HelpTip
+                title={topCardsTitle}
+                description="いいね数が多い注目のドライブコースを横スクロールで確認できるカード一覧です。"
+                usage="左右にスワイプしてカードを選び、「ルート詳細を見る」や「Googleマップを表示」ボタンをタップしてください。"
+              />
+            </div>
           </div>
           <div className="dm-mobile-cards-scroll">
             {displayCards.map((item, idx) => {

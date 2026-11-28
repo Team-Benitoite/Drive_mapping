@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import BackgroundStamps from './BackgroundStamps';
 import ProfileAvatar from './ProfileAvatar';
 import { useAuth } from '../contexts/AuthContext';
@@ -18,6 +18,7 @@ export default function Layout({
   const userName = profile?.name || user?.email || 'ユーザー';
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState('');
@@ -30,6 +31,31 @@ export default function Layout({
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchError, setSearchError] = useState('');
   const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+
+    function handleOutsideClick(event: MouseEvent | TouchEvent) {
+      const target = event.target as Node | null;
+      if (target && headerRef.current?.contains(target)) return;
+      setMenuOpen(false);
+    }
+
+    function handleMenuKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setMenuOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick, { passive: true });
+    window.addEventListener('keydown', handleMenuKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+      window.removeEventListener('keydown', handleMenuKeyDown);
+    };
+  }, [menuOpen]);
 
   useEffect(() => {
     if (!logoutConfirmOpen) return undefined;
@@ -162,7 +188,10 @@ export default function Layout({
       ) : (
         <main className="container">
           {/* ヘッダー操作バー */}
-          <header className={`auth-header-bar${showBackToHome ? ' has-back' : ''}`}>
+          <header
+            ref={headerRef}
+            className={`auth-header-bar${showBackToHome ? ' has-back' : ''}`}
+          >
             {showBackToHome && (
               <Link href="/" className="game-header-btn back-button">
                 ← トップ（日本地図）へ戻る
@@ -218,6 +247,9 @@ export default function Layout({
                     <Link href="/favorites" onClick={() => setMenuOpen(false)}>
                       お気に入り
                     </Link>
+                    <Link href="/faq" onClick={() => setMenuOpen(false)}>
+                      よくある質問（Q&A）
+                    </Link>
                     <button
                       type="button"
                       className="auth-dropdown-menu-item"
@@ -240,20 +272,30 @@ export default function Layout({
                     </form>
                   </div>
                 ) : (
-                  <div className="auth-dropdown-guest">
+                  <div className="auth-dropdown-guest-wrap">
+                    <div className="auth-dropdown-guest">
+                      <Link
+                        href={getAuthHref('/login')}
+                        className="auth-guest-btn"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        ログイン
+                      </Link>
+                      <Link
+                        href={getAuthHref('/signup')}
+                        className="auth-guest-btn"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        新規登録
+                      </Link>
+                    </div>
+                    <hr className="auth-dropdown-divider" />
                     <Link
-                      href={getAuthHref('/login')}
-                      className="auth-guest-btn"
+                      href="/faq"
+                      className="auth-guest-faq-link"
                       onClick={() => setMenuOpen(false)}
                     >
-                      ログイン
-                    </Link>
-                    <Link
-                      href={getAuthHref('/signup')}
-                      className="auth-guest-btn"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      新規登録
+                      よくある質問（Q&A）
                     </Link>
                   </div>
                 )}
